@@ -1,7 +1,7 @@
 "use strict";
 /**
  * @file Context.ts
- * @desc Some relatively standard LTV modules.
+ * @desc The context module used to set up a local text visor.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const LanguageStub_1 = require("./LanguageStub");

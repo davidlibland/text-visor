@@ -1,6 +1,6 @@
 /**
  * @file Context.ts
- * @desc Some relatively standard LTV modules.
+ * @desc The context module used to set up a local text visor.
  */
 
 import {

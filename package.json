@@ -7,6 +7,26 @@
   "devDependencies": {
     "tslint": "5.2.0",
     "tslint-react": "^3.2.0",
-    "typescript": "2.3.4"
+    "typescript": "2.3.4",
+    "jest-cli": "21.2.1",
+    "ts-jest": "21.0.1",
+    "@types/jest": "21.1.1"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.tsx?$": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json"
+    ]
   }
 }
