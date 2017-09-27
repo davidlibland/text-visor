@@ -30,4 +30,5 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs) {
     const prior = () => { };
     return new StandardLTVModules_1.StandardPipeline(languageModule, qualityAssessor, prior);
 }
+exports.initializeLTVWithContext = initializeLTVWithContext;
 //# sourceMappingURL=Context.js.map

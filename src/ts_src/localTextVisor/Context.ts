@@ -40,7 +40,7 @@ export interface RewardModuleSpecs {
 }
 
 // ToDo: sort out how to handle generic types T with no length.
-function initializeLTVWithContext<T extends HasLengthType>(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs): AbstractPipeline<T> {
+export function initializeLTVWithContext<T extends HasLengthType>(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs): AbstractPipeline<T> {
     let languageModule: AbstractPredictor<T>;
     let rewardModule: AbstractValueDifferential<T>;
     switch (languageSpecs.moduleType) {
