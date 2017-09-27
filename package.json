@@ -1,0 +1,11 @@
+{
+  "name": "text-visor",
+  "version": "0.0.1",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "tslint": "5.2.0",
+    "tslint-react": "^3.2.0",
+    "typescript": "2.3.4",
+  },
+}
