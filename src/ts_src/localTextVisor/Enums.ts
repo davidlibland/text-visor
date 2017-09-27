@@ -3,7 +3,7 @@
  * @desc Encapuslates the enums used by the LTV.
  */
 
-type UnionKeyToValue<U extends string> = {
+export type UnionKeyToValue<U extends string> = {
     [K in U]: K
 };
 
