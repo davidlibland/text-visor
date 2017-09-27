@@ -59,6 +59,6 @@ function initializeLTVWithContext<T extends HasLengthType>(languageSpecs: Langua
     }
     const qualityAssessor = new RankedQualityAssessor<T>(rewardModule);
     // ToDo: construct a reasonable prior.
-    const prior = () => {};
+    const prior = () => { };
     return new StandardPipeline<T, any>(languageModule, qualityAssessor, prior);
 }

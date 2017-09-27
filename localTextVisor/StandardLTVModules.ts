@@ -20,9 +20,9 @@ export class RankedQualityAssessor<T> extends AbstractQualityAssessor<T> {
         super(valueDifferential);
     }
 
-    assess(input: T, predictions: WeightedPrediction<T>[], limit: number, offset: number = 0, qualityType: QualityType = QUALITY_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[]{
+    assess(input: T, predictions: WeightedPrediction<T>[], limit: number, offset: number = 0, qualityType: QualityType = QUALITY_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
         let qualityPredictions: WeightedPrediction<T>[];
-        switch (qualityType){
+        switch (qualityType) {
             case QUALITY_TYPE.EXPECTED_REWARD:
                 // We assume the weights of the WeightedPredictions comprise a set of dirichlet parameters,
                 // so to compute the expected value, we normalize them to a probability.
@@ -34,11 +34,11 @@ export class RankedQualityAssessor<T> extends AbstractQualityAssessor<T> {
                     qualityPredictions = [];
                     break;
                 }
-                const invNormalizer = 1/normalizer;
+                const invNormalizer = 1 / normalizer;
                 const expectedRewardComputation = (wPred: WeightedPrediction<T>) => {
                     const reward = this.valueDifferential.evaluate(input, wPred.prediction);
                     const expectedReward = wPred.weight * invNormalizer * reward;
-                    return Object.assign({}, wPred, {weight: expectedReward});
+                    return Object.assign({}, wPred, { weight: expectedReward });
                 };
                 qualityPredictions = predictions.map(expectedRewardComputation);
                 break;

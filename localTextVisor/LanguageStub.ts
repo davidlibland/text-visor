@@ -9,7 +9,7 @@ import {
 } from "./Abstract";
 
 export class IdentityPredictor<T = string> extends AbstractPredictor<T, any> {
-    predict(prior: any, input: T): WeightedPrediction<T>[]{
-        return [{weight: 1, prediction: input}];
+    predict(prior: any, input: T): WeightedPrediction<T>[] {
+        return [{ weight: 1, prediction: input }];
     }
 }

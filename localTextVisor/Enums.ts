@@ -5,7 +5,7 @@
 
 type UnionKeyToValue<U extends string> = {
     [K in U]: K
-    };
+};
 
 // These are some basic score types.
 export type ScoreTypes =
