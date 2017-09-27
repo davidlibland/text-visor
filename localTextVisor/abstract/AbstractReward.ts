@@ -4,4 +4,6 @@
  * provides a fast myopic model which predicts rewards for tokens.
  */
 
-abstract class MyopicReward<T, A, P>
+export abstract class AbstractValueDifferential<T = string> {
+    abstract evaluate(alpha: T, beta: T): number;
+}

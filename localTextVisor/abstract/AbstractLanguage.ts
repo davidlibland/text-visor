@@ -12,13 +12,19 @@
  * @desc The default type for a priors: a map from token, value pairs to
  * relative probabilities.
  */
-export type MapPrior<T = string, V = undefined> = ((token: T, value: V) => number);
+export type MapPrior<T = string> = ((token: T) => number);
 
-export interface LocalVisorPredictions<T = string, V = undefined> {
-    relativeConfidence: number;
-    token: T;
-    value: V;
+export interface WeightedPrediction<T = string> {
+    weight: number;
+    prediction: T;
 }
+
+export abstract class AbstractPredictor<T = string, P = MapPrior<T>> {
+    abstract predict(prior: P, input: T): WeightedPrediction<T>[];
+}
+
+// Old code:
+
 
 /**
  * @class MyopicPredictor
@@ -36,33 +42,33 @@ export interface LocalVisorPredictions<T = string, V = undefined> {
  * @type V The type of values paired with the tokens.
  * @type P The type of the prior consumed by the predict method.
  */
-export abstract class MyopicPredictor<T = string, A = string, V = undefined, P = MapPrior<T, V>> {
-    /**
-     * @constructor
-     * @param {Array<VisorWord>} tokenDictionary A list of known tokens and
-     * associated metadata.
-     * @param {(token: T) => Array<A>} alphabetizer A function which coverts a
-     * (potentially unrecognized) token to a list of symbols from the alphabet.
-     */
-    constructor(private tokenDictionary: {token: T; value: V}[], private alphabetizer: (token: T) => (A[])) {
-    }
-
-    /**
-     * @method predict
-     * @param {P} prior A prior to be used for the prediction algorithm.
-     * @param {T} unknownToken An
-     * @returns {{relativeConfidence: number; token: T; value: V}[]}
-     */
-    abstract predict(prior: P, unknownToken: T): LocalVisorPredictions<T, V>[];
-}
-
-abstract class PredictionLayer {
-    needs (tokenizer, tokenrecombiner), innerLayer
-    prediction method stashes context and calls predictor of innerLayer, whose (array of results) it feeds to token recombiner.
-    constructor should be relatively cheap (maybe eats function pointing to params?)
-}
-
-class FinalPredictor {
-    similar but never calls inner predictor.
-}
-
+// export abstract class MyopicPredictor<T = string, A = string, V = undefined, P = MapPrior<T, V>> {
+//     /**
+//      * @constructor
+//      * @param {Array<VisorWord>} tokenDictionary A list of known tokens and
+//      * associated metadata.
+//      * @param {(token: T) => Array<A>} alphabetizer A function which coverts a
+//      * (potentially unrecognized) token to a list of symbols from the alphabet.
+//      */
+//     constructor(private tokenDictionary: {token: T; value: V}[], private alphabetizer: (token: T) => (A[])) {
+//     }
+//
+//     /**
+//      * @method predict
+//      * @param {P} prior A prior to be used for the prediction algorithm.
+//      * @param {T} unknownToken An
+//      * @returns {{relativeConfidence: number; token: T; value: V}[]}
+//      */
+//     abstract predict(prior: P, unknownToken: T): LocalVisorPredictions<T, V>[];
+// }
+//
+// abstract class PredictionLayer {
+//     needs (tokenizer, tokenrecombiner), innerLayer
+//     prediction method stashes context and calls predictor of innerLayer, whose (array of results) it feeds to token recombiner.
+//     constructor should be relatively cheap (maybe eats function pointing to params?)
+// }
+//
+// class FinalPredictor {
+//     similar but never calls inner predictor.
+// }
+//
