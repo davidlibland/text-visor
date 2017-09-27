@@ -7,11 +7,12 @@
     "declaration": true,
     "rootDirs": [
       "./ts_src",
-      "../node_modules"
+      "./node_modules"
     ],
-    "outDir": "./"
+    "outDir": "./src"
   },
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "./src"
   ]
 }
