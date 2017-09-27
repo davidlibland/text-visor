@@ -1,6 +1,7 @@
 {
   "name": "text-visor",
   "version": "0.0.1",
+  "main": "src/TextVisor.js",
   "dependencies": {},
   "devDependencies": {
     "tslint": "5.2.0",
