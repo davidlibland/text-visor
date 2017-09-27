@@ -41,11 +41,11 @@ export const TOKENIZER_TYPE: UnionKeyToValue<TokenizerType> = {
 
 // These are reward module enums.
 export type RewardType =
-    "STRING_LENGTH_DIFFERENCE" |
+    "LENGTH_DIFFERENCE" |
     "EDIT_DISTANCE";
 
 export const REWARD_TYPE: UnionKeyToValue<RewardType> = {
-    STRING_LENGTH_DIFFERENCE: "STRING_LENGTH_DIFFERENCE",
+    LENGTH_DIFFERENCE: "LENGTH_DIFFERENCE",
     EDIT_DISTANCE: "EDIT_DISTANCE",
 };
 

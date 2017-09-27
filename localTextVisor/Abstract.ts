@@ -3,10 +3,14 @@
  * @desc Abstractions and standard types for the local text visor modules.
  */
 
+import {
+    QualityType
+} from "./Enums";
+
 /**
  * @type MapPrior
  * @desc The default type for a priors: a map from token, value pairs to
- * relative probabilities.
+ * relative probabilities (i.e. dirichlet parameters).
  */
 export type MapPrior<T = string> = ((token: T) => number);
 
@@ -31,5 +35,16 @@ export abstract class AbstractQualityAssessor<T = string> {
     }
 
     //ToDo: Should incorporate display name.
-    abstract assess(input: T, predictions: WeightedPrediction<T>[], limit: number, offset: number): WeightedPrediction<T>[];
+    abstract assess(input: T, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+}
+
+export abstract class AbstractPipeline<T> {
+    protected predictor: AbstractPredictor<T, any>;
+    protected qualityAssessor: AbstractQualityAssessor<T>;
+    constructor(predictor: AbstractPredictor<T, any>, qualityAssessor: AbstractQualityAssessor<T>) {
+        this.predictor = predictor;
+        this.qualityAssessor = qualityAssessor;
+    }
+
+    abstract predict(input: T, limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
 }
