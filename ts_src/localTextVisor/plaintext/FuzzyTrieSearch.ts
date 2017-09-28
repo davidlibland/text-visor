@@ -10,7 +10,8 @@ import {
     MapPrior,
 } from "../Abstract";
 import {
-    Tree
+    Tree,
+    automatonTreeSearch
 } from "./Tree";
 import {
     LevenshteinAutomaton
@@ -35,5 +36,7 @@ export class FuzzyTriePredictor<T = string, A = string, V = any> extends Abstrac
     predict(prior: MapPrior<T>, input: T): WeightedValuedPrediction<T, V>[] {
         const chars = this.tokenizer(input);
         const leven = new LevenshteinAutomaton(chars, this.maxEdit);
+        const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
+
     }
 }

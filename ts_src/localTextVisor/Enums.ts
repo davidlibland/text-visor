@@ -8,11 +8,11 @@ export type UnionKeyToValue<U extends string> = {
 };
 
 // These are some basic score types.
-export type ScoreTypes =
+export type ScoreType =
     "QUALITY" |
     "CONFIDENCE";
 
-export const SCORE_TYPE: UnionKeyToValue<ScoreTypes> = {
+export const SCORE_TYPE: UnionKeyToValue<ScoreType> = {
     QUALITY: "QUALITY",
     CONFIDENCE: "CONFIDENCE",
 };

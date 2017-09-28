@@ -2,6 +2,7 @@
  * @file Tree.ts
  * @desc A Tree data structure.
  */
+import {AbstractAutomaton, STATUS_TYPE} from "./AbstractAutomata";
 
 export interface Tree<A, V> {
     node: A;
@@ -87,4 +88,25 @@ function findObjectIndexInSortedArray<A>(newObject: A, arrayOfObjects: Array<A>,
         }
     }
     return { exists: false, index: low };
+}
+
+export function automatonTreeSearch<S, A, V>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A>, state: S): V[] {
+    const addStatusToData = (data: V[], state: S) => data.map(
+        dataPt => Object.assign({}, automata.status(state), dataPt)
+    );
+    const isAcceptedState = (state) => (automata.status(state).status === STATUS_TYPE.ACCEPT);
+    const isNotRejectedState = (state) => (automata.status(state).status !== STATUS_TYPE.REJECT);
+    return tree.children.map(
+        (child) => ({
+            child: child,
+            state: automata.step(state, child.node)
+        })
+    ).filter(
+        (childAndState) => isNotRejectedState(childAndState.state)
+    ).map(
+        (childAndState) => automatonTreeSearch<S, A, V>(childAndState.child, automata, childAndState.state)
+    ).reduce(
+        (results, result) => results.concat(result),
+        isAcceptedState(state) ? addStatusToData(tree.data, state) : []
+    )
 }
