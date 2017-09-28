@@ -25,7 +25,7 @@ export class LevenshteinAutomaton {
     }
 
     isMatch(state: number[]): boolean {
-        return state[state.length-1] <= this.maxEdits;
+        return state[state.length - 1] <= this.maxEdits;
     }
 
     canMatch(state: number[]): boolean {
