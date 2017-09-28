@@ -3,7 +3,8 @@
  * @desc Some basic tests for the context module.
  */
 
-import { Tree, sortedInsert, insert } from "../localTextVisor/plaintext/Tree";
+import { Tree, sortedInsert, insert, automatonTreeSearch } from "../localTextVisor/plaintext/Tree";
+import { LevenshteinAutomaton } from "../localTextVisor/plaintext/LevenshteinAutomata";
 import "ts-jest";
 
 const str1 = "hello";
@@ -50,7 +51,7 @@ const finalTree: Tree<string, void> = {
 };
 
 test("Testing insertion into a tree", () => {
-    let testTree: Tree<string, void> = {node: "root", children:[], data:[]};
+    let testTree: Tree<string, void> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, str1.split(""));
     sortedInsert(testTree, str2.split(""));
     expect(testTree).toEqual(finalTree)
@@ -58,27 +59,68 @@ test("Testing insertion into a tree", () => {
 
 
 test("Testing insertion into a tree", () => {
-    let testTree: Tree<string, void> = {node: "root", children:[], data:[]};
+    let testTree: Tree<string, void> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, ["b"]);
     sortedInsert(testTree, ["c"]);
     sortedInsert(testTree, ["a"]);
-    sortedInsert(testTree, ["c","d"]);
-    sortedInsert(testTree, ["c","a"]);
+    sortedInsert(testTree, ["c", "d"]);
+    sortedInsert(testTree, ["c", "a"]);
     expect(testTree).toEqual(
         {
             children: [
-                {children: [], data: [], node: "a"},
-                {children: [], data: [], node: "b"},
+                { children: [], data: [], node: "a" },
+                { children: [], data: [], node: "b" },
                 {
                     children: [
-                        {children: [], data: [], node: "a"},
-                        {children: [], data: [], node: "d"}
+                        { children: [], data: [], node: "a" },
+                        { children: [], data: [], node: "d" }
                     ],
                     data: [],
-                    node: "c"}
-                    ],
+                    node: "c"
+                }
+            ],
             data: [],
             node: "root"
         }
     );
+});
+
+
+
+// Automaton Tree Search
+
+type tokenData = { token: string };
+
+test("FuzzyTreeSearch should find correct completions", () => {
+    let testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
+    sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
+    sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
+    sortedInsert(testTree, "heal".split(""), { token: "heal" });
+    sortedInsert(testTree, "heat".split(""), { token: "heat" });
+    let leven = new LevenshteinAutomaton("heal".split(""), 0);
+    let results = automatonTreeSearch(testTree, leven, leven.start());
+    expect(results).toEqual([
+        { status: 'ACCEPT', editCost: 0, token: 'heal' },
+        { status: 'ACCEPT', editCost: 0, token: 'health risk' }
+    ]);
+
+    leven = new LevenshteinAutomaton("heal".split(""), 1);
+    results = automatonTreeSearch(testTree, leven, leven.start());
+    expect(results).toEqual([
+        { status: 'ACCEPT', editCost: 0, token: 'heal' },
+        { status: 'ACCEPT', editCost: 0, token: 'health risk' },
+        { status: 'ACCEPT', editCost: 1, token: 'heart attack' },
+        { status: 'ACCEPT', editCost: 1, token: 'heat' }
+    ]);
+
+    leven = new LevenshteinAutomaton("heal".split(""), 2);
+    results = automatonTreeSearch(testTree, leven, leven.start());
+    expect(results).toEqual([
+        { status: 'ACCEPT', editCost: 0, token: 'heal' },
+        { status: 'ACCEPT', editCost: 0, token: 'health risk' },
+        { status: 'ACCEPT', editCost: 1, token: 'heart attack' },
+        { status: 'ACCEPT', editCost: 1, token: 'heat' },
+        { status: 'ACCEPT', editCost: 2, token: 'hepatitis' }
+    ]);
 });

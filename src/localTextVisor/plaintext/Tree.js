@@ -1,9 +1,10 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * @file Tree.ts
  * @desc A Tree data structure.
  */
-Object.defineProperty(exports, "__esModule", { value: true });
+const AbstractAutomata_1 = require("./AbstractAutomata");
 function insert(tree, token, data) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
@@ -80,4 +81,14 @@ function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc)
     }
     return { exists: false, index: low };
 }
+function automatonTreeSearch(tree, automata, state) {
+    const addStatusToData = (data, state) => data.map(dataPt => Object.assign({}, automata.status(state), dataPt));
+    const isAcceptedState = (state) => (automata.status(state).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
+    const isNotRejectedState = (state) => (automata.status(state).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
+    return tree.children.map((child) => ({
+        child: child,
+        state: automata.step(state, child.node)
+    })).filter((childAndState) => isNotRejectedState(childAndState.state)).map((childAndState) => automatonTreeSearch(childAndState.child, automata, childAndState.state)).reduce((results, result) => results.concat(result), isAcceptedState(state) ? addStatusToData(tree.data, state) : []);
+}
+exports.automatonTreeSearch = automatonTreeSearch;
 //# sourceMappingURL=Tree.js.map

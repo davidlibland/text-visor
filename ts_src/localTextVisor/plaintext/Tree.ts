@@ -2,7 +2,7 @@
  * @file Tree.ts
  * @desc A Tree data structure.
  */
-import {AbstractAutomaton, STATUS_TYPE} from "./AbstractAutomata";
+import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutomata";
 
 export interface Tree<A, V> {
     node: A;
@@ -45,7 +45,7 @@ export function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, compa
 }
 
 let stdComparisonFunc = (a, b) => {
-    if( a < b) {
+    if (a < b) {
         return -1
     }
     if (a > b) {
@@ -90,7 +90,7 @@ function findObjectIndexInSortedArray<A>(newObject: A, arrayOfObjects: Array<A>,
     return { exists: false, index: low };
 }
 
-export function automatonTreeSearch<S, A, V>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A>, state: S): V[] {
+export function automatonTreeSearch<S, A, V extends Object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S): (V & E)[] {
     const addStatusToData = (data: V[], state: S) => data.map(
         dataPt => Object.assign({}, automata.status(state), dataPt)
     );
@@ -104,9 +104,9 @@ export function automatonTreeSearch<S, A, V>(tree: Tree<A, V>, automata: Abstrac
     ).filter(
         (childAndState) => isNotRejectedState(childAndState.state)
     ).map(
-        (childAndState) => automatonTreeSearch<S, A, V>(childAndState.child, automata, childAndState.state)
+        (childAndState) => automatonTreeSearch<S, A, V, E>(childAndState.child, automata, childAndState.state)
     ).reduce(
         (results, result) => results.concat(result),
         isAcceptedState(state) ? addStatusToData(tree.data, state) : []
-    )
+    );
 }

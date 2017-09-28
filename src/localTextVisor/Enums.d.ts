@@ -5,8 +5,8 @@
 export declare type UnionKeyToValue<U extends string> = {
     [K in U]: K;
 };
-export declare type ScoreTypes = "QUALITY" | "CONFIDENCE";
-export declare const SCORE_TYPE: UnionKeyToValue<ScoreTypes>;
+export declare type ScoreType = "QUALITY" | "CONFIDENCE";
+export declare const SCORE_TYPE: UnionKeyToValue<ScoreType>;
 export declare type QualityType = "EXPECTED_REWARD" | "CONFIDENCE";
 export declare const QUALITY_TYPE: UnionKeyToValue<QualityType>;
 export declare type TokenizerType = "CHARACTER" | "WORD" | "SPLIT_PUNCTUATION";

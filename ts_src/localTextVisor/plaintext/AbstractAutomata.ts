@@ -21,10 +21,10 @@ export interface StatusContainer {
     status: StatusType;
 }
 
-export abstract class AbstractAutomaton<S, A> {
+export abstract class AbstractAutomaton<S, A, E extends StatusContainer> {
     abstract start(): S;
 
     abstract step(state: S, action: A): S;
 
-    abstract status(state: S): StatusContainer;
+    abstract status(state: S): E;
 }

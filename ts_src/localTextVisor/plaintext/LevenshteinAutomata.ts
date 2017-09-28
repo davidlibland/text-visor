@@ -4,11 +4,11 @@
  */
 
 import { UnionKeyToValue } from "../Enums";
-import {AbstractAutomaton, StatusContainer, StatusType, STATUS_TYPE} from "./AbstractAutomata";
+import { AbstractAutomaton, StatusContainer, StatusType, STATUS_TYPE } from "./AbstractAutomata";
 
-export interface LAStatus extends StatusContainer{
+export interface LAStatus extends StatusContainer {
     status: StatusType;
-    editCost?: number;
+    editCost: number;
 }
 
 export type LAState = {
@@ -16,7 +16,7 @@ export type LAState = {
     histEditCost: number
 };
 
-export class LevenshteinAutomaton<A> extends AbstractAutomaton< LAState, A >{
+export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LAStatus>{
     private str: A[];
     private maxEdits: number;
 
@@ -35,7 +35,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton< LAState, A >{
 
     step(state: LAState, nextChar: A): LAState {
         let newState: LAState = {
-            data:[state.data[0] + 1],
+            data: [state.data[0] + 1],
             histEditCost: state.histEditCost
         };
         for (let i = 0; i < state.data.length - 1; i++) {
@@ -58,10 +58,12 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton< LAState, A >{
         } else if (Math.min(...state.data) <= this.maxEdits) {
             return {
                 status: STATUS_TYPE.UNKNOWN,
+                editCost: this.maxEdits + 1
             };
         } else {
             return {
                 status: STATUS_TYPE.REJECT,
+                editCost: this.maxEdits + 1
             };
         }
     }
