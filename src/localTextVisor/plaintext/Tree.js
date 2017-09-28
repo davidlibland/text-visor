@@ -20,14 +20,14 @@ function insert(tree, token, data) {
     return tree;
 }
 exports.insert = insert;
-function sortedInsert(comparisonFunc, tree, token, data) {
+function sortedInsert(tree, token, data, comparisonFunc = stdComparisonFunc) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
         const potIndex = findObjectIndexInSortedArray(currentSymbol, tree.children.map(x => x.node), comparisonFunc);
         if (!potIndex.exists) {
             tree.children = [...tree.children.slice(0, potIndex.index), { node: currentSymbol, children: [], data: [] }, ...tree.children.slice(potIndex.index)];
         }
-        sortedInsert(comparisonFunc, tree.children[potIndex.index], token, data);
+        sortedInsert(tree.children[potIndex.index], token, data, comparisonFunc);
     }
     else if (data) {
         tree.data.push(data);
@@ -35,6 +35,15 @@ function sortedInsert(comparisonFunc, tree, token, data) {
     return tree;
 }
 exports.sortedInsert = sortedInsert;
+let stdComparisonFunc = (a, b) => {
+    if (a < b) {
+        return -1;
+    }
+    if (a > b) {
+        return 1;
+    }
+    return 0;
+};
 /**
  * @export @function findNewObjectIndexInSortedArray
  * This function finds the index at which an item is/should-be-inserted

@@ -51,35 +51,19 @@ const finalTree: Tree<string, void> = {
 
 test("Testing insertion into a tree", () => {
     let testTree: Tree<string, void> = {node: "root", children:[], data:[]};
-    let comparisonFunc = (a, b) => {
-        if( a < b) {
-            return -1
-        }
-        if (a == b) {
-            return 0
-        }
-        return 1};
-    sortedInsert(comparisonFunc, testTree, str1.split(""));
-    sortedInsert(comparisonFunc, testTree, str2.split(""));
+    sortedInsert(testTree, str1.split(""));
+    sortedInsert(testTree, str2.split(""));
     expect(testTree).toEqual(finalTree)
 });
 
 
 test("Testing insertion into a tree", () => {
     let testTree: Tree<string, void> = {node: "root", children:[], data:[]};
-    let comparisonFunc = (a, b) => {
-        if( a < b) {
-            return -1
-        }
-        if (a == b) {
-            return 0
-        }
-        return 1};
-    sortedInsert(comparisonFunc, testTree, ["b"]);
-    sortedInsert(comparisonFunc, testTree, ["c"]);
-    sortedInsert(comparisonFunc, testTree, ["a"]);
-    sortedInsert(comparisonFunc, testTree, ["c","d"]);
-    sortedInsert(comparisonFunc, testTree, ["c","a"]);
+    sortedInsert(testTree, ["b"]);
+    sortedInsert(testTree, ["c"]);
+    sortedInsert(testTree, ["a"]);
+    sortedInsert(testTree, ["c","d"]);
+    sortedInsert(testTree, ["c","a"]);
     expect(testTree).toEqual(
         {
             children: [

@@ -24,24 +24,34 @@ export function insert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
     return tree;
 }
 
-export function sortedInsert<A, V>(comparisonFunc: ((obj1: A, obj2: A) => number), tree: Tree<A, V>, token: A[], data?: V) {
+interface PotentialIndex {
+    exists: boolean,
+    index: number
+}
+
+export function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, comparisonFunc: ((obj1: A, obj2: A) => number) = stdComparisonFunc) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
         const potIndex = findObjectIndexInSortedArray<A>(currentSymbol, tree.children.map(x => x.node), comparisonFunc);
         if (!potIndex.exists) {
             tree.children = [...tree.children.slice(0, potIndex.index), { node: currentSymbol, children: [], data: [] }, ...tree.children.slice(potIndex.index)];
         }
-        sortedInsert(comparisonFunc, tree.children[potIndex.index], token, data);
+        sortedInsert(tree.children[potIndex.index], token, data, comparisonFunc);
     } else if (data) {
         tree.data.push(data)
     }
     return tree;
 }
 
-interface PotentialIndex {
-    exists: boolean,
-    index: number
-}
+let stdComparisonFunc = (a, b) => {
+    if( a < b) {
+        return -1
+    }
+    if (a > b) {
+        return 1
+    }
+    return 0
+};
 
 /**
  * @export @function findNewObjectIndexInSortedArray
