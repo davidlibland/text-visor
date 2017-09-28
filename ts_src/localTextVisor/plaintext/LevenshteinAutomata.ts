@@ -3,10 +3,10 @@
  * @desc An implementation of a levenstein automata.
  */
 
-export class LevenshteinAutomaton {
-    private str: string;
+export class LevenshteinAutomaton<A> {
+    private str: A[];
     private maxEdits: number;
-    constructor(str: string, maxEditDistance: number) {
+    constructor(str: A[], maxEditDistance: number) {
         this.str = str;
         this.maxEdits = maxEditDistance
     }
@@ -15,7 +15,7 @@ export class LevenshteinAutomaton {
         return Array.from(Array(this.str.length + 1).keys());
     }
 
-    step(state: number[], nextChar: string): number[] {
+    step(state: number[], nextChar: A): number[] {
         let newState = [state[0] + 1];
         for (let i = 0; i < state.length - 1; i++) {
             const cost = this.str[i] === nextChar ? 0 : 1;
