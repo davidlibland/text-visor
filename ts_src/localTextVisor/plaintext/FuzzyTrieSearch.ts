@@ -17,17 +17,13 @@ import {
     LevenshteinAutomaton
 } from "./LevenshteinAutomata";
 
-export type HasWeight = {
-    weight: number;
-}
-
-export class FuzzyTriePredictor<T = string, A = string, V extends Object & HasWeight = Object & HasWeight> extends AbstractPredictor<T, MapPrior<T>> {
-    private trie: Tree<A, { token: T } & V>;
+export class FuzzyTriePredictor<T = string, A = string, V extends Object = Object> extends AbstractPredictor<T, MapPrior<T>> {
+    private trie: Tree<A, { prediction: T } & V>;
     private tokenizer: (T) => A[];
     private maxEdit: number;
     private weightFunction: (editCost: number) => number;
 
-    constructor(trie: Tree<A, { token: T } & V>, tokenizer: (T) => A[], maxEditCost: number, weightFunction: (editCost: number) => number) {
+    constructor(trie: Tree<A, { prediction: T } & V>, tokenizer: (T) => A[], maxEditCost: number, weightFunction: (editCost: number) => number) {
         super();
         this.trie = trie;
         this.tokenizer = tokenizer;
@@ -35,16 +31,14 @@ export class FuzzyTriePredictor<T = string, A = string, V extends Object & HasWe
         this.weightFunction = weightFunction;
     }
 
-
-
-    predict(prior: MapPrior<T>, input: T): (WeightedPrediction<T> & V)[] {
+    predict(prior: MapPrior<T>, input: T): (WeightedPrediction<T> & V & { cursorPosition: number })[] {
         const chars = this.tokenizer(input);
         const leven = new LevenshteinAutomaton(chars, this.maxEdit);
         const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
         return fuzzyCompletions.map(
             completion => Object.assign({}, completion, {
-                weight: this.weightFunction(completion.editCost) * completion.weight,
-                prediction: completion.token,
+                weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
+                cursorPosition: this.tokenizer(completion.prediction).length
             })
         );
     }
