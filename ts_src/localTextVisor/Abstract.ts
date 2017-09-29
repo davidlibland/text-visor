@@ -19,15 +19,15 @@ export interface WeightedPrediction<T = string> {
     prediction: T;
 }
 
-export abstract class AbstractPredictor<T = string, P = MapPrior<T>, E extends Object = Object> {
-    abstract predict(prior: P, input: T): (WeightedPrediction<T> & E)[];
+export abstract class AbstractPredictor<S = string, T = string, P = MapPrior<T>, E extends Object = Object> {
+    abstract predict(prior: P, input: S): (WeightedPrediction<T> & E)[];
 }
 
 export abstract class AbstractValueDifferential<T = string> {
     abstract evaluate(alpha: T, beta: T): number;
 }
 
-export abstract class AbstractQualityAssessor<T = string> {
+export abstract class AbstractQualityAssessor<S = string, T = string> {
     protected valueDifferential: AbstractValueDifferential<T>;
 
     constructor(valueDifferential: AbstractValueDifferential<T>) {
@@ -35,16 +35,16 @@ export abstract class AbstractQualityAssessor<T = string> {
     }
 
     //ToDo: Should incorporate display name.
-    abstract assess(input: T, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
 }
 
-export abstract class AbstractPipeline<T> {
-    protected predictor: AbstractPredictor<T, any>;
-    protected qualityAssessor: AbstractQualityAssessor<T>;
-    constructor(predictor: AbstractPredictor<T, any>, qualityAssessor: AbstractQualityAssessor<T>) {
+export abstract class AbstractPipeline<S, T, E> {
+    protected predictor: AbstractPredictor<S, T, any, E>;
+    protected qualityAssessor: AbstractQualityAssessor<S, T>;
+    constructor(predictor: AbstractPredictor<S, T, any, E>, qualityAssessor: AbstractQualityAssessor<S, T>) {
         this.predictor = predictor;
         this.qualityAssessor = qualityAssessor;
     }
 
-    abstract predict(input: T, limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+    abstract predict(input: S, limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
 }

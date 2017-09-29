@@ -16,11 +16,14 @@ import {
 import {
     LevenshteinAutomaton
 } from "./LevenshteinAutomata";
+import { HasLengthType } from "../StandardLTVModules";
 
 export type SplitterType<T, A> = (T) => A[];
-export type ActionType<T, A> = (cum: T, next: A) => T;
+export type CombinerType<T, A> = (...components: A[]) => T;
+export type CursorPositionType = { cursorPosition: number };
+export type InputAndPositionType<T> = { input: T } & CursorPositionType;
 
-export class FuzzyTriePredictor<T = string, A = string, V extends Object = Object> extends AbstractPredictor<T, MapPrior<T>> {
+export class FuzzyTriePredictor<T = string, A = string, V extends Object = Object> extends AbstractPredictor<T, T, MapPrior<T>, V & CursorPositionType> {
     private trie: Tree<A, { prediction: T } & V>;
     private splitter: SplitterType<T, A>;
     private maxEdit: number;
@@ -34,7 +37,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends Object = Objec
         this.weightFunction = weightFunction;
     }
 
-    predict(prior: MapPrior<T>, input: T): (WeightedPrediction<T> & V & { cursorPosition: number })[] {
+    predict(prior: MapPrior<T>, input: T): (WeightedPrediction<T> & V & CursorPositionType)[] {
         const chars = this.splitter(input);
         const leven = new LevenshteinAutomaton(chars, this.maxEdit);
         const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
@@ -43,47 +46,43 @@ export class FuzzyTriePredictor<T = string, A = string, V extends Object = Objec
                 weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
                 cursorPosition: this.splitter(completion.prediction).length
             })
-        );
+        ).filter(
+            completion => (completion.weight > 0)
+            );
     }
 }
 
-export class TokenizingPredictor<T = string, A = string, V extends Object = Object, P = MapPrior<A>> extends AbstractPredictor<T, P, V> {
+export class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends Object = Object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V> {
     private splitter: SplitterType<T, A>;
-    private tokenLength: (A) => number;
-    private action: ActionType<T, A>;
-    private readonly unit: T;
-    private childPredictor: AbstractPredictor<A, P, V & { cursorPosition: number }>;
+    private combiner: CombinerType<T, A>;
+    private childPredictor: AbstractPredictor<A, A, P, V & CursorPositionType>;
 
-    constructor(splitter: SplitterType<T, A>, tokenLength: (T) => number, joiner: ActionType<T, A>, prefix: T, childPredictor: AbstractPredictor<A, P, V & { cursorPosition: number }>) {
+    constructor(splitter: SplitterType<T, A>, combiner: CombinerType<T, A>, childPredictor: AbstractPredictor<A, A, P, V & CursorPositionType>) {
         super();
         this.splitter = splitter;
-        this.tokenLength = tokenLength;
-        this.action = joiner;
-        this.unit = prefix;
+        this.combiner = combiner;
         this.childPredictor = childPredictor;
     }
 
-    predict(prior: P, input: T, cursorPosition: number = 0): (WeightedPrediction<T> & V & { cursorPosition: number })[] {
-        let tokens = this.splitter(input);
-        let prefix: T = this.unit;
+    predict(prior: P, wrappedInput: InputAndPositionType<T>): (WeightedPrediction<T> & V & { cursorPosition: number })[] {
+        let suffix = this.splitter(wrappedInput.input);
+        let prefix: A[] = [];
         let token: A;
-        while (token = tokens.shift()) {
-            const prefixCand = this.action(prefix, token);
-            if (this.tokenLength(prefixCand) >= cursorPosition) {
+        while (token = suffix.shift()) {
+            if (this.combiner(...prefix, token).length >= wrappedInput.cursorPosition) {
                 break;
             }
-            prefix = prefixCand;
+            prefix.push(token);
         }
         if (token === undefined) {
             return [];
         }
         const results = this.childPredictor.predict(prior, token);
         const contextifyResult = (result: (WeightedPrediction<A> & V & { cursorPosition: number })) => {
-            const prefixAndPred = this.action(prefix, result.prediction);
-            const prediction = tokens.reduce<T>(this.action, prefixAndPred);
+            const cursPos = this.combiner(...prefix, result.prediction).length - this.combiner(result.prediction).length + result.cursorPosition;
             return Object.assign({}, result, {
-                prediction: prediction,
-                cursorPosition: this.tokenLength(prefixAndPred)
+                prediction: this.combiner(...prefix, result.prediction, ...suffix),
+                cursorPosition: cursPos
             });
         };
         return results.map(contextifyResult);

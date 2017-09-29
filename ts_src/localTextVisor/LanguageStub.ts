@@ -8,7 +8,7 @@ import {
     WeightedPrediction,
 } from "./Abstract";
 
-export class IdentityPredictor<T = string> extends AbstractPredictor<T, any> {
+export class IdentityPredictor<T = string> extends AbstractPredictor<T, T, any, any> {
     predict(prior: any, input: T): WeightedPrediction<T>[] {
         return [{ weight: 1, prediction: input }];
     }
