@@ -2,7 +2,7 @@
  * @file Abstract.ts
  * @desc Abstractions and standard types for the local text visor modules.
  */
-import { QualityType } from "./Enums";
+import { QualityModuleType } from "./Enums";
 /**
  * @type MapPrior
  * @desc The default type for a priors: a map from token, value pairs to
@@ -22,11 +22,11 @@ export declare abstract class AbstractValueDifferential<T = string> {
 export declare abstract class AbstractQualityAssessor<S = string, T = string> {
     protected valueDifferential: AbstractValueDifferential<T>;
     constructor(valueDifferential: AbstractValueDifferential<T>);
-    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
 }
 export declare abstract class AbstractPipeline<S, T, E> {
     protected predictor: AbstractPredictor<S, T, any, E>;
     protected qualityAssessor: AbstractQualityAssessor<S, T>;
     constructor(predictor: AbstractPredictor<S, T, any, E>, qualityAssessor: AbstractQualityAssessor<S, T>);
-    abstract predict(input: S, limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
 }

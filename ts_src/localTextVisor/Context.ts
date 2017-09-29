@@ -18,11 +18,11 @@ import {
     HasLengthType
 } from "./StandardLTVModules";
 import {
-    LanguageAlgorithmType,
-    LANGUAGE_ALGORITHM_TYPE,
+    LanguageModuleType,
+    LANGUAGE_MODULE_TYPE,
     CaseSensitivityType,
-    RewardType,
-    REWARD_TYPE,
+    RewardModuleType,
+    REWARD_MODULE_TYPE,
     TokenizerType, TOKENIZER_TYPE
 } from "./Enums";
 import {
@@ -32,14 +32,14 @@ import {
 import { Tree } from "./plaintext/Tree";
 
 export interface LanguageModuleSpecs {
-    moduleType: LanguageAlgorithmType;
+    moduleType: LanguageModuleType;
     maxEditDistance?: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
 }
 
 export interface RewardModuleSpecs {
-    moduleType: RewardType;
+    moduleType: RewardModuleType;
 }
 
 // ToDo: properly document this.
@@ -49,12 +49,12 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
     let prior: () => any;
     let inputConverter: (any) => any;
     switch (languageSpecs.moduleType) {
-        case LANGUAGE_ALGORITHM_TYPE.IDENTITY:
+        case LANGUAGE_MODULE_TYPE.IDENTITY:
             languageModule = new IdentityPredictor<HasLengthType>();
             prior = () => { };
             inputConverter = input => input;
             break;
-        case LANGUAGE_ALGORITHM_TYPE.TRIE_SEARCH:
+        case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
             if (!('trie' in data)) {
                 // ToDo: Add Tree typeguard.
                 throw `The data ${data} passed to initializeLTVWithContext must contain a trie.`;
@@ -76,13 +76,11 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
                     contextTokenizer = (token) => token.split("");
                     contextJoiner = (...tokens) => tokens.join("");
                     break;
-                case TOKENIZER_TYPE.WORD:
-                    contextTokenizer = (token) => token.split(" ");
-                    contextJoiner = (...tokens) => tokens.join(" ");
-                    break;
+                case TOKENIZER_TYPE.WHITE_SPACE:
                 default:
                     contextTokenizer = (token) => token.split(" ");
                     contextJoiner = (...tokens) => tokens.join(" ");
+                    break;
             }
             languageModule = new TokenizingPredictor(contextTokenizer, contextJoiner, triePredictor);
             prior = () => (token) => {
@@ -95,7 +93,7 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             throw `The language algorithm ${languageSpecs.moduleType} has not been implemented.`;
     }
     switch (rewardSpecs.moduleType) {
-        case REWARD_TYPE.LENGTH_DIFFERENCE:
+        case REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
             rewardModule = new LengthValueDifferential<HasLengthType>();
             break;
         default:

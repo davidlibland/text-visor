@@ -4,7 +4,7 @@
  */
 
 import {
-    QualityType
+    QualityModuleType
 } from "./Enums";
 
 /**
@@ -35,7 +35,7 @@ export abstract class AbstractQualityAssessor<S = string, T = string> {
     }
 
     //ToDo: Should incorporate display name.
-    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
 }
 
 export abstract class AbstractPipeline<S, T, E> {
@@ -46,5 +46,5 @@ export abstract class AbstractPipeline<S, T, E> {
         this.qualityAssessor = qualityAssessor;
     }
 
-    abstract predict(input: S, limit: number, offset: number, qualityType: QualityType): WeightedPrediction<T>[];
+    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
 }

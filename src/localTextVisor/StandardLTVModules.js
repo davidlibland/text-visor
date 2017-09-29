@@ -11,10 +11,10 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
         super(valueDifferential);
         this.inputConverter = inputConverter;
     }
-    assess(input, predictions, limit, offset = 0, qualityType = Enums_1.QUALITY_TYPE.EXPECTED_REWARD) {
+    assess(input, predictions, limit, offset = 0, qualityType = Enums_1.QUALITY_MODULE_TYPE.EXPECTED_REWARD) {
         let qualityPredictions;
         switch (qualityType) {
-            case Enums_1.QUALITY_TYPE.EXPECTED_REWARD:
+            case Enums_1.QUALITY_MODULE_TYPE.EXPECTED_REWARD:
                 // We assume the weights of the WeightedPredictions comprise a set of dirichlet parameters,
                 // so to compute the expected value, we normalize them to a probability.
                 const normalizer = predictions.reduce((partialSum, wPred) => (partialSum + wPred.weight), 0);
@@ -30,7 +30,7 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
                 };
                 qualityPredictions = predictions.map(expectedRewardComputation);
                 break;
-            case Enums_1.QUALITY_TYPE.CONFIDENCE:
+            case Enums_1.QUALITY_MODULE_TYPE.CONFIDENCE:
                 qualityPredictions = predictions;
                 break;
             default:
@@ -54,7 +54,7 @@ class StandardPipeline extends Abstract_1.AbstractPipeline {
         super(predictor, qualityAssessor);
         this.priorCallback = priorCallback;
     }
-    predict(input, limit, offset = 0, qualityType = Enums_1.QUALITY_TYPE.EXPECTED_REWARD) {
+    predict(input, limit, offset = 0, qualityType = Enums_1.QUALITY_MODULE_TYPE.EXPECTED_REWARD) {
         const predictions = this.predictor.predict(this.priorCallback(), input);
         return this.qualityAssessor.assess(input, predictions, limit, offset, qualityType);
     }

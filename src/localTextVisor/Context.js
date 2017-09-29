@@ -15,12 +15,12 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
     let prior;
     let inputConverter;
     switch (languageSpecs.moduleType) {
-        case Enums_1.LANGUAGE_ALGORITHM_TYPE.IDENTITY:
+        case Enums_1.LANGUAGE_MODULE_TYPE.IDENTITY:
             languageModule = new LanguageStub_1.IdentityPredictor();
             prior = () => { };
             inputConverter = input => input;
             break;
-        case Enums_1.LANGUAGE_ALGORITHM_TYPE.TRIE_SEARCH:
+        case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
             if (!('trie' in data)) {
                 // ToDo: Add Tree typeguard.
                 throw `The data ${data} passed to initializeLTVWithContext must contain a trie.`;
@@ -42,13 +42,11 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
                     contextTokenizer = (token) => token.split("");
                     contextJoiner = (...tokens) => tokens.join("");
                     break;
-                case Enums_1.TOKENIZER_TYPE.WORD:
-                    contextTokenizer = (token) => token.split(" ");
-                    contextJoiner = (...tokens) => tokens.join(" ");
-                    break;
+                case Enums_1.TOKENIZER_TYPE.WHITE_SPACE:
                 default:
                     contextTokenizer = (token) => token.split(" ");
                     contextJoiner = (...tokens) => tokens.join(" ");
+                    break;
             }
             languageModule = new FuzzyTrieSearch_1.TokenizingPredictor(contextTokenizer, contextJoiner, triePredictor);
             prior = () => (token) => {
@@ -61,7 +59,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             throw `The language algorithm ${languageSpecs.moduleType} has not been implemented.`;
     }
     switch (rewardSpecs.moduleType) {
-        case Enums_1.REWARD_TYPE.LENGTH_DIFFERENCE:
+        case Enums_1.REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
             rewardModule = new StandardLTVModules_1.LengthValueDifferential();
             break;
         default:

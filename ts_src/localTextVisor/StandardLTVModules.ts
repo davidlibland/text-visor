@@ -11,8 +11,8 @@ import {
     WeightedPrediction,
 } from "./Abstract";
 import {
-    QualityType,
-    QUALITY_TYPE
+    QualityModuleType,
+    QUALITY_MODULE_TYPE
 } from "./Enums";
 
 export class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
@@ -23,10 +23,10 @@ export class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
         this.inputConverter = inputConverter;
     }
 
-    assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number = 0, qualityType: QualityType = QUALITY_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
+    assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
         let qualityPredictions: WeightedPrediction<T>[];
         switch (qualityType) {
-            case QUALITY_TYPE.EXPECTED_REWARD:
+            case QUALITY_MODULE_TYPE.EXPECTED_REWARD:
                 // We assume the weights of the WeightedPredictions comprise a set of dirichlet parameters,
                 // so to compute the expected value, we normalize them to a probability.
                 const normalizer = predictions.reduce(
@@ -45,7 +45,7 @@ export class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
                 };
                 qualityPredictions = predictions.map(expectedRewardComputation);
                 break;
-            case QUALITY_TYPE.CONFIDENCE:
+            case QUALITY_MODULE_TYPE.CONFIDENCE:
                 qualityPredictions = predictions;
                 break;
             default:
@@ -77,7 +77,7 @@ export class StandardPipeline<S, T, P> extends AbstractPipeline<S, T, any> {
         this.priorCallback = priorCallback;
     }
 
-    predict(input: S, limit: number, offset: number = 0, qualityType: QualityType = QUALITY_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
+    predict(input: S, limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
         const predictions = this.predictor.predict(this.priorCallback(), input);
         return this.qualityAssessor.assess(input, predictions, limit, offset, qualityType);
     }

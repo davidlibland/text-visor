@@ -3,11 +3,11 @@
  * @desc Some relatively standard LTV modules.
  */
 import { AbstractPipeline, AbstractPredictor, AbstractQualityAssessor, AbstractValueDifferential, WeightedPrediction } from "./Abstract";
-import { QualityType } from "./Enums";
+import { QualityModuleType } from "./Enums";
 export declare class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
     private inputConverter;
     constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (S) => T);
-    assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset?: number, qualityType?: QualityType): WeightedPrediction<T>[];
+    assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset?: number, qualityType?: QualityModuleType): WeightedPrediction<T>[];
 }
 export declare type HasLengthType = {
     length: number;
@@ -20,5 +20,5 @@ export declare class StandardPipeline<S, T, P> extends AbstractPipeline<S, T, an
     protected qualityAssessor: AbstractQualityAssessor<S, T>;
     protected priorCallback: () => P;
     constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T>, priorCallback: () => P);
-    predict(input: S, limit: number, offset?: number, qualityType?: QualityType): WeightedPrediction<T>[];
+    predict(input: S, limit: number, offset?: number, qualityType?: QualityModuleType): WeightedPrediction<T>[];
 }
