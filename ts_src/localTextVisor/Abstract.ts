@@ -19,8 +19,8 @@ export interface WeightedPrediction<T = string> {
     prediction: T;
 }
 
-export abstract class AbstractPredictor<T = string, P = MapPrior<T>> {
-    abstract predict(prior: P, input: T): WeightedPrediction<T>[];
+export abstract class AbstractPredictor<T = string, P = MapPrior<T>, E extends Object = Object> {
+    abstract predict(prior: P, input: T): (WeightedPrediction<T> & E)[];
 }
 
 export abstract class AbstractValueDifferential<T = string> {
