@@ -10,14 +10,14 @@ export interface Tree<A, V> {
     data: V[];
 }
 
-export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data: V}[]): Tree<A, V> {
+export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
     return wrappedPaths.reduce<Tree<A, V>>(
         (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data),
         {node: root, children: [], data: []}
     );
 }
 
-export function buildTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data: V}[]): Tree<A, V> {
+export function buildTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
     return wrappedPaths.reduce<Tree<A, V>>(
         (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => insert(tree, wrappedPath.nodePath, wrappedPath.data),
         {node: root, children: [], data: []}
@@ -110,17 +110,9 @@ export function automatonTreeSearch<S, A, V extends Object, E extends StatusCont
     );
     const isAcceptedState = (state) => (automata.status(state).status === STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (state) => (automata.status(state).status !== STATUS_TYPE.REJECT);
-    return tree.children.map(
-        (child) => ({
-            child: child,
-            state: automata.step(state, child.node)
-        })
-    ).filter(
-        (childAndState) => isNotRejectedState(childAndState.state)
-    ).map(
-        (childAndState) => automatonTreeSearch<S, A, V, E>(childAndState.child, automata, childAndState.state)
-    ).reduce(
-        (results, result) => results.concat(result),
-        isAcceptedState(state) ? addStatusToData(tree.data, state) : []
-    );
+    return tree.children
+        .map((child) => ({child: child, state: automata.step(state, child.node)}))
+        .filter((childAndState) => isNotRejectedState(childAndState.state))
+        .map((childAndState) => automatonTreeSearch<S, A, V, E>(childAndState.child, automata, childAndState.state))
+        .reduce((results, result) => results.concat(result), isAcceptedState(state) ? addStatusToData(tree.data, state) : []);
 }

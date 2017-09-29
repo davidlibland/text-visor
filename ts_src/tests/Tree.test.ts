@@ -3,7 +3,10 @@
  * @desc Some basic tests for the context module.
  */
 
-import { Tree, sortedInsert, insert, automatonTreeSearch } from "../localTextVisor/plaintext/Tree";
+import {
+    Tree, sortedInsert, insert, automatonTreeSearch,
+    buildSortedTreeFromPaths
+} from "../localTextVisor/plaintext/Tree";
 import { LevenshteinAutomaton } from "../localTextVisor/plaintext/LevenshteinAutomata";
 import "ts-jest";
 
@@ -50,15 +53,14 @@ const finalTree: Tree<string, void> = {
     ]
 };
 
-test("Testing insertion into a tree", () => {
+test("Testing sortedInsert into a tree", () => {
     let testTree: Tree<string, void> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, str1.split(""));
     sortedInsert(testTree, str2.split(""));
     expect(testTree).toEqual(finalTree)
 });
 
-
-test("Testing insertion into a tree", () => {
+test("Testing sortedInsert into a tree", () => {
     let testTree: Tree<string, void> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, ["b"]);
     sortedInsert(testTree, ["c"]);
@@ -74,6 +76,35 @@ test("Testing insertion into a tree", () => {
                     children: [
                         { children: [], data: [], node: "a" },
                         { children: [], data: [], node: "d" }
+                    ],
+                    data: [],
+                    node: "c"
+                }
+            ],
+            data: [],
+            node: "root"
+        }
+    );
+});
+
+test("Testing buildSortedTreeFromPaths", () => {
+    const wrappedPaths = [
+        {nodePath: ["b"]},
+        {nodePath: ["c"]},
+        {nodePath: ["a"], data: "here is A"},
+        {nodePath: ["c", "d"], data: "here is CD"},
+        {nodePath: ["c", "a"]},
+    ];
+    const testTree = buildSortedTreeFromPaths("root", ...wrappedPaths);
+    expect(testTree).toEqual(
+        {
+            children: [
+                { children: [], data: ["here is A"], node: "a" },
+                { children: [], data: [], node: "b" },
+                {
+                    children: [
+                        { children: [], data: [], node: "a" },
+                        { children: [], data: ["here is CD"], node: "d" }
                     ],
                     data: [],
                     node: "c"

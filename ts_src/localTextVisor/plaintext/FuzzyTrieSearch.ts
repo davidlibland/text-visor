@@ -41,14 +41,13 @@ export class FuzzyTriePredictor<T = string, A = string, V extends Object = Objec
         const chars = this.splitter(input);
         const leven = new LevenshteinAutomaton(chars, this.maxEdit);
         const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
-        return fuzzyCompletions.map(
-            completion => Object.assign({}, completion, {
-                weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
-                cursorPosition: this.splitter(completion.prediction).length
-            })
-        ).filter(
-            completion => (completion.weight > 0)
-            );
+        const addMetadata = completion => Object.assign({}, completion, {
+            weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
+            cursorPosition: this.splitter(completion.prediction).length
+        });
+        return fuzzyCompletions
+            .map(addMetadata)
+            .filter(completion => (completion.weight > 0));
     }
 }
 

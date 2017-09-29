@@ -7,8 +7,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const Abstract_1 = require("./Abstract");
 const Enums_1 = require("./Enums");
 class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
-    constructor(valueDifferential) {
+    constructor(valueDifferential, inputConverter) {
         super(valueDifferential);
+        this.inputConverter = inputConverter;
     }
     assess(input, predictions, limit, offset = 0, qualityType = Enums_1.QUALITY_TYPE.EXPECTED_REWARD) {
         let qualityPredictions;
@@ -23,7 +24,7 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
                 }
                 const invNormalizer = 1 / normalizer;
                 const expectedRewardComputation = (wPred) => {
-                    const reward = this.valueDifferential.evaluate(input, wPred.prediction);
+                    const reward = this.valueDifferential.evaluate(this.inputConverter(input), wPred.prediction);
                     const expectedReward = wPred.weight * invNormalizer * reward;
                     return Object.assign({}, wPred, { weight: expectedReward });
                 };

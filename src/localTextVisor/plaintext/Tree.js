@@ -5,6 +5,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @desc A Tree data structure.
  */
 const AbstractAutomata_1 = require("./AbstractAutomata");
+function buildSortedTreeFromPaths(root, ...wrappedPaths) {
+    return wrappedPaths.reduce((tree, wrappedPath) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
+}
+exports.buildSortedTreeFromPaths = buildSortedTreeFromPaths;
+function buildTreeFromPaths(root, ...wrappedPaths) {
+    return wrappedPaths.reduce((tree, wrappedPath) => insert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
+}
+exports.buildTreeFromPaths = buildTreeFromPaths;
 function insert(tree, token, data) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
@@ -85,10 +93,11 @@ function automatonTreeSearch(tree, automata, state) {
     const addStatusToData = (data, state) => data.map(dataPt => Object.assign({}, automata.status(state), dataPt));
     const isAcceptedState = (state) => (automata.status(state).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (state) => (automata.status(state).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
-    return tree.children.map((child) => ({
-        child: child,
-        state: automata.step(state, child.node)
-    })).filter((childAndState) => isNotRejectedState(childAndState.state)).map((childAndState) => automatonTreeSearch(childAndState.child, automata, childAndState.state)).reduce((results, result) => results.concat(result), isAcceptedState(state) ? addStatusToData(tree.data, state) : []);
+    return tree.children
+        .map((child) => ({ child: child, state: automata.step(state, child.node) }))
+        .filter((childAndState) => isNotRejectedState(childAndState.state))
+        .map((childAndState) => automatonTreeSearch(childAndState.child, automata, childAndState.state))
+        .reduce((results, result) => results.concat(result), isAcceptedState(state) ? addStatusToData(tree.data, state) : []);
 }
 exports.automatonTreeSearch = automatonTreeSearch;
 //# sourceMappingURL=Tree.js.map

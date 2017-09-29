@@ -3,7 +3,6 @@
  * @desc The context module used to set up a local text visor.
  */
 import { AbstractPipeline } from "./Abstract";
-import { HasLengthType } from "./StandardLTVModules";
 import { LanguageAlgorithmType, CaseSensitivityType, RewardType, TokenizerType } from "./Enums";
 export interface LanguageModuleSpecs {
     moduleType: LanguageAlgorithmType;
@@ -14,4 +13,4 @@ export interface LanguageModuleSpecs {
 export interface RewardModuleSpecs {
     moduleType: RewardType;
 }
-export declare function initializeLTVWithContext<T extends HasLengthType>(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs): AbstractPipeline<T>;
+export declare function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: Object): AbstractPipeline<any, any, any>;
