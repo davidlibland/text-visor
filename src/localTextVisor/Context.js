@@ -16,9 +16,9 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
     let inputConverter;
     switch (languageSpecs.moduleType) {
         case Enums_1.LANGUAGE_MODULE_TYPE.IDENTITY:
-            languageModule = new LanguageStub_1.IdentityPredictor();
             prior = () => { };
             inputConverter = input => input;
+            languageModule = new LanguageStub_1.MapPredictor(inputConverter);
             break;
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
             if (!('trie' in data)) {

@@ -24,7 +24,7 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends Object
     } & V>, splitter: SplitterType<T, A>, maxEditCost: number, weightFunction: (editCost: number) => number);
     predict(prior: MapPrior<T>, input: T): (WeightedPrediction<T> & V & CursorPositionType)[];
 }
-export declare class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends Object = Object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V> {
+export declare class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends Object = Object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V & CursorPositionType> {
     private splitter;
     private combiner;
     private childPredictor;

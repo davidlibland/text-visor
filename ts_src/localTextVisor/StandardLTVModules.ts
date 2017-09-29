@@ -15,7 +15,7 @@ import {
     QUALITY_MODULE_TYPE
 } from "./Enums";
 
-export class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
+export class RankedQualityAssessor<S, T, E extends Object> extends AbstractQualityAssessor<S, T, E> {
     private inputConverter: (S) => T;
 
     constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (S) => T) {
@@ -23,8 +23,8 @@ export class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
         this.inputConverter = inputConverter;
     }
 
-    assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
-        let qualityPredictions: WeightedPrediction<T>[];
+    assess(input: S, predictions: (WeightedPrediction<T> & E)[], limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): (WeightedPrediction<T> & E)[] {
+        let qualityPredictions: (WeightedPrediction<T> & E)[];
         switch (qualityType) {
             case QUALITY_MODULE_TYPE.EXPECTED_REWARD:
                 // We assume the weights of the WeightedPredictions comprise a set of dirichlet parameters,
@@ -38,7 +38,7 @@ export class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
                     break;
                 }
                 const invNormalizer = 1 / normalizer;
-                const expectedRewardComputation = (wPred: WeightedPrediction<T>) => {
+                const expectedRewardComputation = (wPred: (WeightedPrediction<T> & E)) => {
                     const reward = this.valueDifferential.evaluate(this.inputConverter(input), wPred.prediction);
                     const expectedReward = wPred.weight * invNormalizer * reward;
                     return Object.assign({}, wPred, { weight: expectedReward });
@@ -68,16 +68,16 @@ export class LengthValueDifferential<T extends HasLengthType> extends AbstractVa
     }
 }
 
-export class StandardPipeline<S, T, P> extends AbstractPipeline<S, T, any> {
-    protected predictor: AbstractPredictor<S, T, P>;
-    protected qualityAssessor: AbstractQualityAssessor<S, T>;
+export class StandardPipeline<S, T, P, E extends Object> extends AbstractPipeline<S, T, any> {
+    protected predictor: AbstractPredictor<S, T, P, E>;
+    protected qualityAssessor: AbstractQualityAssessor<S, T, E>;
     protected priorCallback: () => P;
-    constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T>, priorCallback: () => P) {
+    constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T, E>, priorCallback: () => P) {
         super(predictor, qualityAssessor);
         this.priorCallback = priorCallback;
     }
 
-    predict(input: S, limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): WeightedPrediction<T>[] {
+    predict(input: S, limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): (WeightedPrediction<T> & E)[] {
         const predictions = this.predictor.predict(this.priorCallback(), input);
         return this.qualityAssessor.assess(input, predictions, limit, offset, qualityType);
     }

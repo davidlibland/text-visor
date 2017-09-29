@@ -8,8 +8,14 @@ import {
     WeightedPrediction,
 } from "./Abstract";
 
-export class IdentityPredictor<T = string> extends AbstractPredictor<T, T, any, any> {
-    predict(prior: any, input: T): WeightedPrediction<T>[] {
-        return [{ weight: 1, prediction: input }];
+export class MapPredictor<S = string, T = string> extends AbstractPredictor<S, T, any, any> {
+    private map: (S) => T;
+
+    constructor(map: (S) => T) {
+        super();
+        this.map = map;
+    }
+    predict(prior: any, input: S): WeightedPrediction<T>[] {
+        return [{ weight: 1, prediction: this.map(input) }];
     }
 }

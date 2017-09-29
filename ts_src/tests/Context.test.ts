@@ -9,7 +9,7 @@ import "ts-jest";
 import { Tree, sortedInsert } from "../localTextVisor/plaintext/Tree";
 
 test("Initialize LTV with Identity Predictor", () => {
-    const idPipeline = initializeLTVWithContext({ moduleType: LANGUAGE_MODULE_TYPE.IDENTITY, tokenizerType: TOKENIZER_TYPE.CHARACTER }, { moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE }, {});
+    const idPipeline = initializeLTVWithContext({ moduleType: LANGUAGE_MODULE_TYPE.IDENTITY, tokenizerType: TOKENIZER_TYPE.CHARACTER }, { moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE }, {trie:{node:"",children:[],data:[]}, prior:{}});
 
     const result = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
         .map(wPred => wPred.prediction);

@@ -27,7 +27,7 @@ export abstract class AbstractValueDifferential<T = string> {
     abstract evaluate(alpha: T, beta: T): number;
 }
 
-export abstract class AbstractQualityAssessor<S = string, T = string> {
+export abstract class AbstractQualityAssessor<S = string, T = string, E = Object> {
     protected valueDifferential: AbstractValueDifferential<T>;
 
     constructor(valueDifferential: AbstractValueDifferential<T>) {
@@ -35,7 +35,7 @@ export abstract class AbstractQualityAssessor<S = string, T = string> {
     }
 
     //ToDo: Should incorporate display name.
-    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
+    abstract assess(input: S, predictions: (WeightedPrediction<T> & E)[], limit: number, offset: number, qualityType: QualityModuleType): (WeightedPrediction<T> & E)[];
 }
 
 export abstract class AbstractPipeline<S, T, E> {
@@ -46,5 +46,5 @@ export abstract class AbstractPipeline<S, T, E> {
         this.qualityAssessor = qualityAssessor;
     }
 
-    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
+    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): (WeightedPrediction<T> & E)[];
 }

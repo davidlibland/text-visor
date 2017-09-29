@@ -9,7 +9,7 @@ import {
     AbstractValueDifferential,
 } from "./Abstract";
 import {
-    IdentityPredictor
+    MapPredictor
 } from "./LanguageStub";
 import {
     StandardPipeline,
@@ -42,24 +42,30 @@ export interface RewardModuleSpecs {
     moduleType: RewardModuleType;
 }
 
+export type ContextDataType =
+    {
+        trie: Tree<any, { prediction: any }>;
+        prior: { [key: string]: number };
+    }
+
 // ToDo: properly document this.
-export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: Object): AbstractPipeline<any, any, any> {
+export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any> {
     let languageModule: AbstractPredictor<any, any>;
     let rewardModule: AbstractValueDifferential<any>;
     let prior: () => any;
     let inputConverter: (any) => any;
     switch (languageSpecs.moduleType) {
         case LANGUAGE_MODULE_TYPE.IDENTITY:
-            languageModule = new IdentityPredictor<HasLengthType>();
             prior = () => { };
             inputConverter = input => input;
+            languageModule = new MapPredictor<any, any>(inputConverter);
             break;
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
             if (!('trie' in data)) {
                 // ToDo: Add Tree typeguard.
                 throw `The data ${data} passed to initializeLTVWithContext must contain a trie.`;
             }
-            const trie = (<{ trie: Tree<string, any> }>data).trie;
+            const trie = data.trie;
             if (!('prior' in data)) {
                 // ToDo: Add prior typeguard.
                 throw `The data ${data} passed to initializeLTVWithContext must contain a prior.`;
@@ -70,7 +76,7 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             const weightFunction = (editCost: number) => Math.pow(0.5, editCost);
             const triePredictor = new FuzzyTriePredictor(trie, charTokenizer, maxEditDistance, weightFunction);
             let contextTokenizer: (string) => string[];
-            let contextJoiner: (tok1: string, tok2: string) => string;
+            let contextJoiner: (...tokens) => string;
             switch (languageSpecs.tokenizerType) {
                 case TOKENIZER_TYPE.CHARACTER:
                     contextTokenizer = (token) => token.split("");
@@ -99,6 +105,6 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
         default:
             throw `The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`;
     }
-    const qualityAssessor = new RankedQualityAssessor<any, any>(rewardModule, inputConverter);
-    return new StandardPipeline(languageModule, qualityAssessor, prior);
+    const qualityAssessor = new RankedQualityAssessor<any, any, any>(rewardModule, inputConverter);
+    return new StandardPipeline<any, any, any, any>(languageModule, qualityAssessor, prior);
 }

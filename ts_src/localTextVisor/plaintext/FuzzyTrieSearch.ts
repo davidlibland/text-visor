@@ -51,7 +51,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends Object = Objec
     }
 }
 
-export class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends Object = Object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V> {
+export class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends Object = Object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V  & CursorPositionType> {
     private splitter: SplitterType<T, A>;
     private combiner: CombinerType<T, A>;
     private childPredictor: AbstractPredictor<A, A, P, V & CursorPositionType>;

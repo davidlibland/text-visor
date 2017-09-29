@@ -19,14 +19,14 @@ export declare abstract class AbstractPredictor<S = string, T = string, P = MapP
 export declare abstract class AbstractValueDifferential<T = string> {
     abstract evaluate(alpha: T, beta: T): number;
 }
-export declare abstract class AbstractQualityAssessor<S = string, T = string> {
+export declare abstract class AbstractQualityAssessor<S = string, T = string, E = Object> {
     protected valueDifferential: AbstractValueDifferential<T>;
     constructor(valueDifferential: AbstractValueDifferential<T>);
-    abstract assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
+    abstract assess(input: S, predictions: (WeightedPrediction<T> & E)[], limit: number, offset: number, qualityType: QualityModuleType): (WeightedPrediction<T> & E)[];
 }
 export declare abstract class AbstractPipeline<S, T, E> {
     protected predictor: AbstractPredictor<S, T, any, E>;
     protected qualityAssessor: AbstractQualityAssessor<S, T>;
     constructor(predictor: AbstractPredictor<S, T, any, E>, qualityAssessor: AbstractQualityAssessor<S, T>);
-    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): WeightedPrediction<T>[];
+    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): (WeightedPrediction<T> & E)[];
 }

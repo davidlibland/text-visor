@@ -4,10 +4,10 @@
  */
 import { AbstractPipeline, AbstractPredictor, AbstractQualityAssessor, AbstractValueDifferential, WeightedPrediction } from "./Abstract";
 import { QualityModuleType } from "./Enums";
-export declare class RankedQualityAssessor<S, T> extends AbstractQualityAssessor<S, T> {
+export declare class RankedQualityAssessor<S, T, E extends Object> extends AbstractQualityAssessor<S, T, E> {
     private inputConverter;
     constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (S) => T);
-    assess(input: S, predictions: WeightedPrediction<T>[], limit: number, offset?: number, qualityType?: QualityModuleType): WeightedPrediction<T>[];
+    assess(input: S, predictions: (WeightedPrediction<T> & E)[], limit: number, offset?: number, qualityType?: QualityModuleType): (WeightedPrediction<T> & E)[];
 }
 export declare type HasLengthType = {
     length: number;
@@ -15,10 +15,10 @@ export declare type HasLengthType = {
 export declare class LengthValueDifferential<T extends HasLengthType> extends AbstractValueDifferential<T> {
     evaluate(alpha: T, beta: T): number;
 }
-export declare class StandardPipeline<S, T, P> extends AbstractPipeline<S, T, any> {
-    protected predictor: AbstractPredictor<S, T, P>;
-    protected qualityAssessor: AbstractQualityAssessor<S, T>;
+export declare class StandardPipeline<S, T, P, E extends Object> extends AbstractPipeline<S, T, any> {
+    protected predictor: AbstractPredictor<S, T, P, E>;
+    protected qualityAssessor: AbstractQualityAssessor<S, T, E>;
     protected priorCallback: () => P;
-    constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T>, priorCallback: () => P);
-    predict(input: S, limit: number, offset?: number, qualityType?: QualityModuleType): WeightedPrediction<T>[];
+    constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T, E>, priorCallback: () => P);
+    predict(input: S, limit: number, offset?: number, qualityType?: QualityModuleType): (WeightedPrediction<T> & E)[];
 }

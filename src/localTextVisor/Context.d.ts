@@ -4,6 +4,7 @@
  */
 import { AbstractPipeline } from "./Abstract";
 import { LanguageModuleType, CaseSensitivityType, RewardModuleType, TokenizerType } from "./Enums";
+import { Tree } from "./plaintext/Tree";
 export interface LanguageModuleSpecs {
     moduleType: LanguageModuleType;
     maxEditDistance?: number;
@@ -13,4 +14,12 @@ export interface LanguageModuleSpecs {
 export interface RewardModuleSpecs {
     moduleType: RewardModuleType;
 }
-export declare function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: Object): AbstractPipeline<any, any, any>;
+export declare type ContextDataType = {
+    trie: Tree<any, {
+        prediction: any;
+    }>;
+    prior: {
+        [key: string]: number;
+    };
+};
+export declare function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any>;
