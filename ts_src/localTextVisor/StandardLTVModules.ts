@@ -16,9 +16,9 @@ import {
 } from "./Enums";
 
 export class RankedQualityAssessor<S, T, E extends Object> extends AbstractQualityAssessor<S, T, E> {
-    private inputConverter: (S) => T;
+    private inputConverter: (input: S) => T;
 
-    constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (S) => T) {
+    constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (input: S) => T) {
         super(valueDifferential);
         this.inputConverter = inputConverter;
     }

@@ -18,7 +18,7 @@ import {
 } from "./LevenshteinAutomata";
 import { HasLengthType } from "../StandardLTVModules";
 
-export type SplitterType<T, A> = (T) => A[];
+export type SplitterType<T, A> = (input: T) => A[];
 export type CombinerType<T, A> = (...components: A[]) => T;
 export type CursorPositionType = { cursorPosition: number };
 export type InputAndPositionType<T> = { input: T } & CursorPositionType;

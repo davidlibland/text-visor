@@ -6,7 +6,7 @@ import { AbstractPipeline, AbstractPredictor, AbstractQualityAssessor, AbstractV
 import { QualityModuleType } from "./Enums";
 export declare class RankedQualityAssessor<S, T, E extends Object> extends AbstractQualityAssessor<S, T, E> {
     private inputConverter;
-    constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (S) => T);
+    constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (input: S) => T);
     assess(input: S, predictions: (WeightedPrediction<T> & E)[], limit: number, offset?: number, qualityType?: QualityModuleType): (WeightedPrediction<T> & E)[];
 }
 export declare type HasLengthType = {

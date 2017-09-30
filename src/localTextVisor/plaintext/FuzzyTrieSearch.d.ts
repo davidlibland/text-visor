@@ -6,7 +6,7 @@
 import { AbstractPredictor, WeightedPrediction, MapPrior } from "../Abstract";
 import { Tree } from "./Tree";
 import { HasLengthType } from "../StandardLTVModules";
-export declare type SplitterType<T, A> = (T) => A[];
+export declare type SplitterType<T, A> = (input: T) => A[];
 export declare type CombinerType<T, A> = (...components: A[]) => T;
 export declare type CursorPositionType = {
     cursorPosition: number;
