@@ -11,4 +11,5 @@ __export(require("./localTextVisor/Context"));
 var Abstract_1 = require("./localTextVisor/Abstract");
 exports.AbstractPipeline = Abstract_1.AbstractPipeline;
 __export(require("./localTextVisor/Enums"));
+__export(require("./localTextVisor/plaintext/Tree"));
 //# sourceMappingURL=TextVisor.js.map
