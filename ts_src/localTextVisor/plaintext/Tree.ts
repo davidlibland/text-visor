@@ -10,6 +10,13 @@ export interface Tree<A, V> {
     data: V[];
 }
 
+export function buildSortedTreeFromSortedPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
+    return wrappedPaths.reduce<Tree<A, V>>(
+        (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data),
+        {node: root, children: [], data: []}
+    );
+}
+
 export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
     return wrappedPaths.reduce<Tree<A, V>>(
         (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data),
@@ -67,6 +74,23 @@ let stdComparisonFunc = (a, b) => {
     }
     return 0
 };
+
+export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
+    if (token.length > 0) {
+        const currentSymbol = token.shift();
+        let branch;
+        if (tree.children[tree.children.length].node == currentSymbol) {
+            branch = tree.children[tree.children.length];
+        } else {
+            branch = { node: currentSymbol, children: [], data: [] };
+            tree.children.push(branch)
+        }
+        lazyInsert(branch, token, data);
+    } else if (data) {
+        tree.data.push(data)
+    }
+    return tree;
+}
 
 /**
  * @export @function findNewObjectIndexInSortedArray

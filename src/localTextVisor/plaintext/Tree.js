@@ -5,6 +5,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @desc A Tree data structure.
  */
 const AbstractAutomata_1 = require("./AbstractAutomata");
+function buildSortedTreeFromSortedPaths(root, ...wrappedPaths) {
+    return wrappedPaths.reduce((tree, wrappedPath) => lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
+}
+exports.buildSortedTreeFromSortedPaths = buildSortedTreeFromSortedPaths;
 function buildSortedTreeFromPaths(root, ...wrappedPaths) {
     return wrappedPaths.reduce((tree, wrappedPath) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
 }
@@ -53,6 +57,25 @@ let stdComparisonFunc = (a, b) => {
     }
     return 0;
 };
+function lazyInsert(tree, token, data) {
+    if (token.length > 0) {
+        const currentSymbol = token.shift();
+        let branch;
+        if (tree.children[tree.children.length].node == currentSymbol) {
+            branch = tree.children[tree.children.length];
+        }
+        else {
+            branch = { node: currentSymbol, children: [], data: [] };
+            tree.children.push(branch);
+        }
+        lazyInsert(branch, token, data);
+    }
+    else if (data) {
+        tree.data.push(data);
+    }
+    return tree;
+}
+exports.lazyInsert = lazyInsert;
 /**
  * @export @function findNewObjectIndexInSortedArray
  * This function finds the index at which an item is/should-be-inserted
