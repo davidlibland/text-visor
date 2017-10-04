@@ -49,6 +49,8 @@ export type ContextDataType =
     }
 
 // ToDo: properly document this.
+// ToDo: Improve this function.
+// ToDo: Improve the typing of this function (currently uses any types).
 export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any> {
     let languageModule: AbstractPredictor<any, any>;
     let rewardModule: AbstractValueDifferential<any>;
