@@ -5,7 +5,8 @@
 
 import {
     Tree, sortedInsert, insert, automatonTreeSearch,
-    buildSortedTreeFromPaths
+    buildSortedTreeFromPaths,
+    buildSortedTreeFromSortedPaths
 } from "../localTextVisor/plaintext/Tree";
 import { LevenshteinAutomaton } from "../localTextVisor/plaintext/LevenshteinAutomata";
 import "ts-jest";
@@ -96,6 +97,44 @@ test("Testing buildSortedTreeFromPaths", () => {
         {nodePath: ["c", "a"]},
     ];
     const testTree = buildSortedTreeFromPaths("root", ...wrappedPaths);
+    expect(testTree).toEqual(
+        {
+            children: [
+                { children: [], data: ["here is A"], node: "a" },
+                { children: [], data: [], node: "b" },
+                {
+                    children: [
+                        { children: [], data: [], node: "a" },
+                        { children: [], data: ["here is CD"], node: "d" }
+                    ],
+                    data: [],
+                    node: "c"
+                }
+            ],
+            data: [],
+            node: "root"
+        }
+    );
+});
+
+test("Testing buildSortedTreeFromSortedPaths", () => {
+    const wrappedPaths = [
+        {nodePath: ["b"]},
+        {nodePath: ["c"]},
+        {nodePath: ["a"], data: "here is A"},
+        {nodePath: ["c", "d"], data: "here is CD"},
+        {nodePath: ["c", "a"]},
+    ].sort((a, b) => {
+            if (a.nodePath < b.nodePath) {
+                return -1;
+            } else if (a.nodePath > b.nodePath) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+    );
+    const testTree = buildSortedTreeFromSortedPaths("root", ...wrappedPaths);
     expect(testTree).toEqual(
         {
             children: [
