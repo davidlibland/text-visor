@@ -5,22 +5,72 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @desc A Tree data structure.
  */
 const AbstractAutomata_1 = require("./AbstractAutomata");
+/**
+ * @function buildSortedTreeFromSortedPaths
+ * @desc This function assumes that wrappedPaths has been sorted
+ * lexicographically by nodePath, and builds a tree from the wrapped paths
+ * significantly faster than buildSortedTreeFromPaths or buildTreeFromPaths.
+ * However, if wrappedPaths have not been sorted, the resulting tree will be
+ * incorrectly built. Complexity is O(nm) on the number n of the wrappedPaths,
+ * and max-length m of a nodePath.
+ * @param {A} root The node label for the root of the tree.
+ * @param {{nodePath: A[]; data?: V}} wrappedPaths A (sorted) list of nodePaths
+ * along with associated data. For each wrappedPath, the resulting tree will
+ * contain the specified nodePath (from the root) and the associated data will
+ * be placed at that node in the tree.
+ * @returns {Tree<A, V>}
+ */
 function buildSortedTreeFromSortedPaths(root, ...wrappedPaths) {
-    return wrappedPaths.reduce((tree, wrappedPath) => lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
+    const reducer = (tree, wrappedPath) => lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data);
+    return wrappedPaths.reduce(reducer, { node: root, children: [], data: [] });
 }
 exports.buildSortedTreeFromSortedPaths = buildSortedTreeFromSortedPaths;
+/**
+ * @function buildSortedTreeFromPaths
+ * @desc This function builds a tree from the wrapped paths
+ * significantly faster than buildTreeFromPaths by doing a sorted insert, it is
+ * assumed that the data type A is totally ordered with the comparisons
+ * operators >, <.
+ * Complexity is O(nmln(k)) on the number n of the wrappedPaths,
+ * max-length m of a nodePath, and size k of the symbol set. Heuristically, n is
+ * on the order of k^m, so that the complexity is roughly O(nln(n)), the same as
+ * a sort.
+ * @param {A} root The node label for the root of the tree.
+ * @param {{nodePath: A[]; data?: V}} wrappedPaths A list of nodePaths
+ * along with associated data. For each wrappedPath, the resulting tree will
+ * contain the specified nodePath (from the root) and the associated data will
+ * be placed at that node in the tree.
+ * @returns {Tree<A, V>}
+ */
 function buildSortedTreeFromPaths(root, ...wrappedPaths) {
-    return wrappedPaths.reduce((tree, wrappedPath) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
+    const reducer = (tree, wrappedPath) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data);
+    return wrappedPaths.reduce(reducer, { node: root, children: [], data: [] });
 }
 exports.buildSortedTreeFromPaths = buildSortedTreeFromPaths;
+/**
+ * @function buildSortedTreeFromPaths
+ * @desc This function builds a tree from the wrapped paths, use this only if
+ * data type A is not totally ordered, as it is significantly slower than
+ * buildSortedTreeFromPaths.
+ * Complexity is O(nmk) on the number n of the wrappedPaths,
+ * max-length m of a nodePath, and size k of the symbol set. Average complexity
+ * is on the order of n^2.
+ * @param {A} root The node label for the root of the tree.
+ * @param {{nodePath: A[]; data?: V}} wrappedPaths A list of nodePaths
+ * along with associated data. For each wrappedPath, the resulting tree will
+ * contain the specified nodePath (from the root) and the associated data will
+ * be placed at that node in the tree.
+ * @returns {Tree<A, V>}
+ */
 function buildTreeFromPaths(root, ...wrappedPaths) {
-    return wrappedPaths.reduce((tree, wrappedPath) => insert(tree, wrappedPath.nodePath, wrappedPath.data), { node: root, children: [], data: [] });
+    const reducer = (tree, wrappedPath) => insert(tree, wrappedPath.nodePath, wrappedPath.data);
+    return wrappedPaths.reduce(reducer, { node: root, children: [], data: [] });
 }
 exports.buildTreeFromPaths = buildTreeFromPaths;
 function insert(tree, token, data) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
-        let branch = tree.children.find(child => (child.node == currentSymbol));
+        let branch = tree.children.find((child) => (child.node == currentSymbol));
         if (branch === undefined) {
             branch = { node: currentSymbol, children: [], data: [] };
             tree.children.push(branch);
@@ -36,9 +86,13 @@ exports.insert = insert;
 function sortedInsert(tree, token, data, comparisonFunc = stdComparisonFunc) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
-        const potIndex = findObjectIndexInSortedArray(currentSymbol, tree.children.map(x => x.node), comparisonFunc);
+        const childNodes = tree.children.map((x) => x.node);
+        const potIndex = findObjectIndexInSortedArray(currentSymbol, childNodes, comparisonFunc);
         if (!potIndex.exists) {
-            tree.children = [...tree.children.slice(0, potIndex.index), { node: currentSymbol, children: [], data: [] }, ...tree.children.slice(potIndex.index)];
+            const leftChildren = tree.children.slice(0, potIndex.index);
+            const rightChildren = tree.children.slice(potIndex.index);
+            const newChild = { node: currentSymbol, children: [], data: [] };
+            tree.children = [...leftChildren, newChild, ...rightChildren];
         }
         sortedInsert(tree.children[potIndex.index], token, data, comparisonFunc);
     }
@@ -48,7 +102,7 @@ function sortedInsert(tree, token, data, comparisonFunc = stdComparisonFunc) {
     return tree;
 }
 exports.sortedInsert = sortedInsert;
-let stdComparisonFunc = (a, b) => {
+const stdComparisonFunc = (a, b) => {
     if (a < b) {
         return -1;
     }
@@ -92,8 +146,8 @@ function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc)
     let low = 0;
     let high = arrayOfObjects.length;
     while (low < high) {
-        let mid = (low + high) >> 1; //divide by two.
-        let comparison = comparisonFunc(arrayOfObjects[mid], newObject);
+        const mid = (low + high) >> 1; // divide by two.
+        const comparison = comparisonFunc(arrayOfObjects[mid], newObject);
         if (comparison < 0) {
             // then we should insert our object strictly to the right of mid.
             low = mid + 1;
@@ -113,14 +167,15 @@ function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc)
     return { exists: false, index: low };
 }
 function automatonTreeSearch(tree, automata, state) {
-    const addStatusToData = (data, state) => data.map(dataPt => Object.assign({}, automata.status(state), dataPt));
+    const addStatusToData = (data, state) => data.map((dataPt) => Object.assign({}, automata.status(state), dataPt));
     const isAcceptedState = (state) => (automata.status(state).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (state) => (automata.status(state).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
+    const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
     return tree.children
-        .map((child) => ({ child: child, state: automata.step(state, child.node) }))
+        .map((child) => ({ child, state: automata.step(state, child.node) }))
         .filter((childAndState) => isNotRejectedState(childAndState.state))
         .map((childAndState) => automatonTreeSearch(childAndState.child, automata, childAndState.state))
-        .reduce((results, result) => results.concat(result), isAcceptedState(state) ? addStatusToData(tree.data, state) : []);
+        .reduce((results, result) => results.concat(result), localSearchResult);
 }
 exports.automatonTreeSearch = automatonTreeSearch;
 //# sourceMappingURL=Tree.js.map

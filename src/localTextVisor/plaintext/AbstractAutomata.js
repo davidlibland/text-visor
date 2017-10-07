@@ -7,7 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.STATUS_TYPE = {
     ACCEPT: "ACCEPT",
     REJECT: "REJECT",
-    UNKNOWN: "UNKNOWN"
+    UNKNOWN: "UNKNOWN",
 };
 class AbstractAutomaton {
 }

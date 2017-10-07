@@ -11,11 +11,11 @@ import {
     WeightedPrediction,
 } from "./Abstract";
 import {
+    QUALITY_MODULE_TYPE,
     QualityModuleType,
-    QUALITY_MODULE_TYPE
 } from "./Enums";
 
-export class RankedQualityAssessor<S, T, E extends Object> extends AbstractQualityAssessor<S, T, E> {
+export class RankedQualityAssessor<S, T, E extends object> extends AbstractQualityAssessor<S, T, E> {
     private inputConverter: (input: S) => T;
 
     constructor(valueDifferential: AbstractValueDifferential<T>, inputConverter: (input: S) => T) {
@@ -23,17 +23,23 @@ export class RankedQualityAssessor<S, T, E extends Object> extends AbstractQuali
         this.inputConverter = inputConverter;
     }
 
-    assess(input: S, predictions: (WeightedPrediction<T> & E)[], limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): (WeightedPrediction<T> & E)[] {
-        let qualityPredictions: (WeightedPrediction<T> & E)[];
+    public assess(
+        input: S,
+        predictions: Array<(WeightedPrediction<T> & E)>,
+        limit: number,
+        offset: number = 0,
+        qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD,
+    ): Array<(WeightedPrediction<T> & E)> {
+        let qualityPredictions: Array<(WeightedPrediction<T> & E)>;
         switch (qualityType) {
             case QUALITY_MODULE_TYPE.EXPECTED_REWARD:
                 // We assume the weights of the WeightedPredictions comprise a set of dirichlet parameters,
                 // so to compute the expected value, we normalize them to a probability.
                 const normalizer = predictions.reduce(
                     (partialSum, wPred) => (partialSum + wPred.weight),
-                    0
+                    0,
                 );
-                if (normalizer == 0) {
+                if (normalizer === 0) {
                     qualityPredictions = [];
                     break;
                 }
@@ -58,26 +64,60 @@ export class RankedQualityAssessor<S, T, E extends Object> extends AbstractQuali
     }
 }
 
-export type HasLengthType = {
+export interface HasLengthType {
     length: number;
 }
 
 export class LengthValueDifferential<T extends HasLengthType> extends AbstractValueDifferential<T> {
-    evaluate(alpha: T, beta: T): number {
+    public evaluate(alpha: T, beta: T): number {
         return Math.abs(beta.length - alpha.length);
     }
 }
 
-export class StandardPipeline<S, T, P, E extends Object> extends AbstractPipeline<S, T, any> {
+export class ProbOfNotRejectingSymbolsGainedDifferential<T extends HasLengthType> extends AbstractValueDifferential<T> {
+    protected rejectionProb: number;
+
+    /**
+     * @constructor
+     * @param {number} rejectionLogit The logit of rejecting a symbol gained,
+     * i.e. log(p/(1-p)) where p is the rejection probability for a symbol
+     * gained.
+     */
+    constructor(rejectionLogit: number) {
+        super();
+        this.rejectionProb = 1 / (1 + Math.exp(-rejectionLogit));
+    }
+
+    public evaluate(alpha: T, beta: T): number {
+        return 1 - Math.pow(this.rejectionProb, Math.abs(beta.length - alpha.length));
+    }
+}
+
+export class StandardPipeline<S, T, P, E extends object> extends AbstractPipeline<S, T, any> {
     protected predictor: AbstractPredictor<S, T, P, E>;
     protected qualityAssessor: AbstractQualityAssessor<S, T, E>;
     protected priorCallback: () => P;
-    constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T, E>, priorCallback: () => P) {
+
+    /**
+     * @constructor
+     * @param {AbstractPredictor<S, T, P>} predictor
+     * @param {AbstractQualityAssessor<S, T, E extends Object>} qualityAssessor
+     * @param {() => P} priorCallback
+     */
+    constructor(
+        predictor: AbstractPredictor<S, T, P>,
+        qualityAssessor: AbstractQualityAssessor<S, T, E>,
+        priorCallback: () => P) {
         super(predictor, qualityAssessor);
         this.priorCallback = priorCallback;
     }
 
-    predict(input: S, limit: number, offset: number = 0, qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD): (WeightedPrediction<T> & E)[] {
+    public predict(
+        input: S,
+        limit: number,
+        offset: number = 0,
+        qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD,
+    ): Array<(WeightedPrediction<T> & E)> {
         const predictions = this.predictor.predict(this.priorCallback(), input);
         return this.qualityAssessor.assess(input, predictions, limit, offset, qualityType);
     }

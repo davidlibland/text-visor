@@ -14,7 +14,7 @@ export type StatusType =
 export const STATUS_TYPE: UnionKeyToValue<StatusType> = {
     ACCEPT: "ACCEPT",
     REJECT: "REJECT",
-    UNKNOWN: "UNKNOWN"
+    UNKNOWN: "UNKNOWN",
 };
 
 export interface StatusContainer {
@@ -22,9 +22,9 @@ export interface StatusContainer {
 }
 
 export abstract class AbstractAutomaton<S, A, E extends StatusContainer> {
-    abstract start(): S;
+    public abstract start(): S;
 
-    abstract step(state: S, action: A): S;
+    public abstract step(state: S, action: A): S;
 
-    abstract status(state: S): E;
+    public abstract status(state: S): E;
 }

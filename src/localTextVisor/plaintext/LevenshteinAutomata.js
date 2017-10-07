@@ -18,9 +18,9 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         };
     }
     step(state, nextChar) {
-        let newState = {
+        const newState = {
             data: [state.data[0] + 1],
-            histEditCost: state.histEditCost
+            histEditCost: state.histEditCost,
         };
         for (let i = 0; i < state.data.length - 1; i++) {
             const cost = this.str[i] === nextChar ? 0 : 1;
@@ -32,20 +32,20 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
     status(state) {
         if (state.histEditCost <= this.maxEdits) {
             return {
+                editCost: state.histEditCost,
                 status: AbstractAutomata_1.STATUS_TYPE.ACCEPT,
-                editCost: state.histEditCost
             };
         }
         else if (Math.min(...state.data) <= this.maxEdits) {
             return {
+                editCost: this.maxEdits + 1,
                 status: AbstractAutomata_1.STATUS_TYPE.UNKNOWN,
-                editCost: this.maxEdits + 1
             };
         }
         else {
             return {
+                editCost: this.maxEdits + 1,
                 status: AbstractAutomata_1.STATUS_TYPE.REJECT,
-                editCost: this.maxEdits + 1
             };
         }
     }

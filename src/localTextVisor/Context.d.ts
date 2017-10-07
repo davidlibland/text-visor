@@ -3,7 +3,7 @@
  * @desc The context module used to set up a local text visor.
  */
 import { AbstractPipeline } from "./Abstract";
-import { LanguageModuleType, CaseSensitivityType, RewardModuleType, TokenizerType } from "./Enums";
+import { CaseSensitivityType, LanguageModuleType, RewardModuleType, TokenizerType } from "./Enums";
 import { Tree } from "./plaintext/Tree";
 export interface LanguageModuleSpecs {
     moduleType: LanguageModuleType;
@@ -11,15 +11,23 @@ export interface LanguageModuleSpecs {
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
 }
-export interface RewardModuleSpecs {
+export interface RewardModuleSpecsConstraints {
     moduleType: RewardModuleType;
 }
-export declare type ContextDataType = {
+export interface RewardModuleSpecsSLD extends RewardModuleSpecsConstraints {
+    moduleType: "SLD";
+}
+export interface RewardModuleSpecsPSG extends RewardModuleSpecsConstraints {
+    moduleType: "PSG";
+    rejectionProb: number;
+}
+export declare type RewardModuleSpecs = RewardModuleSpecsSLD | RewardModuleSpecsPSG;
+export interface ContextDataType {
     trie: Tree<any, {
         prediction: any;
     }>;
     prior: {
         [key: string]: number;
     };
-};
+}
 export declare function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any>;

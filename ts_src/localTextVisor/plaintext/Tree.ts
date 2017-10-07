@@ -6,7 +6,7 @@ import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutom
 
 export interface Tree<A, V> {
     node: A;
-    children: Tree<A, V>[];
+    children: Array<Tree<A, V>>;
     data: V[];
 }
 
@@ -25,10 +25,12 @@ export interface Tree<A, V> {
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-export function buildSortedTreeFromSortedPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
+export function buildSortedTreeFromSortedPaths<A, V>(root: A, ...wrappedPaths: Array<{nodePath: A[], data?: V}>): Tree<A, V> {
+    const reducer = (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) =>
+        lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data);
     return wrappedPaths.reduce<Tree<A, V>>(
-        (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data),
-        {node: root, children: [], data: []}
+        reducer,
+        {node: root, children: [], data: []},
     );
 }
 
@@ -49,10 +51,12 @@ export function buildSortedTreeFromSortedPaths<A, V>(root: A, ...wrappedPaths: {
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
+export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: Array<{nodePath: A[], data?: V}>): Tree<A, V> {
+    const reducer = (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) =>
+        sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data);
     return wrappedPaths.reduce<Tree<A, V>>(
-        (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data),
-        {node: root, children: [], data: []}
+        reducer,
+        {node: root, children: [], data: []},
     );
 }
 
@@ -71,55 +75,61 @@ export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePa
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-export function buildTreeFromPaths<A, V>(root: A, ...wrappedPaths: {nodePath: A[], data?: V}[]): Tree<A, V> {
+export function buildTreeFromPaths<A, V>(root: A, ...wrappedPaths: Array<{nodePath: A[], data?: V}>): Tree<A, V> {
+    const reducer = (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) =>
+        insert(tree, wrappedPath.nodePath, wrappedPath.data);
     return wrappedPaths.reduce<Tree<A, V>>(
-        (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) => insert(tree, wrappedPath.nodePath, wrappedPath.data),
-        {node: root, children: [], data: []}
+        reducer,
+        {node: root, children: [], data: []},
     );
 }
 
 export function insert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
-        let branch = tree.children.find(child => (child.node == currentSymbol));
+        let branch = tree.children.find((child) => (child.node == currentSymbol));
         if (branch === undefined) {
             branch = { node: currentSymbol, children: [], data: [] };
-            tree.children.push(branch)
+            tree.children.push(branch);
         }
         insert(branch, token, data);
     } else if (data) {
-        tree.data.push(data)
+        tree.data.push(data);
     }
     return tree;
 }
 
 interface PotentialIndex {
-    exists: boolean,
-    index: number
+    exists: boolean;
+    index: number;
 }
 
 export function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, comparisonFunc: ((obj1: A, obj2: A) => number) = stdComparisonFunc) {
     if (token.length > 0) {
         const currentSymbol = token.shift();
-        const potIndex = findObjectIndexInSortedArray<A>(currentSymbol, tree.children.map(x => x.node), comparisonFunc);
+        const childNodes = tree.children.map((x) => x.node);
+        const potIndex = findObjectIndexInSortedArray<A>(currentSymbol, childNodes, comparisonFunc);
         if (!potIndex.exists) {
-            tree.children = [...tree.children.slice(0, potIndex.index), { node: currentSymbol, children: [], data: [] }, ...tree.children.slice(potIndex.index)];
+            const leftChildren = tree.children.slice(0, potIndex.index);
+            const rightChildren = tree.children.slice(potIndex.index);
+            const newChild = { node: currentSymbol, children: [], data: [] };
+            tree.children = [...leftChildren, newChild, ...rightChildren];
         }
         sortedInsert(tree.children[potIndex.index], token, data, comparisonFunc);
     } else if (data) {
-        tree.data.push(data)
+        tree.data.push(data);
     }
     return tree;
 }
 
-let stdComparisonFunc = (a, b) => {
+const stdComparisonFunc = (a, b) => {
     if (a < b) {
-        return -1
+        return -1;
     }
     if (a > b) {
-        return 1
+        return 1;
     }
-    return 0
+    return 0;
 };
 
 export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
@@ -130,11 +140,11 @@ export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
             branch = tree.children[tree.children.length - 1];
         } else {
             branch = { node: currentSymbol, children: [], data: [] };
-            tree.children.push(branch)
+            tree.children.push(branch);
         }
         lazyInsert(branch, token, data);
     } else if (data) {
-        tree.data.push(data)
+        tree.data.push(data);
     }
     return tree;
 }
@@ -151,13 +161,17 @@ export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
  * @returns {exists: bool, index: number} The index is where the item is or
  * should-be-inserted, exists reflect whether the item is already there.
  */
-function findObjectIndexInSortedArray<A>(newObject: A, arrayOfObjects: Array<A>, comparisonFunc: ((obj1: A, obj2: A) => number)): PotentialIndex {
+function findObjectIndexInSortedArray<A>(
+    newObject: A,
+    arrayOfObjects: A[],
+    comparisonFunc: ((obj1: A, obj2: A) => number),
+): PotentialIndex {
     let low = 0;
     let high = arrayOfObjects.length;
 
     while (low < high) {
-        let mid = (low + high) >> 1; //divide by two.
-        let comparison = comparisonFunc(arrayOfObjects[mid], newObject);
+        const mid = (low + high) >> 1; // divide by two.
+        const comparison = comparisonFunc(arrayOfObjects[mid], newObject);
         if (comparison < 0) {
             // then we should insert our object strictly to the right of mid.
             low = mid + 1;
@@ -175,15 +189,16 @@ function findObjectIndexInSortedArray<A>(newObject: A, arrayOfObjects: Array<A>,
     return { exists: false, index: low };
 }
 
-export function automatonTreeSearch<S, A, V extends Object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S): (V & E)[] {
+export function automatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S): Array<V & E> {
     const addStatusToData = (data: V[], state: S) => data.map(
-        dataPt => Object.assign({}, automata.status(state), dataPt)
+        (dataPt) => Object.assign({}, automata.status(state), dataPt),
     );
     const isAcceptedState = (state) => (automata.status(state).status === STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (state) => (automata.status(state).status !== STATUS_TYPE.REJECT);
+    const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
     return tree.children
-        .map((child) => ({child: child, state: automata.step(state, child.node)}))
+        .map((child) => ({child, state: automata.step(state, child.node)}))
         .filter((childAndState) => isNotRejectedState(childAndState.state))
         .map((childAndState) => automatonTreeSearch<S, A, V, E>(childAndState.child, automata, childAndState.state))
-        .reduce((results, result) => results.concat(result), isAcceptedState(state) ? addStatusToData(tree.data, state) : []);
+        .reduce((results, result) => results.concat(result), localSearchResult);
 }

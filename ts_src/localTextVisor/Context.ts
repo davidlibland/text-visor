@@ -9,27 +9,28 @@ import {
     AbstractValueDifferential,
 } from "./Abstract";
 import {
-    MapPredictor
-} from "./LanguageStub";
-import {
-    StandardPipeline,
-    RankedQualityAssessor,
-    LengthValueDifferential,
-    HasLengthType
-} from "./StandardLTVModules";
-import {
-    LanguageModuleType,
-    LANGUAGE_MODULE_TYPE,
     CaseSensitivityType,
-    RewardModuleType,
+    LANGUAGE_MODULE_TYPE,
+    LanguageModuleType,
     REWARD_MODULE_TYPE,
-    TokenizerType, TOKENIZER_TYPE
+    RewardModuleType,
+    TOKENIZER_TYPE, TokenizerType,
 } from "./Enums";
 import {
+    MapPredictor,
+} from "./LanguageStub";
+import {
+    FuzzyTriePredictor,
     TokenizingPredictor,
-    FuzzyTriePredictor
 } from "./plaintext/FuzzyTrieSearch";
 import { Tree } from "./plaintext/Tree";
+import {
+    HasLengthType,
+    LengthValueDifferential,
+    ProbOfNotRejectingSymbolsGainedDifferential,
+    RankedQualityAssessor,
+    StandardPipeline,
+} from "./StandardLTVModules";
 
 export interface LanguageModuleSpecs {
     moduleType: LanguageModuleType;
@@ -38,12 +39,22 @@ export interface LanguageModuleSpecs {
     tokenizerType: TokenizerType;
 }
 
-export interface RewardModuleSpecs {
+export interface RewardModuleSpecsConstraints {
     moduleType: RewardModuleType;
 }
 
-export type ContextDataType =
-    {
+export interface RewardModuleSpecsSLD extends RewardModuleSpecsConstraints {
+    moduleType: "SLD";
+}
+
+export interface RewardModuleSpecsPSG extends RewardModuleSpecsConstraints  {
+    moduleType: "PSG";
+    rejectionProb: number;
+}
+
+export type RewardModuleSpecs = RewardModuleSpecsSLD | RewardModuleSpecsPSG;
+
+export interface ContextDataType {
         trie: Tree<any, { prediction: any }>;
         prior: { [key: string]: number };
     }
@@ -55,57 +66,61 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
     let languageModule: AbstractPredictor<any, any>;
     let rewardModule: AbstractValueDifferential<any>;
     let prior: () => any;
-    let inputConverter: (any) => any;
+    let inputConverter: ( input: any) => any;
     switch (languageSpecs.moduleType) {
         case LANGUAGE_MODULE_TYPE.IDENTITY:
-            prior = () => { };
-            inputConverter = input => input;
+            prior = () => { return; };
+            inputConverter = (input) => input;
             languageModule = new MapPredictor<any, any>(inputConverter);
             break;
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
-            if (!('trie' in data)) {
+            if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
-                throw `The data ${data} passed to initializeLTVWithContext must contain a trie.`;
+                throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
             }
             const trie = data.trie;
-            if (!('prior' in data)) {
+            if (!("prior" in data)) {
                 // ToDo: Add prior typeguard.
-                throw `The data ${data} passed to initializeLTVWithContext must contain a prior.`;
+                throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a prior.`);
             }
-            const priorObj = (<{ prior: { [key: string]: number } }>data).prior;
+            const priorObj = (data as { prior: { [key: string]: number } }).prior;
             const maxEditDistance = languageSpecs.maxEditDistance !== undefined ? languageSpecs.maxEditDistance : 1;
             const charTokenizer = (token: string) => token.split("");
             const weightFunction = (editCost: number) => Math.pow(0.5, editCost);
             const triePredictor = new FuzzyTriePredictor(trie, charTokenizer, maxEditDistance, weightFunction);
-            let contextTokenizer: (string) => string[];
+            let contextTokenizer: (input: string) => string[];
             let contextJoiner: (...tokens) => string;
             switch (languageSpecs.tokenizerType) {
                 case TOKENIZER_TYPE.CHARACTER:
-                    contextTokenizer = (token) => token.split("");
+                    contextTokenizer = (input) => input.split("");
                     contextJoiner = (...tokens) => tokens.join("");
                     break;
                 case TOKENIZER_TYPE.WHITE_SPACE:
                 default:
-                    contextTokenizer = (token) => token.split(" ");
+                    contextTokenizer = (input) => input.split(" ");
                     contextJoiner = (...tokens) => tokens.join(" ");
                     break;
             }
             languageModule = new TokenizingPredictor(contextTokenizer, contextJoiner, triePredictor);
             prior = () => (token) => {
-                let count = priorObj[token];
+                const count = priorObj[token];
                 return count ? count : 0;
             };
             inputConverter = (wrappedInput) => wrappedInput.input;
             break;
         default:
-            throw `The language algorithm ${languageSpecs.moduleType} has not been implemented.`;
+            throw new Error(`The language algorithm ${languageSpecs.moduleType} has not been implemented.`);
     }
     switch (rewardSpecs.moduleType) {
         case REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
             rewardModule = new LengthValueDifferential<HasLengthType>();
             break;
+        case REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
+            const rewardSpecsPSG = rewardSpecs as RewardModuleSpecsPSG;
+            rewardModule = new ProbOfNotRejectingSymbolsGainedDifferential<HasLengthType>(rewardSpecsPSG.rejectionProb);
+            break;
         default:
-            throw `The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`;
+            throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);
     }
     const qualityAssessor = new RankedQualityAssessor<any, any, any>(rewardModule, inputConverter);
     return new StandardPipeline<any, any, any, any>(languageModule, qualityAssessor, prior);

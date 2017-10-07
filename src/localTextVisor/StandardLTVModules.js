@@ -18,7 +18,7 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
                 // We assume the weights of the WeightedPredictions comprise a set of dirichlet parameters,
                 // so to compute the expected value, we normalize them to a probability.
                 const normalizer = predictions.reduce((partialSum, wPred) => (partialSum + wPred.weight), 0);
-                if (normalizer == 0) {
+                if (normalizer === 0) {
                     qualityPredictions = [];
                     break;
                 }
@@ -49,7 +49,29 @@ class LengthValueDifferential extends Abstract_1.AbstractValueDifferential {
     }
 }
 exports.LengthValueDifferential = LengthValueDifferential;
+class ProbOfNotRejectingSymbolsGainedDifferential extends Abstract_1.AbstractValueDifferential {
+    /**
+     * @constructor
+     * @param {number} rejectionLogit The logit of rejecting a symbol gained,
+     * i.e. log(p/(1-p)) where p is the rejection probability for a symbol
+     * gained.
+     */
+    constructor(rejectionLogit) {
+        super();
+        this.rejectionProb = 1 / (1 + Math.exp(-rejectionLogit));
+    }
+    evaluate(alpha, beta) {
+        return 1 - Math.pow(this.rejectionProb, Math.abs(beta.length - alpha.length));
+    }
+}
+exports.ProbOfNotRejectingSymbolsGainedDifferential = ProbOfNotRejectingSymbolsGainedDifferential;
 class StandardPipeline extends Abstract_1.AbstractPipeline {
+    /**
+     * @constructor
+     * @param {AbstractPredictor<S, T, P>} predictor
+     * @param {AbstractQualityAssessor<S, T, E extends Object>} qualityAssessor
+     * @param {() => P} priorCallback
+     */
     constructor(predictor, qualityAssessor, priorCallback) {
         super(predictor, qualityAssessor);
         this.priorCallback = priorCallback;

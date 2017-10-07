@@ -5,22 +5,23 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SCORE_TYPE = {
-    QUALITY: "QUALITY",
     CONFIDENCE: "CONFIDENCE",
+    QUALITY: "QUALITY",
 };
 exports.QUALITY_MODULE_TYPE = {
-    EXPECTED_REWARD: "ER",
     CONFIDENCE: "C",
+    EXPECTED_REWARD: "ER",
 };
 exports.TOKENIZER_TYPE = {
     CHARACTER: "CH",
-    WHITE_SPACE: "WS",
     DEFAULT_WORD_TOKENIZER: "DWT",
     SENTENCE: "S",
+    WHITE_SPACE: "WS",
 };
 exports.REWARD_MODULE_TYPE = {
-    LENGTH_DIFFERENCE: "SLD",
     EDIT_DISTANCE: "ED",
+    LENGTH_DIFFERENCE: "SLD",
+    PROB_OF_NOT_REJECTING_SYMBOLS_GAINED: "PSG",
 };
 exports.LANGUAGE_MODULE_TYPE = {
     FUZZY_TRIE_SEARCH: "FTS",

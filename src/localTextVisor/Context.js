@@ -4,11 +4,13 @@
  * @desc The context module used to set up a local text visor.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const LanguageStub_1 = require("./LanguageStub");
-const StandardLTVModules_1 = require("./StandardLTVModules");
 const Enums_1 = require("./Enums");
+const LanguageStub_1 = require("./LanguageStub");
 const FuzzyTrieSearch_1 = require("./plaintext/FuzzyTrieSearch");
+const StandardLTVModules_1 = require("./StandardLTVModules");
 // ToDo: properly document this.
+// ToDo: Improve this function.
+// ToDo: Improve the typing of this function (currently uses any types).
 function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
     let languageModule;
     let rewardModule;
@@ -16,19 +18,19 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
     let inputConverter;
     switch (languageSpecs.moduleType) {
         case Enums_1.LANGUAGE_MODULE_TYPE.IDENTITY:
-            prior = () => { };
-            inputConverter = input => input;
+            prior = () => { return; };
+            inputConverter = (input) => input;
             languageModule = new LanguageStub_1.MapPredictor(inputConverter);
             break;
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
-            if (!('trie' in data)) {
+            if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
-                throw `The data ${data} passed to initializeLTVWithContext must contain a trie.`;
+                throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
             }
             const trie = data.trie;
-            if (!('prior' in data)) {
+            if (!("prior" in data)) {
                 // ToDo: Add prior typeguard.
-                throw `The data ${data} passed to initializeLTVWithContext must contain a prior.`;
+                throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a prior.`);
             }
             const priorObj = data.prior;
             const maxEditDistance = languageSpecs.maxEditDistance !== undefined ? languageSpecs.maxEditDistance : 1;
@@ -39,31 +41,35 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             let contextJoiner;
             switch (languageSpecs.tokenizerType) {
                 case Enums_1.TOKENIZER_TYPE.CHARACTER:
-                    contextTokenizer = (token) => token.split("");
+                    contextTokenizer = (input) => input.split("");
                     contextJoiner = (...tokens) => tokens.join("");
                     break;
                 case Enums_1.TOKENIZER_TYPE.WHITE_SPACE:
                 default:
-                    contextTokenizer = (token) => token.split(" ");
+                    contextTokenizer = (input) => input.split(" ");
                     contextJoiner = (...tokens) => tokens.join(" ");
                     break;
             }
             languageModule = new FuzzyTrieSearch_1.TokenizingPredictor(contextTokenizer, contextJoiner, triePredictor);
             prior = () => (token) => {
-                let count = priorObj[token];
+                const count = priorObj[token];
                 return count ? count : 0;
             };
             inputConverter = (wrappedInput) => wrappedInput.input;
             break;
         default:
-            throw `The language algorithm ${languageSpecs.moduleType} has not been implemented.`;
+            throw new Error(`The language algorithm ${languageSpecs.moduleType} has not been implemented.`);
     }
     switch (rewardSpecs.moduleType) {
         case Enums_1.REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
             rewardModule = new StandardLTVModules_1.LengthValueDifferential();
             break;
+        case Enums_1.REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
+            const rewardSpecsPSG = rewardSpecs;
+            rewardModule = new StandardLTVModules_1.ProbOfNotRejectingSymbolsGainedDifferential(rewardSpecsPSG.rejectionProb);
+            break;
         default:
-            throw `The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`;
+            throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);
     }
     const qualityAssessor = new StandardLTVModules_1.RankedQualityAssessor(rewardModule, inputConverter);
     return new StandardLTVModules_1.StandardPipeline(languageModule, qualityAssessor, prior);

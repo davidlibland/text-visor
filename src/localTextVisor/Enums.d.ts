@@ -14,7 +14,7 @@ export declare type QualityModuleType = "ER" | "C";
 export declare const QUALITY_MODULE_TYPE: EnumTypeValue<QualityModuleType>;
 export declare type TokenizerType = "CH" | "WS" | "DWT" | "S";
 export declare const TOKENIZER_TYPE: EnumTypeValue<TokenizerType>;
-export declare type RewardModuleType = "SLD" | "ED";
+export declare type RewardModuleType = "SLD" | "ED" | "PSG";
 export declare const REWARD_MODULE_TYPE: EnumTypeValue<RewardModuleType>;
 export declare type LanguageModuleType = "FTS" | "ID";
 export declare const LANGUAGE_MODULE_TYPE: EnumTypeValue<LanguageModuleType>;

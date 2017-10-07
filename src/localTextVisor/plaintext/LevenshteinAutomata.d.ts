@@ -3,10 +3,10 @@ export interface LAStatus extends StatusContainer {
     status: StatusType;
     editCost: number;
 }
-export declare type LAState = {
+export interface LAState {
     data: number[];
     histEditCost: number;
-};
+}
 export declare class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LAStatus> {
     private str;
     private maxEdits;
