@@ -66,7 +66,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             break;
         case Enums_1.REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
             const rewardSpecsPSG = rewardSpecs;
-            rewardModule = new StandardLTVModules_1.ProbOfNotRejectingSymbolsGainedDifferential(rewardSpecsPSG.rejectionProb);
+            rewardModule = new StandardLTVModules_1.ProbOfNotRejectingSymbolsGainedDifferential(rewardSpecsPSG.rejectionLogit);
             break;
         default:
             throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);

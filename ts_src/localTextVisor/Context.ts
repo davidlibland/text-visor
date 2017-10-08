@@ -49,7 +49,7 @@ export interface RewardModuleSpecsSLD extends RewardModuleSpecsConstraints {
 
 export interface RewardModuleSpecsPSG extends RewardModuleSpecsConstraints  {
     moduleType: "PSG";
-    rejectionProb: number;
+    rejectionLogit: number;
 }
 
 export type RewardModuleSpecs = RewardModuleSpecsSLD | RewardModuleSpecsPSG;
@@ -117,7 +117,7 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             break;
         case REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
             const rewardSpecsPSG = rewardSpecs as RewardModuleSpecsPSG;
-            rewardModule = new ProbOfNotRejectingSymbolsGainedDifferential<HasLengthType>(rewardSpecsPSG.rejectionProb);
+            rewardModule = new ProbOfNotRejectingSymbolsGainedDifferential<HasLengthType>(rewardSpecsPSG.rejectionLogit);
             break;
         default:
             throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);

@@ -19,7 +19,7 @@ export interface RewardModuleSpecsSLD extends RewardModuleSpecsConstraints {
 }
 export interface RewardModuleSpecsPSG extends RewardModuleSpecsConstraints {
     moduleType: "PSG";
-    rejectionProb: number;
+    rejectionLogit: number;
 }
 export declare type RewardModuleSpecs = RewardModuleSpecsSLD | RewardModuleSpecsPSG;
 export interface ContextDataType {
