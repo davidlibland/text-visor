@@ -185,11 +185,18 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
                 this.costModule.maxEditCostThreshold,
             ));
         }
-        if (newState.data[newState.data.length - 1] < newState.histEditCost.editCost) {
-            newState.histEditCost = {
-                editCost: newState.data[newState.data.length - 1],
-                step: newState.step,
-            };
+        const curEditCost = {
+            editCost: newState.data[newState.data.length - 1],
+            step: newState.step,
+        };
+        if (this.status({... newState, histEditCost: curEditCost }).status === STATUS_TYPE.ACCEPT) {
+            if (this.status(state).status === STATUS_TYPE.ACCEPT) {
+                if (newState.data[newState.data.length - 1] < newState.histEditCost.editCost) {
+                    newState.histEditCost = curEditCost;
+                }
+            } else {
+                newState.histEditCost = curEditCost;
+            }
         }
         return newState;
     }

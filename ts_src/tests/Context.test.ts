@@ -68,10 +68,7 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and prob-not-reject reward
     };
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we hea", cursorPosition: 15 };
-    const results = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD).map((wPred) => {
-        console.log(wPred);
-        return wPred.prediction;
-    });
+    const results = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD).map((wPred) => wPred.prediction);
     expect(results).toEqual([
         "who should we heart attack",
         "who should we hepatitis",

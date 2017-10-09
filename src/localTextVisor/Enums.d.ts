@@ -16,7 +16,7 @@ export declare type TokenizerType = "CH" | "WS" | "DWT" | "S";
 export declare const TOKENIZER_TYPE: EnumTypeValue<TokenizerType>;
 export declare type RewardModuleType = "SLD" | "ED" | "PSG";
 export declare const REWARD_MODULE_TYPE: EnumTypeValue<RewardModuleType>;
-export declare type LanguageModuleType = "FTS" | "ID";
+export declare type LanguageModuleType = "FTS" | "RFTS" | "ID";
 export declare const LANGUAGE_MODULE_TYPE: EnumTypeValue<LanguageModuleType>;
 export declare type CaseSensitivityType = "I" | "S";
 export declare const CASE_SENSITIVITY_TYPE: EnumTypeValue<CaseSensitivityType>;

@@ -5,13 +5,22 @@
 import { AbstractPipeline } from "./Abstract";
 import { CaseSensitivityType, LanguageModuleType, RewardModuleType, TokenizerType } from "./Enums";
 import { Tree } from "./plaintext/Tree";
-export interface LanguageModuleSpecs {
+export interface LanguageModuleSpecsConstraints {
     moduleType: LanguageModuleType;
-    maxEditDistance?: number;
-    maxRelativeEditDistance?: number;
+}
+export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
+    moduleType: "FTS";
+    maxEditDistance: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
 }
+export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints {
+    moduleType: "RFTS";
+    maxRelativeEditDistance: number;
+    caseSensitivity?: CaseSensitivityType;
+    tokenizerType: TokenizerType;
+}
+export declare type LanguageModuleSpecs = LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS;
 export interface RewardModuleSpecsConstraints {
     moduleType: RewardModuleType;
 }

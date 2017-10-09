@@ -97,11 +97,19 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         for (let i = 0; i < state.data.length - 1; i++) {
             newState.data.push(Math.min(newState.data[i] + this.costModule.insertCost(this.str[i]), state.data[i] + this.costModule.swapCost(nextChar, this.str[i]), state.data[i + 1] + this.costModule.deleteCost(nextChar), this.costModule.maxEditCostThreshold));
         }
-        if (newState.data[newState.data.length - 1] < newState.histEditCost.editCost) {
-            newState.histEditCost = {
-                editCost: newState.data[newState.data.length - 1],
-                step: newState.step,
-            };
+        const curEditCost = {
+            editCost: newState.data[newState.data.length - 1],
+            step: newState.step,
+        };
+        if (this.status(Object.assign({}, newState, { histEditCost: curEditCost })).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT) {
+            if (this.status(state).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT) {
+                if (newState.data[newState.data.length - 1] < newState.histEditCost.editCost) {
+                    newState.histEditCost = curEditCost;
+                }
+            }
+            else {
+                newState.histEditCost = curEditCost;
+            }
         }
         return newState;
     }

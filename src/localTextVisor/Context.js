@@ -22,7 +22,14 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             inputConverter = (input) => input;
             languageModule = new LanguageStub_1.MapPredictor(inputConverter);
             break;
+        case Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
+            const languageSpecsRFTS = languageSpecs;
+            let maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
+            let relEdit = true;
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
+            const languageSpecsFTS = languageSpecs;
+            maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+            relEdit = false;
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
@@ -33,12 +40,9 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a prior.`);
             }
             const priorObj = data.prior;
-            const maxEditDistance = languageSpecs.maxEditDistance !== undefined ? languageSpecs.maxEditDistance : 1;
-            const relEdit = languageSpecs.maxRelativeEditDistance !== undefined;
-            const maxRelativeEditDistance = relEdit ? languageSpecs.maxRelativeEditDistance : 1 / 3;
             const charTokenizer = (token) => token.split("");
             const weightFunction = (editCost) => Math.pow(0.5, editCost);
-            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, relEdit ? maxRelativeEditDistance : maxEditDistance, weightFunction, relEdit);
+            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, maxEditCost, weightFunction, relEdit);
             let contextTokenizer;
             let contextJoiner;
             switch (languageSpecs.tokenizerType) {

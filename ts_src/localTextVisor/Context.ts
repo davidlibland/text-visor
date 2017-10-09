@@ -32,13 +32,24 @@ import {
     StandardPipeline,
 } from "./StandardLTVModules";
 
-export interface LanguageModuleSpecs {
+export interface LanguageModuleSpecsConstraints {
     moduleType: LanguageModuleType;
-    maxEditDistance?: number;
-    maxRelativeEditDistance?: number;
+}
+export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
+    moduleType: "FTS";
+    maxEditDistance: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
 }
+
+export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints {
+    moduleType: "RFTS";
+    maxRelativeEditDistance: number;
+    caseSensitivity?: CaseSensitivityType;
+    tokenizerType: TokenizerType;
+}
+
+export type LanguageModuleSpecs = LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS;
 
 export interface RewardModuleSpecsConstraints {
     moduleType: RewardModuleType;
@@ -74,7 +85,14 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             inputConverter = (input) => input;
             languageModule = new MapPredictor<any, any>(inputConverter);
             break;
+        case LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
+            const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
+            let maxEditCost: number = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1/3;
+            let relEdit = true;
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
+            const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
+            maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+            relEdit = false;
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
@@ -85,15 +103,12 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a prior.`);
             }
             const priorObj = (data as { prior: { [key: string]: number } }).prior;
-            const maxEditDistance = languageSpecs.maxEditDistance !== undefined ? languageSpecs.maxEditDistance : 1;
-            const relEdit = languageSpecs.maxRelativeEditDistance !== undefined;
-            const maxRelativeEditDistance = relEdit ? languageSpecs.maxRelativeEditDistance : 1/3;
             const charTokenizer = (token: string) => token.split("");
             const weightFunction = (editCost: number) => Math.pow(0.5, editCost);
             const triePredictor = new FuzzyTriePredictor(
                 trie,
                 charTokenizer,
-                relEdit ? maxRelativeEditDistance : maxEditDistance,
+                maxEditCost,
                 weightFunction,
                 relEdit,
             );
