@@ -25,7 +25,7 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
         const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, costModule);
         const fuzzyCompletions = Tree_1.automatonTreeSearch(this.trie, leven, leven.start());
         const addMetadata = (completion) => {
-            return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: this.weightFunction(completion.editCost) * prior(completion.prediction), displayName: `${completion.displayName} prediction: ${completion.prediction}, editCost: ${completion.editCost}, prior: ${prior(completion.prediction)}` });
+            return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: this.weightFunction(completion.editCost) * prior(completion.prediction) });
         };
         return fuzzyCompletions
             .map(addMetadata)

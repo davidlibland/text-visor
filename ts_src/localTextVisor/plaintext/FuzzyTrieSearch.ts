@@ -59,7 +59,6 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
                 ...completion,
                 cursorPosition: this.splitter(completion.prediction).length,
                 weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
-                displayName: `${completion.displayName} prediction: ${completion.prediction}, editCost: ${completion.editCost}, prior: ${prior(completion.prediction)}`
             };
         };
         return fuzzyCompletions

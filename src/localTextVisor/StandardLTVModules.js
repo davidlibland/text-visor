@@ -26,7 +26,7 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
                 const expectedRewardComputation = (wPred) => {
                     const reward = this.valueDifferential.evaluate(this.inputConverter(input), wPred.prediction);
                     const expectedReward = wPred.weight * invNormalizer * reward;
-                    return Object.assign({}, wPred, { weight: expectedReward, displayName: `${wPred["displayName"]} prediction: ${wPred.prediction}, weight: ${wPred.weight * invNormalizer}, reward: ${reward}` });
+                    return Object.assign({}, wPred, { weight: expectedReward });
                 };
                 qualityPredictions = predictions.map(expectedRewardComputation);
                 break;
