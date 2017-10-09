@@ -9,16 +9,19 @@ const Abstract_1 = require("../Abstract");
 const LevenshteinAutomata_1 = require("./LevenshteinAutomata");
 const Tree_1 = require("./Tree");
 class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
-    constructor(trie, splitter, maxEditCost, weightFunction) {
+    constructor(trie, splitter, maxEditCost, weightFunction, relEdit = false) {
         super();
         this.trie = trie;
         this.splitter = splitter;
         this.maxEdit = maxEditCost;
         this.weightFunction = weightFunction;
+        this.relEdit = relEdit;
     }
     predict(prior, input) {
         const chars = this.splitter(input);
-        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.maxEdit);
+        const editCostAcceptor = this.relEdit ?
+            LevenshteinAutomata_1.maxRelativeEditCostAcceptor(this.maxEdit) : LevenshteinAutomata_1.maxEditCostAcceptor(this.maxEdit);
+        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.maxEdit, editCostAcceptor);
         const fuzzyCompletions = Tree_1.automatonTreeSearch(this.trie, leven, leven.start());
         const addMetadata = (completion) => Object.assign({}, completion, {
             cursorPosition: this.splitter(completion.prediction).length,

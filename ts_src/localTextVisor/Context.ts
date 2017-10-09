@@ -35,6 +35,7 @@ import {
 export interface LanguageModuleSpecs {
     moduleType: LanguageModuleType;
     maxEditDistance?: number;
+    maxRelativeEditDistance?: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
 }
@@ -85,9 +86,17 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             }
             const priorObj = (data as { prior: { [key: string]: number } }).prior;
             const maxEditDistance = languageSpecs.maxEditDistance !== undefined ? languageSpecs.maxEditDistance : 1;
+            const relEdit = languageSpecs.maxRelativeEditDistance !== undefined;
+            const maxRelativeEditDistance = relEdit ? languageSpecs.maxRelativeEditDistance : 1/3;
             const charTokenizer = (token: string) => token.split("");
             const weightFunction = (editCost: number) => Math.pow(0.5, editCost);
-            const triePredictor = new FuzzyTriePredictor(trie, charTokenizer, maxEditDistance, weightFunction);
+            const triePredictor = new FuzzyTriePredictor(
+                trie,
+                charTokenizer,
+                relEdit ? maxRelativeEditDistance : maxEditDistance,
+                weightFunction,
+                relEdit,
+            );
             let contextTokenizer: (input: string) => string[];
             let contextJoiner: (...tokens) => string;
             switch (languageSpecs.tokenizerType) {

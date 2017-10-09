@@ -19,9 +19,10 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends object
     private splitter;
     private maxEdit;
     private weightFunction;
+    private relEdit;
     constructor(trie: Tree<A, {
         prediction: T;
-    } & V>, splitter: SplitterType<T, A>, maxEditCost: number, weightFunction: (editCost: number) => number);
+    } & V>, splitter: SplitterType<T, A>, maxEditCost: number, weightFunction: (editCost: number) => number, relEdit?: boolean);
     predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType>;
 }
 export declare class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends object = object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V & CursorPositionType> {

@@ -11,6 +11,8 @@ import {
 } from "../Abstract";
 import { HasLengthType } from "../StandardLTVModules";
 import {
+    FlatLevenshteinCostModule,
+    FlatLevenshteinRelativeCostModule,
     LevenshteinAutomaton,
 } from "./LevenshteinAutomata";
 import {
@@ -28,25 +30,32 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
     private splitter: SplitterType<T, A>;
     private maxEdit: number;
     private weightFunction: (editCost: number) => number;
+    private relEdit: boolean;
 
     constructor(
         trie: Tree<A, { prediction: T } & V>,
         splitter: SplitterType<T, A>,
         maxEditCost: number,
-        weightFunction: (editCost: number) => number
+        weightFunction: (editCost: number) => number,
+        relEdit: boolean = false,
     ) {
         super();
         this.trie = trie;
         this.splitter = splitter;
         this.maxEdit = maxEditCost;
         this.weightFunction = weightFunction;
+        this.relEdit = relEdit;
     }
 
     public predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType> {
         const chars = this.splitter(input);
-        const leven = new LevenshteinAutomaton(chars, this.maxEdit);
+        const costModule = this.relEdit ?
+            new FlatLevenshteinRelativeCostModule(this.maxEdit, this.maxEdit * chars.length * 2 ) :
+            new FlatLevenshteinCostModule(this.maxEdit + 1);
+        const leven = new LevenshteinAutomaton(chars, costModule);
         const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
-        const addMetadata = (completion) => Object.assign({}, completion, {
+        const addMetadata = (completion) => ({
+            ...completion,
             cursorPosition: this.splitter(completion.prediction).length,
             weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
         });
@@ -74,7 +83,7 @@ export class TokenizingPredictor<T extends HasLengthType = string, A = string, V
 
     public predict(
         prior: P,
-        wrappedInput: InputAndPositionType<T>
+        wrappedInput: InputAndPositionType<T>,
     ): Array<WeightedPrediction<T> & V & { cursorPosition: number }> {
         const suffix = this.splitter(wrappedInput.input);
         const prefix: A[] = [];

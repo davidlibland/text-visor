@@ -8,6 +8,7 @@ import { Tree } from "./plaintext/Tree";
 export interface LanguageModuleSpecs {
     moduleType: LanguageModuleType;
     maxEditDistance?: number;
+    maxRelativeEditDistance?: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
 }

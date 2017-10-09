@@ -34,9 +34,11 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             }
             const priorObj = data.prior;
             const maxEditDistance = languageSpecs.maxEditDistance !== undefined ? languageSpecs.maxEditDistance : 1;
+            const relEdit = languageSpecs.maxRelativeEditDistance !== undefined;
+            const maxRelativeEditDistance = relEdit ? languageSpecs.maxRelativeEditDistance : 1 / 3;
             const charTokenizer = (token) => token.split("");
             const weightFunction = (editCost) => Math.pow(0.5, editCost);
-            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, maxEditDistance, weightFunction);
+            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, relEdit ? maxRelativeEditDistance : maxEditDistance, weightFunction, relEdit);
             let contextTokenizer;
             let contextJoiner;
             switch (languageSpecs.tokenizerType) {
