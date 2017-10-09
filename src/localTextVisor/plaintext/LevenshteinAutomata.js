@@ -5,20 +5,81 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const AbstractAutomata_1 = require("./AbstractAutomata");
-function maxEditCostAcceptor(maxEdit) {
-    return (editCost, step) => (editCost <= maxEdit);
+class LevenshteinEditCostModule {
 }
-exports.maxEditCostAcceptor = maxEditCostAcceptor;
-function maxRelativeEditCostAcceptor(maxRelEdit) {
-    return (editCost, step) => (editCost <= maxRelEdit * step);
+exports.LevenshteinEditCostModule = LevenshteinEditCostModule;
+class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
+    constructor(maxEditCostThreshold) {
+        super();
+        this.maxEditCostThreshold = maxEditCostThreshold;
+    }
+    /**
+     * @public
+     * @method swapCost
+     * @desc this is the cost of swapping alpha for beta; must be non-negative.
+     * @param {A} alpha
+     * @param {A} beta
+     * @returns {number}
+     */
+    swapCost(alpha, beta) {
+        return alpha === beta ? 0 : 1;
+    }
+    /**
+     * @public
+     * @method deleteCost
+     * @desc this is the cost of deleting alpha; must be non-negative.
+     * @param {A} alpha
+     * @returns {number}
+     */
+    deleteCost(alpha) {
+        return 1;
+    }
+    /**
+     * @public
+     * @method insertCost
+     * @desc this is the cost of inserting alpha; must be non-negative.
+     * @param {A} alpha
+     * @returns {number}
+     */
+    insertCost(alpha) {
+        return 1;
+    }
+    /**
+     * @public
+     * @method editCostAcceptor
+     * @desc This returns true if an editCost is acceptable at a given step.
+     * @param {number} editCost
+     * @param {number} step
+     * @returns {boolean}
+     */
+    editCostAcceptor(editCost, step) {
+        return (editCost < this.maxEditCostThreshold);
+    }
 }
-exports.maxRelativeEditCostAcceptor = maxRelativeEditCostAcceptor;
+exports.FlatLevenshteinCostModule = FlatLevenshteinCostModule;
+class FlatLevenshteinRelativeCostModule extends FlatLevenshteinCostModule {
+    constructor(reletiveAcceptanceThreshold, maxEditCostThreshold) {
+        super(maxEditCostThreshold);
+        this.reletiveAcceptanceThreshold = reletiveAcceptanceThreshold;
+    }
+    /**
+     * @public
+     * @method editCostAcceptor
+     * @desc This returns true if an editCost is acceptable at a given step.
+     * @param {number} editCost
+     * @param {number} step
+     * @returns {boolean}
+     */
+    editCostAcceptor(editCost, step) {
+        return (editCost <= this.reletiveAcceptanceThreshold * step);
+    }
+}
+exports.FlatLevenshteinRelativeCostModule = FlatLevenshteinRelativeCostModule;
 class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
-    constructor(str, maxEditCost, editCostAcceptor) {
+    constructor(str, costModule) {
         super();
         this.str = str;
-        this.maxEdits = maxEditCost;
-        this.editCostAcceptor = editCostAcceptor !== undefined ? editCostAcceptor : maxEditCostAcceptor(this.maxEdits);
+        this.costModule = costModule;
     }
     start() {
         return {
@@ -29,13 +90,12 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
     }
     step(state, nextChar) {
         const newState = {
-            data: [state.data[0] + 1],
+            data: [state.data[0] + this.costModule.deleteCost(nextChar)],
             histEditCost: state.histEditCost,
             step: state.step + 1,
         };
         for (let i = 0; i < state.data.length - 1; i++) {
-            const cost = this.str[i] === nextChar ? 0 : 1;
-            newState.data.push(Math.min(newState.data[i] + 1, state.data[i] + cost, state.data[i + 1] + 1));
+            newState.data.push(Math.min(newState.data[i] + this.costModule.insertCost(this.str[i]), state.data[i] + this.costModule.swapCost(nextChar, this.str[i]), state.data[i + 1] + this.costModule.deleteCost(nextChar), this.costModule.maxEditCostThreshold));
         }
         if (newState.data[newState.data.length - 1] < newState.histEditCost.editCost) {
             newState.histEditCost = {
@@ -46,23 +106,23 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         return newState;
     }
     status(state) {
-        if (this.editCostAcceptor(state.histEditCost.editCost, state.histEditCost.step)) {
+        if (this.costModule.editCostAcceptor(state.histEditCost.editCost, state.histEditCost.step)) {
             return {
                 editCost: state.histEditCost.editCost,
                 status: AbstractAutomata_1.STATUS_TYPE.ACCEPT,
                 step: state.histEditCost.step,
             };
         }
-        else if (this.editCostAcceptor(Math.min(...state.data), state.step)) {
+        else if (this.costModule.editCostAcceptor(Math.min(...state.data), state.step)) {
             return {
-                editCost: this.maxEdits + 1,
+                editCost: this.costModule.maxEditCostThreshold,
                 status: AbstractAutomata_1.STATUS_TYPE.UNKNOWN,
                 step: state.step,
             };
         }
         else {
             return {
-                editCost: this.maxEdits + 1,
+                editCost: this.costModule.maxEditCostThreshold,
                 status: AbstractAutomata_1.STATUS_TYPE.REJECT,
                 step: state.step,
             };

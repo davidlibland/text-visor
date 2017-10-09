@@ -19,14 +19,15 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
     }
     predict(prior, input) {
         const chars = this.splitter(input);
-        const editCostAcceptor = this.relEdit ?
-            LevenshteinAutomata_1.maxRelativeEditCostAcceptor(this.maxEdit) : LevenshteinAutomata_1.maxEditCostAcceptor(this.maxEdit);
-        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.maxEdit, editCostAcceptor);
+        const costModule = this.relEdit ?
+            new LevenshteinAutomata_1.FlatLevenshteinRelativeCostModule(this.maxEdit, this.maxEdit * chars.length * 2) :
+            new LevenshteinAutomata_1.FlatLevenshteinCostModule(this.maxEdit + 1);
+        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, costModule);
         const fuzzyCompletions = Tree_1.automatonTreeSearch(this.trie, leven, leven.start());
-        const addMetadata = (completion) => Object.assign({}, completion, {
-            cursorPosition: this.splitter(completion.prediction).length,
-            weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
-        });
+        const addMetadata = (completion) => {
+            console.log(`prediction: ${completion.prediction}, editCost: ${completion.editCost}, prior: ${prior(completion.prediction)}`);
+            return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: this.weightFunction(completion.editCost) * prior(completion.prediction) });
+        };
         return fuzzyCompletions
             .map(addMetadata)
             .filter((completion) => (completion.weight > 0));

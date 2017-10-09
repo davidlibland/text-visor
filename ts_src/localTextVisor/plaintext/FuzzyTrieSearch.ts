@@ -54,11 +54,14 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
             new FlatLevenshteinCostModule(this.maxEdit + 1);
         const leven = new LevenshteinAutomaton(chars, costModule);
         const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
-        const addMetadata = (completion) => ({
-            ...completion,
-            cursorPosition: this.splitter(completion.prediction).length,
-            weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
-        });
+        const addMetadata = (completion) => {
+            console.log(`prediction: ${completion.prediction}, editCost: ${completion.editCost}, prior: ${prior(completion.prediction)}`);
+            return {
+                ...completion,
+                cursorPosition: this.splitter(completion.prediction).length,
+                weight: this.weightFunction(completion.editCost) * prior(completion.prediction),
+            };
+        };
         return fuzzyCompletions
             .map(addMetadata)
             .filter((completion) => (completion.weight > 0));
