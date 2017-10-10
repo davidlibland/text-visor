@@ -5,21 +5,21 @@ export interface LAStatus extends StatusContainer {
     step: number;
 }
 export interface LAState {
-    data: number[];
     histEditCost: {
         editCost: number;
         step: number;
     };
+    state: number;
     step: number;
 }
 export declare abstract class LevenshteinEditCostModule<A> {
     /**
-     * @property maxEditCostThreshold
+     * @property rejectCostThreshold
      * @desc All costs are capped at this threshold (to keep the number of
      * states finite). Any state whose cost is as large as this threshold is
      * rejected.
      */
-    maxEditCostThreshold: number;
+    rejectCostThreshold: number;
     /**
      * @public
      * @method swapCost
@@ -62,8 +62,9 @@ export declare class FlatLevenshteinCostModule<A> extends LevenshteinEditCostMod
      * states finite). Any state whose cost is as large as this threshold is
      * rejected.
      */
-    maxEditCostThreshold: number;
-    constructor(maxEditCostThreshold: number);
+    rejectCostThreshold: number;
+    protected flatWeight: number;
+    constructor(rejectCostThreshold: number, flatWeight?: number);
     /**
      * @public
      * @method swapCost
@@ -108,7 +109,7 @@ export declare class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshtei
      */
     maxEditCostThreshold: number;
     protected reletiveAcceptanceThreshold: number;
-    constructor(reletiveAcceptanceThreshold: number, maxEditCostThreshold: number);
+    constructor(reletiveAcceptanceThreshold: number, rejectCostThreshold: number, flatWeight?: number);
     /**
      * @public
      * @method editCostAcceptor
@@ -122,8 +123,14 @@ export declare class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshtei
 export declare class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LAStatus> {
     private str;
     private costModule;
+    private numericStateLookup;
+    private hiddenStateLookup;
+    private numericStateTransitions;
+    private initialState;
+    private initialHiddenState;
     constructor(str: A[], costModule: LevenshteinEditCostModule<A>);
     start(): LAState;
-    step(state: LAState, nextChar: A): LAState;
+    step(laState: LAState, nextChar: A): LAState;
     status(state: LAState): LAStatus;
+    private getNumericState(state);
 }

@@ -4,16 +4,23 @@
  */
 
 import "ts-jest";
-import { initializeLTVWithContext, RewardModuleSpecsPSG, RewardModuleSpecsSLD } from "../localTextVisor/Context";
+import {
+    initializeLTVWithContext,
+    RewardModuleSpecs,
+} from "../localTextVisor/Contexts/StringContext";
 import { LANGUAGE_MODULE_TYPE, QUALITY_MODULE_TYPE, REWARD_MODULE_TYPE, TOKENIZER_TYPE } from "../localTextVisor/Enums";
 import { sortedInsert, Tree } from "../localTextVisor/plaintext/Tree";
 
 test("Initialize LTV with Identity Predictor", () => {
     const idPipeline = initializeLTVWithContext({ moduleType: LANGUAGE_MODULE_TYPE.IDENTITY, tokenizerType: TOKENIZER_TYPE.CHARACTER }, { moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE }, {trie: {node: "", children: [], data: []}, prior: {}});
 
-    const result = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
+    let result = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE)
         .map((wPred) => wPred.prediction);
     expect(result).toEqual(["abracadabra"]);
+
+    result = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
+        .map((wPred) => wPred.prediction);
+    expect(result).toEqual([]);
 });
 
 interface TokenData {
@@ -42,7 +49,7 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and string length differen
         moduleType: LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH,
         tokenizerType: TOKENIZER_TYPE.WORD,
     };
-    const rewardSpecs: RewardModuleSpecsSLD = {
+    const rewardSpecs: RewardModuleSpecs = {
         moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE,
     };
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
@@ -50,8 +57,8 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and string length differen
     const results = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD).map((wPred) => wPred.prediction);
     expect(results).toEqual([
         "who should we heart attack",
-        "who should we hepatitis",
         "who should we health risk",
+        "who should we hepatitis",
         "who should we heal",
     ]);
 });
@@ -62,7 +69,7 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and prob-not-reject reward
         moduleType: LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH,
         tokenizerType: TOKENIZER_TYPE.WORD,
     };
-    const rewardSpecs: RewardModuleSpecsPSG = {
+    const rewardSpecs: RewardModuleSpecs = {
         moduleType: REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED,
         rejectionLogit: 0,
     };

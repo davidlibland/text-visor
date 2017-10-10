@@ -13,19 +13,19 @@ export interface LAStatus extends StatusContainer {
 }
 
 export interface LAState {
-    data: number[];
     histEditCost: {editCost: number, step: number};
+    state: number;
     step: number;
 }
 
 export abstract class LevenshteinEditCostModule<A> {
     /**
-     * @property maxEditCostThreshold
+     * @property rejectCostThreshold
      * @desc All costs are capped at this threshold (to keep the number of
      * states finite). Any state whose cost is as large as this threshold is
      * rejected.
      */
-    public maxEditCostThreshold: number;
+    public rejectCostThreshold: number;
 
     /**
      * @public
@@ -73,10 +73,12 @@ export class FlatLevenshteinCostModule<A> extends LevenshteinEditCostModule<A> {
      * states finite). Any state whose cost is as large as this threshold is
      * rejected.
      */
-    public maxEditCostThreshold: number;
-    constructor(maxEditCostThreshold: number) {
+    public rejectCostThreshold: number;
+    protected flatWeight: number;
+    constructor(rejectCostThreshold: number, flatWeight: number = 1) {
         super();
-        this.maxEditCostThreshold = maxEditCostThreshold;
+        this.rejectCostThreshold = rejectCostThreshold;
+        this.flatWeight = flatWeight;
     }
 
     /**
@@ -88,7 +90,7 @@ export class FlatLevenshteinCostModule<A> extends LevenshteinEditCostModule<A> {
      * @returns {number}
      */
     public swapCost(alpha: A, beta: A): number {
-        return alpha === beta ? 0 : 1;
+        return alpha === beta ? 0 : this.flatWeight;
     }
 
     /**
@@ -99,7 +101,7 @@ export class FlatLevenshteinCostModule<A> extends LevenshteinEditCostModule<A> {
      * @returns {number}
      */
     public deleteCost(alpha: A): number {
-        return 1;
+        return this.flatWeight;
     }
 
     /**
@@ -110,7 +112,7 @@ export class FlatLevenshteinCostModule<A> extends LevenshteinEditCostModule<A> {
      * @returns {number}
      */
     public insertCost(alpha: A): number {
-        return 1;
+        return this.flatWeight;
     }
 
     /**
@@ -122,7 +124,7 @@ export class FlatLevenshteinCostModule<A> extends LevenshteinEditCostModule<A> {
      * @returns {boolean}
      */
     public editCostAcceptor(editCost: number, step: number): boolean {
-        return (editCost < this.maxEditCostThreshold);
+        return (editCost < this.rejectCostThreshold);
     }
 }
 
@@ -135,8 +137,8 @@ export class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshteinCostMod
      */
     public maxEditCostThreshold: number;
     protected reletiveAcceptanceThreshold: number;
-    constructor(reletiveAcceptanceThreshold: number, maxEditCostThreshold: number) {
-        super(maxEditCostThreshold);
+    constructor(reletiveAcceptanceThreshold: number, rejectCostThreshold: number, flatWeight: number = 1) {
+        super(rejectCostThreshold, flatWeight);
         this.reletiveAcceptanceThreshold = reletiveAcceptanceThreshold;
     }
 
@@ -149,77 +151,126 @@ export class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshteinCostMod
      * @returns {boolean}
      */
     public editCostAcceptor(editCost: number, step: number): boolean {
-        return (editCost <= this.reletiveAcceptanceThreshold * step);
+        return (editCost < this.rejectCostThreshold) && (editCost <= this.reletiveAcceptanceThreshold * step);
     }
 }
 
 export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LAStatus> {
     private str: A[];
     private costModule;
+    private numericStateLookup: Map<number[], number>;
+    private hiddenStateLookup: number[][];
+    private numericStateTransitions: Map<number, number>;
+    private initialState: LAState;
+    private initialHiddenState: number[];
 
     constructor(str: A[], costModule: LevenshteinEditCostModule<A>) {
         super();
         this.str = str;
         this.costModule = costModule;
-    }
-
-    public start(): LAState {
-        return {
-            data: Array.from(Array(this.str.length + 1).keys()),
+        this.numericStateLookup = new Map<number[], number>();
+        this.hiddenStateLookup = [];
+        this.numericStateTransitions = new Map<number, number>();
+        const initialNumericState = this.getNumericState(Array.from(Array(this.str.length + 1).keys()));
+        this.initialState = {
             histEditCost: {editCost: this.str.length, step: 0},
+            state: initialNumericState,
             step: 0,
         };
     }
 
-    public step(state: LAState, nextChar: A): LAState {
-        const newState: LAState = {
-            data: [state.data[0] + this.costModule.deleteCost(nextChar)],
-            histEditCost: state.histEditCost,
-            step: state.step + 1,
-        };
-        for (let i = 0; i < state.data.length - 1; i++) {
-            newState.data.push(Math.min(
-                newState.data[i] + this.costModule.insertCost(this.str[i]),
-                state.data[i] + this.costModule.swapCost(nextChar, this.str[i]),
-                state.data[i + 1] + this.costModule.deleteCost(nextChar),
-                this.costModule.maxEditCostThreshold,
-            ));
+    public start(): LAState {
+        return this.initialState;
+    }
+
+    public step(laState: LAState, nextChar: A): LAState {
+        const sourceNumericState = laState.state;
+        if (sourceNumericState >= this.hiddenStateLookup.length) {
+            console.warn(`The State ${sourceNumericState} has never been seen before.` +
+                `Pass only allowed states to the automaton's step method.`);
+            return laState;
         }
-        const curEditCost = {
-            editCost: newState.data[newState.data.length - 1],
-            step: newState.step,
-        };
-        if (this.status({... newState, histEditCost: curEditCost }).status === STATUS_TYPE.ACCEPT) {
-            if (this.status(state).status === STATUS_TYPE.ACCEPT) {
-                if (newState.data[newState.data.length - 1] < newState.histEditCost.editCost) {
-                    newState.histEditCost = curEditCost;
-                }
-            } else {
-                newState.histEditCost = curEditCost;
+        let targetNumericState: number;
+        let targetHiddenState: number[];
+        if ( this.numericStateTransitions.get(sourceNumericState) ) {
+            targetNumericState = this.numericStateTransitions.get(sourceNumericState);
+            targetHiddenState = this.hiddenStateLookup[targetNumericState];
+        } else {
+            const sourceHiddenState = this.hiddenStateLookup[laState.state];
+            targetHiddenState = [sourceHiddenState[0] + this.costModule.deleteCost(nextChar)];
+            for (let i = 0; i < sourceHiddenState.length - 1; i++) {
+                targetHiddenState.push(Math.min(
+                    targetHiddenState[i] + this.costModule.insertCost(this.str[i]),
+                    sourceHiddenState[i] + this.costModule.swapCost(nextChar, this.str[i]),
+                    sourceHiddenState[i + 1] + this.costModule.deleteCost(nextChar),
+                    this.costModule.rejectCostThreshold,
+                ));
             }
+            targetNumericState = this.getNumericState(targetHiddenState);
         }
-        return newState;
+        const targetLaState: LAState = {
+            histEditCost: laState.histEditCost,
+            state: targetNumericState,
+            step: laState.step + 1,
+        };
+        const targetStep = laState.step + 1;
+        const targetEditCost = {
+            editCost: targetHiddenState[targetHiddenState.length - 1],
+            step: targetStep,
+        };
+        const sourceHistEditCost = laState.histEditCost;
+        const targetLAStateProposal = {state: targetNumericState, histEditCost: targetEditCost, step: targetStep};
+        if (this.status(targetLAStateProposal).status === STATUS_TYPE.ACCEPT) {
+            if (this.status(laState).status === STATUS_TYPE.ACCEPT) {
+                if (targetHiddenState[targetHiddenState.length - 1] > laState.histEditCost.editCost) {
+                    targetLAStateProposal.histEditCost = sourceHistEditCost;
+                }
+            }
+        } else {
+            targetLAStateProposal.histEditCost = sourceHistEditCost;
+        }
+        return targetLAStateProposal;
     }
 
     public status(state: LAState): LAStatus {
+        if (state.state >= this.hiddenStateLookup.length) {
+            console.warn(`The State ${state.state} has never been seen before.` +
+                `Pass only allowed states to the automaton's step method.`);
+            return {
+                editCost: this.costModule.rejectCostThreshold,
+                status: STATUS_TYPE.REJECT,
+                step: state.step,
+            };
+        }
         if (this.costModule.editCostAcceptor(state.histEditCost.editCost, state.histEditCost.step)) {
             return {
                 editCost: state.histEditCost.editCost,
                 status: STATUS_TYPE.ACCEPT,
                 step: state.histEditCost.step,
             };
-        } else if (this.costModule.editCostAcceptor(Math.min(...state.data), state.step)) {
+        } else if (this.costModule.editCostAcceptor(Math.min(...this.hiddenStateLookup[state.state]), state.step)) {
             return {
-                editCost: this.costModule.maxEditCostThreshold,
+                editCost: this.costModule.rejectCostThreshold,
                 status: STATUS_TYPE.UNKNOWN,
                 step: state.step,
             };
         } else {
             return {
-                editCost: this.costModule.maxEditCostThreshold,
+                editCost: this.costModule.rejectCostThreshold,
                 status: STATUS_TYPE.REJECT,
                 step: state.step,
             };
         }
+    }
+
+    private getNumericState(state: number[]): number {
+        const numericState = this.numericStateLookup.get(state);
+        if (numericState === undefined) {
+            const newNumericState = this.hiddenStateLookup.length;
+            this.numericStateLookup.set(state, newNumericState);
+            this.hiddenStateLookup.push(state);
+            return newNumericState;
+        }
+        return numericState;
     }
 }

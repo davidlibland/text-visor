@@ -9,23 +9,18 @@ const Abstract_1 = require("../Abstract");
 const LevenshteinAutomata_1 = require("./LevenshteinAutomata");
 const Tree_1 = require("./Tree");
 class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
-    constructor(trie, splitter, maxEditCost, weightFunction, relEdit = false) {
+    constructor(trie, splitter, costModuleFactory) {
         super();
         this.trie = trie;
         this.splitter = splitter;
-        this.maxEdit = maxEditCost;
-        this.weightFunction = weightFunction;
-        this.relEdit = relEdit;
+        this.costModuleFactory = costModuleFactory;
     }
     predict(prior, input) {
         const chars = this.splitter(input);
-        const costModule = this.relEdit ?
-            new LevenshteinAutomata_1.FlatLevenshteinRelativeCostModule(this.maxEdit, this.maxEdit * chars.length * 2) :
-            new LevenshteinAutomata_1.FlatLevenshteinCostModule(this.maxEdit + 1);
-        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, costModule);
+        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
         const fuzzyCompletions = Tree_1.automatonTreeSearch(this.trie, leven, leven.start());
         const addMetadata = (completion) => {
-            return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: this.weightFunction(completion.editCost) * prior(completion.prediction) });
+            return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: Math.exp(-completion.editCost) * prior(completion.prediction) });
         };
         return fuzzyCompletions
             .map(addMetadata)
@@ -67,4 +62,8 @@ class TokenizingPredictor extends Abstract_1.AbstractPredictor {
     }
 }
 exports.TokenizingPredictor = TokenizingPredictor;
+var LevenshteinAutomata_2 = require("./LevenshteinAutomata");
+exports.FlatLevenshteinRelativeCostModule = LevenshteinAutomata_2.FlatLevenshteinRelativeCostModule;
+exports.FlatLevenshteinCostModule = LevenshteinAutomata_2.FlatLevenshteinCostModule;
+exports.LevenshteinEditCostModule = LevenshteinAutomata_2.LevenshteinEditCostModule;
 //# sourceMappingURL=FuzzyTrieSearch.js.map

@@ -7,7 +7,7 @@ function __export(m) {
     for (var p in m) if (!exports.hasOwnProperty(p)) exports[p] = m[p];
 }
 Object.defineProperty(exports, "__esModule", { value: true });
-__export(require("./localTextVisor/Context"));
+__export(require("./localTextVisor/Contexts/StringContext"));
 var Abstract_1 = require("./localTextVisor/Abstract");
 exports.AbstractPipeline = Abstract_1.AbstractPipeline;
 __export(require("./localTextVisor/Enums"));

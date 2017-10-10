@@ -5,6 +5,7 @@
  */
 import { AbstractPredictor, MapPrior, WeightedPrediction } from "../Abstract";
 import { HasLengthType } from "../StandardLTVModules";
+import { LevenshteinEditCostModule } from "./LevenshteinAutomata";
 import { Tree } from "./Tree";
 export declare type SplitterType<T, A> = (input: T) => A[];
 export declare type CombinerType<T, A> = (...components: A[]) => T;
@@ -17,12 +18,10 @@ export declare type InputAndPositionType<T> = {
 export declare class FuzzyTriePredictor<T = string, A = string, V extends object = object> extends AbstractPredictor<T, T, MapPrior<T>, V & CursorPositionType> {
     private trie;
     private splitter;
-    private maxEdit;
-    private weightFunction;
-    private relEdit;
+    private costModuleFactory;
     constructor(trie: Tree<A, {
         prediction: T;
-    } & V>, splitter: SplitterType<T, A>, maxEditCost: number, weightFunction: (editCost: number) => number, relEdit?: boolean);
+    } & V>, splitter: SplitterType<T, A>, costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>);
     predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType>;
 }
 export declare class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends object = object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V & CursorPositionType> {
@@ -34,3 +33,4 @@ export declare class TokenizingPredictor<T extends HasLengthType = string, A = s
         cursorPosition: number;
     }>;
 }
+export { FlatLevenshteinRelativeCostModule, FlatLevenshteinCostModule, LevenshteinEditCostModule } from "./LevenshteinAutomata";

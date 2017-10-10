@@ -47,11 +47,13 @@ export const TOKENIZER_TYPE: EnumTypeValue<TokenizerType> = {
 
 // These are reward module enums.
 export type RewardModuleType =
+    "C" |
     "SLD" |
     "ED" |
     "PSG";
 
 export const REWARD_MODULE_TYPE: EnumTypeValue<RewardModuleType> = {
+    CONSTANT: "C",
     EDIT_DISTANCE: "ED",
     LENGTH_DIFFERENCE: "SLD",
     PROB_OF_NOT_REJECTING_SYMBOLS_GAINED: "PSG",

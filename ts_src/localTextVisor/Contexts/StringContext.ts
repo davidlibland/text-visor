@@ -7,7 +7,7 @@ import {
     AbstractPipeline,
     AbstractPredictor,
     AbstractValueDifferential,
-} from "./Abstract";
+} from "../Abstract";
 import {
     CaseSensitivityType,
     LANGUAGE_MODULE_TYPE,
@@ -15,26 +15,36 @@ import {
     REWARD_MODULE_TYPE,
     RewardModuleType,
     TOKENIZER_TYPE, TokenizerType,
-} from "./Enums";
+} from "../Enums";
 import {
     MapPredictor,
-} from "./LanguageStub";
+} from "../LanguageStub";
 import {
+    FlatLevenshteinCostModule,
+    FlatLevenshteinRelativeCostModule,
     FuzzyTriePredictor,
+    LevenshteinEditCostModule,
     TokenizingPredictor,
-} from "./plaintext/FuzzyTrieSearch";
-import { Tree } from "./plaintext/Tree";
+} from "../plaintext/FuzzyTrieSearch";
+import { Tree } from "../plaintext/Tree";
 import {
+    FlatDifferential,
     HasLengthType,
     LengthValueDifferential,
-    ProbOfNotRejectingSymbolsGainedDifferential,
+    ProbOfNotRejectingSymbolsGainedDifferential as PRNSGDifferential,
     RankedQualityAssessor,
     StandardPipeline,
-} from "./StandardLTVModules";
+} from "../StandardLTVModules";
 
 export interface LanguageModuleSpecsConstraints {
     moduleType: LanguageModuleType;
 }
+
+export interface LanguageModuleSpecsID extends LanguageModuleSpecsConstraints {
+    moduleType: "ID";
+    tokenizerType: TokenizerType;
+}
+
 export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
     moduleType: "FTS";
     maxEditDistance: number;
@@ -49,7 +59,14 @@ export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints 
     tokenizerType: TokenizerType;
 }
 
-export type LanguageModuleSpecs = LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS;
+export type LanguageModuleSpecs =
+    LanguageModuleSpecsID |
+    LanguageModuleSpecsFTS |
+    LanguageModuleSpecsRFTS |
+    {
+        moduleType: LanguageModuleType,
+        tokenizerType: TokenizerType;
+    };
 
 export interface RewardModuleSpecsConstraints {
     moduleType: RewardModuleType;
@@ -64,7 +81,12 @@ export interface RewardModuleSpecsPSG extends RewardModuleSpecsConstraints  {
     rejectionLogit: number;
 }
 
-export type RewardModuleSpecs = RewardModuleSpecsSLD | RewardModuleSpecsPSG;
+export type RewardModuleSpecs =
+    RewardModuleSpecsSLD |
+    RewardModuleSpecsPSG |
+    {
+        moduleType: RewardModuleType;
+    };
 
 export interface ContextDataType {
         trie: Tree<any, { prediction: any }>;
@@ -73,6 +95,27 @@ export interface ContextDataType {
 
 // ToDo: properly document this.
 // ToDo: Improve this function.
+function constructCostModuleFactory<A>(
+    languageSpecs: LanguageModuleSpecs,
+): (input: A[]) => LevenshteinEditCostModule<A> {
+    let maxEditCost: number;
+    if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
+        const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
+        maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
+            languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
+        return (input: A[]) => {
+            const rejectCostThreshold = maxEditCost * input.length * 2;
+            return new FlatLevenshteinRelativeCostModule(maxEditCost, rejectCostThreshold);
+        };
+    } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
+        const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
+        maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+        const rejectCostThreshold = maxEditCost + 1;
+        const costModule = new FlatLevenshteinCostModule(rejectCostThreshold);
+        return (input: A[]) => costModule;
+    }
+}
+
 // ToDo: Improve the typing of this function (currently uses any types).
 export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any> {
     let languageModule: AbstractPredictor<any, any>;
@@ -86,19 +129,8 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             languageModule = new MapPredictor<any, any>(inputConverter);
             break;
         case LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
-
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
-            let maxEditCost: number;
-            let relEdit: boolean;
-            if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
-                const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
-                maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
-                relEdit = true;
-            } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
-                const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
-                maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
-                relEdit = false;
-            }
+            const costModuleFactory = constructCostModuleFactory(languageSpecs);
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
@@ -110,13 +142,10 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             }
             const priorObj = (data as { prior: { [key: string]: number } }).prior;
             const charTokenizer = (token: string) => token.split("");
-            const weightFunction = (editCost: number) => Math.pow(0.5, editCost);
             const triePredictor = new FuzzyTriePredictor(
                 trie,
                 charTokenizer,
-                maxEditCost,
-                weightFunction,
-                relEdit,
+                costModuleFactory,
             );
             let contextTokenizer: (input: string) => string[];
             let contextJoiner: (...tokens) => string;
@@ -142,12 +171,15 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             throw new Error(`The language algorithm ${languageSpecs.moduleType} has not been implemented.`);
     }
     switch (rewardSpecs.moduleType) {
+        case REWARD_MODULE_TYPE.CONSTANT:
+            rewardModule = new FlatDifferential();
+            break;
         case REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
             rewardModule = new LengthValueDifferential<HasLengthType>();
             break;
         case REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
             const rewardSpecsPSG = rewardSpecs as RewardModuleSpecsPSG;
-            rewardModule = new ProbOfNotRejectingSymbolsGainedDifferential<HasLengthType>(rewardSpecsPSG.rejectionLogit);
+            rewardModule = new PRNSGDifferential<HasLengthType>(rewardSpecsPSG.rejectionLogit);
             break;
         default:
             throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);
