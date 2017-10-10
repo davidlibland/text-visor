@@ -23,13 +23,19 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             languageModule = new LanguageStub_1.MapPredictor(inputConverter);
             break;
         case Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
-            const languageSpecsRFTS = languageSpecs;
-            let maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
-            let relEdit = true;
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
-            const languageSpecsFTS = languageSpecs;
-            maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
-            relEdit = false;
+            let maxEditCost;
+            let relEdit;
+            if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
+                const languageSpecsRFTS = languageSpecs;
+                maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
+                relEdit = true;
+            }
+            else if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
+                const languageSpecsFTS = languageSpecs;
+                maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+                relEdit = false;
+            }
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);

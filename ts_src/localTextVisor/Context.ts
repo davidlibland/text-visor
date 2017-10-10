@@ -86,13 +86,19 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             languageModule = new MapPredictor<any, any>(inputConverter);
             break;
         case LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
-            const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
-            let maxEditCost: number = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1/3;
-            let relEdit = true;
+
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
-            const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
-            maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
-            relEdit = false;
+            let maxEditCost: number;
+            let relEdit: boolean;
+            if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
+                const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
+                maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ? languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
+                relEdit = true;
+            } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
+                const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
+                maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+                relEdit = false;
+            }
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
                 throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
