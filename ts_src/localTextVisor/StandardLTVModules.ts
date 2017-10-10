@@ -49,7 +49,9 @@ export class RankedQualityAssessor<S, T, E extends object> extends AbstractQuali
                     const expectedReward = wPred.weight * invNormalizer * reward;
                     return Object.assign({}, wPred, { weight: expectedReward });
                 };
-                qualityPredictions = predictions.map(expectedRewardComputation);
+                qualityPredictions = predictions
+                    .map(expectedRewardComputation)
+                    .filter((wPred) => (wPred.weight > 0));
                 break;
             case QUALITY_MODULE_TYPE.CONFIDENCE:
                 qualityPredictions = predictions;
@@ -66,6 +68,12 @@ export class RankedQualityAssessor<S, T, E extends object> extends AbstractQuali
 
 export interface HasLengthType {
     length: number;
+}
+
+export class FlatDifferential<T> extends AbstractValueDifferential<T> {
+    public evaluate(alpha: T, beta: T): number {
+        return 1;
+    }
 }
 
 export class LengthValueDifferential<T extends HasLengthType> extends AbstractValueDifferential<T> {

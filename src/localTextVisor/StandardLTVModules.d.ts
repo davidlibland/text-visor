@@ -12,6 +12,9 @@ export declare class RankedQualityAssessor<S, T, E extends object> extends Abstr
 export interface HasLengthType {
     length: number;
 }
+export declare class FlatDifferential<T> extends AbstractValueDifferential<T> {
+    evaluate(alpha: T, beta: T): number;
+}
 export declare class LengthValueDifferential<T extends HasLengthType> extends AbstractValueDifferential<T> {
     evaluate(alpha: T, beta: T): number;
 }

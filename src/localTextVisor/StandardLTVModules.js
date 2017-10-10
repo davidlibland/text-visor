@@ -28,7 +28,9 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
                     const expectedReward = wPred.weight * invNormalizer * reward;
                     return Object.assign({}, wPred, { weight: expectedReward });
                 };
-                qualityPredictions = predictions.map(expectedRewardComputation);
+                qualityPredictions = predictions
+                    .map(expectedRewardComputation)
+                    .filter((wPred) => (wPred.weight > 0));
                 break;
             case Enums_1.QUALITY_MODULE_TYPE.CONFIDENCE:
                 qualityPredictions = predictions;
@@ -43,6 +45,12 @@ class RankedQualityAssessor extends Abstract_1.AbstractQualityAssessor {
     }
 }
 exports.RankedQualityAssessor = RankedQualityAssessor;
+class FlatDifferential extends Abstract_1.AbstractValueDifferential {
+    evaluate(alpha, beta) {
+        return 1;
+    }
+}
+exports.FlatDifferential = FlatDifferential;
 class LengthValueDifferential extends Abstract_1.AbstractValueDifferential {
     evaluate(alpha, beta) {
         return Math.abs(beta.length - alpha.length);
