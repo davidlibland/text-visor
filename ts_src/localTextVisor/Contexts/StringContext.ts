@@ -179,6 +179,7 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
             inputConverter = (input) => input;
             languageModule = new MapPredictor<any, any>(inputConverter);
             break;
+        case LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
         case LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
             const costModuleFactory = constructCostModuleFactory(languageSpecs);
