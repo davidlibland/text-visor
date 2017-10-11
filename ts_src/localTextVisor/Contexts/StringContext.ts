@@ -50,6 +50,7 @@ export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
     maxEditDistance: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
+    flatCostUnit?: number;
 }
 
 export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints {
@@ -57,6 +58,7 @@ export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints 
     maxRelativeEditDistance: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
+    flatCostUnit?: number;
 }
 
 export type LanguageModuleSpecs =
@@ -98,20 +100,23 @@ export interface ContextDataType {
 function constructCostModuleFactory<A>(
     languageSpecs: LanguageModuleSpecs,
 ): (input: A[]) => LevenshteinEditCostModule<A> {
-    let maxEditCost: number;
     if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
         const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
-        maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
+        const maxRetiveEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
             languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
+        const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
+            languageSpecsRFTS.flatCostUnit : 1;
         return (input: A[]) => {
-            const rejectCostThreshold = maxEditCost * input.length * 2;
-            return new FlatLevenshteinRelativeCostModule(maxEditCost, rejectCostThreshold);
+            const rejectCostThreshold = maxRetiveEditCost * input.length * 2;
+            return new FlatLevenshteinRelativeCostModule(maxRetiveEditCost, rejectCostThreshold, flatWeight);
         };
     } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
         const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
-        maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+        const maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
         const rejectCostThreshold = maxEditCost + 1;
-        const costModule = new FlatLevenshteinCostModule(rejectCostThreshold);
+        const flatWeight = languageSpecsFTS.flatCostUnit !== undefined ?
+            languageSpecsFTS.flatCostUnit : 1;
+        const costModule = new FlatLevenshteinCostModule(rejectCostThreshold, flatWeight);
         return (input: A[]) => costModule;
     }
 }

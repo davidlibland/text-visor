@@ -17,12 +17,14 @@ export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
     maxEditDistance: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
+    flatCostUnit?: number;
 }
 export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints {
     moduleType: "RFTS";
     maxRelativeEditDistance: number;
     caseSensitivity?: CaseSensitivityType;
     tokenizerType: TokenizerType;
+    flatCostUnit?: number;
 }
 export declare type LanguageModuleSpecs = LanguageModuleSpecsID | LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS | {
     moduleType: LanguageModuleType;

@@ -1,11 +1,12 @@
 import { AbstractAutomaton, StatusContainer, StatusType } from "./AbstractAutomata";
 export interface LAStatus extends StatusContainer {
     status: StatusType;
-    editCost: number;
+    prefixEditCost: number;
     step: number;
+    editCost: number;
 }
 export interface LAState {
-    histEditCost: {
+    prefixEditCost: {
         editCost: number;
         step: number;
     };
@@ -24,6 +25,7 @@ export declare abstract class LevenshteinEditCostModule<A> {
      * @public
      * @method swapCost
      * @desc this is the cost of swapping alpha for beta; must be non-negative.
+     * (i.e. Cost of swapping unintended alpha and for intended beta).
      * @param {A} alpha
      * @param {A} beta
      * @returns {number}
@@ -33,6 +35,7 @@ export declare abstract class LevenshteinEditCostModule<A> {
      * @public
      * @method deleteCost
      * @desc this is the cost of deleting alpha; must be non-negative.
+     * (i.e. Cost of deleting an unintended symbol alpha).
      * @param {A} alpha
      * @returns {number}
      */
@@ -41,6 +44,7 @@ export declare abstract class LevenshteinEditCostModule<A> {
      * @public
      * @method insertCost
      * @desc this is the cost of inserting alpha; must be non-negative.
+     * (i.e. Cost of inserting an intended symbol alpha).
      * @param {A} alpha
      * @returns {number}
      */

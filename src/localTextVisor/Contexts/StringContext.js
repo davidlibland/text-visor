@@ -11,21 +11,24 @@ const StandardLTVModules_1 = require("../StandardLTVModules");
 // ToDo: properly document this.
 // ToDo: Improve this function.
 function constructCostModuleFactory(languageSpecs) {
-    let maxEditCost;
     if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
         const languageSpecsRFTS = languageSpecs;
-        maxEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
+        const maxRetiveEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
             languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
+        const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
+            languageSpecsRFTS.flatCostUnit : 1;
         return (input) => {
-            const rejectCostThreshold = maxEditCost * input.length * 2;
-            return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxEditCost, rejectCostThreshold);
+            const rejectCostThreshold = maxRetiveEditCost * input.length * 2;
+            return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxRetiveEditCost, rejectCostThreshold, flatWeight);
         };
     }
     else if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
         const languageSpecsFTS = languageSpecs;
-        maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+        const maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
         const rejectCostThreshold = maxEditCost + 1;
-        const costModule = new FuzzyTrieSearch_1.FlatLevenshteinCostModule(rejectCostThreshold);
+        const flatWeight = languageSpecsFTS.flatCostUnit !== undefined ?
+            languageSpecsFTS.flatCostUnit : 1;
+        const costModule = new FuzzyTrieSearch_1.FlatLevenshteinCostModule(rejectCostThreshold, flatWeight);
         return (input) => costModule;
     }
 }

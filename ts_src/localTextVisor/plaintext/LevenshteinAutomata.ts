@@ -8,12 +8,13 @@ import { AbstractAutomaton, StatusContainer, StatusType, STATUS_TYPE } from "./A
 
 export interface LAStatus extends StatusContainer {
     status: StatusType;
-    editCost: number;
+    prefixEditCost: number;
     step: number;
+    editCost: number;
 }
 
 export interface LAState {
-    histEditCost: {editCost: number, step: number};
+    prefixEditCost: {editCost: number, step: number};
     state: number;
     step: number;
 }
@@ -31,6 +32,7 @@ export abstract class LevenshteinEditCostModule<A> {
      * @public
      * @method swapCost
      * @desc this is the cost of swapping alpha for beta; must be non-negative.
+     * (i.e. Cost of swapping unintended alpha and for intended beta).
      * @param {A} alpha
      * @param {A} beta
      * @returns {number}
@@ -41,6 +43,7 @@ export abstract class LevenshteinEditCostModule<A> {
      * @public
      * @method deleteCost
      * @desc this is the cost of deleting alpha; must be non-negative.
+     * (i.e. Cost of deleting an unintended symbol alpha).
      * @param {A} alpha
      * @returns {number}
      */
@@ -50,6 +53,7 @@ export abstract class LevenshteinEditCostModule<A> {
      * @public
      * @method insertCost
      * @desc this is the cost of inserting alpha; must be non-negative.
+     * (i.e. Cost of inserting an intended symbol alpha).
      * @param {A} alpha
      * @returns {number}
      */
@@ -171,9 +175,16 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         this.numericStateLookup = new Map<number[], number>();
         this.hiddenStateLookup = [];
         this.numericStateTransitions = new Map<number, number>();
-        const initialNumericState = this.getNumericState(Array.from(Array(this.str.length + 1).keys()));
+        const initialHiddenState = str.reduce<number[]>((accState, char) => {
+                const prevValue = accState[accState.length - 1];
+                costModule.insertCost(char);
+                return [...accState, prevValue + costModule.deleteCost(char)];
+            },
+            [0],
+        );
+        const initialNumericState = this.getNumericState(initialHiddenState);
         this.initialState = {
-            histEditCost: {editCost: this.str.length, step: 0},
+            prefixEditCost: {editCost: initialHiddenState[initialHiddenState.length - 1], step: 0},
             state: initialNumericState,
             step: 0,
         };
@@ -197,19 +208,19 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             targetHiddenState = this.hiddenStateLookup[targetNumericState];
         } else {
             const sourceHiddenState = this.hiddenStateLookup[laState.state];
-            targetHiddenState = [sourceHiddenState[0] + this.costModule.deleteCost(nextChar)];
+            targetHiddenState = [sourceHiddenState[0] + this.costModule.insertCost(nextChar)];
             for (let i = 0; i < sourceHiddenState.length - 1; i++) {
                 targetHiddenState.push(Math.min(
-                    targetHiddenState[i] + this.costModule.insertCost(this.str[i]),
-                    sourceHiddenState[i] + this.costModule.swapCost(nextChar, this.str[i]),
-                    sourceHiddenState[i + 1] + this.costModule.deleteCost(nextChar),
+                    targetHiddenState[i] + this.costModule.deleteCost(this.str[i]),
+                    sourceHiddenState[i] + this.costModule.swapCost(this.str[i], nextChar),
+                    sourceHiddenState[i + 1] + this.costModule.insertCost(nextChar),
                     this.costModule.rejectCostThreshold,
                 ));
             }
             targetNumericState = this.getNumericState(targetHiddenState);
         }
         const targetLaState: LAState = {
-            histEditCost: laState.histEditCost,
+            prefixEditCost: laState.prefixEditCost,
             state: targetNumericState,
             step: laState.step + 1,
         };
@@ -218,16 +229,20 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             editCost: targetHiddenState[targetHiddenState.length - 1],
             step: targetStep,
         };
-        const sourceHistEditCost = laState.histEditCost;
-        const targetLAStateProposal = {state: targetNumericState, histEditCost: targetEditCost, step: targetStep};
+        const sourceHistEditCost = laState.prefixEditCost;
+        const targetLAStateProposal: LAState = {
+            prefixEditCost: targetEditCost,
+            state: targetNumericState,
+            step: targetStep,
+        };
         if (this.status(targetLAStateProposal).status === STATUS_TYPE.ACCEPT) {
             if (this.status(laState).status === STATUS_TYPE.ACCEPT) {
-                if (targetHiddenState[targetHiddenState.length - 1] > laState.histEditCost.editCost) {
-                    targetLAStateProposal.histEditCost = sourceHistEditCost;
+                if (targetHiddenState[targetHiddenState.length - 1] > laState.prefixEditCost.editCost) {
+                    targetLAStateProposal.prefixEditCost = sourceHistEditCost;
                 }
             }
         } else {
-            targetLAStateProposal.histEditCost = sourceHistEditCost;
+            targetLAStateProposal.prefixEditCost = sourceHistEditCost;
         }
         return targetLAStateProposal;
     }
@@ -238,25 +253,32 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
                 `Pass only allowed states to the automaton's step method.`);
             return {
                 editCost: this.costModule.rejectCostThreshold,
+                prefixEditCost: this.costModule.rejectCostThreshold,
                 status: STATUS_TYPE.REJECT,
                 step: state.step,
             };
         }
-        if (this.costModule.editCostAcceptor(state.histEditCost.editCost, state.histEditCost.step)) {
+        if (this.costModule.editCostAcceptor(state.prefixEditCost.editCost, state.prefixEditCost.step)) {
+            const curState = this.hiddenStateLookup[state.state];
             return {
-                editCost: state.histEditCost.editCost,
+                editCost: curState[curState.length - 1],
+                prefixEditCost: state.prefixEditCost.editCost,
                 status: STATUS_TYPE.ACCEPT,
-                step: state.histEditCost.step,
+                step: state.prefixEditCost.step,
             };
         } else if (this.costModule.editCostAcceptor(Math.min(...this.hiddenStateLookup[state.state]), state.step)) {
+            const curState = this.hiddenStateLookup[state.state];
             return {
-                editCost: this.costModule.rejectCostThreshold,
+                editCost: curState[curState.length - 1],
+                prefixEditCost: this.hiddenStateLookup[state.state][this.hiddenStateLookup[state.state].length - 1],
                 status: STATUS_TYPE.UNKNOWN,
                 step: state.step,
             };
         } else {
+            const curState = this.hiddenStateLookup[state.state];
             return {
-                editCost: this.costModule.rejectCostThreshold,
+                editCost: curState[curState.length - 1],
+                prefixEditCost: this.costModule.rejectCostThreshold,
                 status: STATUS_TYPE.REJECT,
                 step: state.step,
             };

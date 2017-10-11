@@ -50,7 +50,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
             return {
                 ...completion,
                 cursorPosition: this.splitter(completion.prediction).length,
-                weight: Math.exp(-completion.editCost) * prior(completion.prediction),
+                weight: Math.exp(-completion.prefixEditCost) * prior(completion.prediction),
             };
         };
         return fuzzyCompletions
