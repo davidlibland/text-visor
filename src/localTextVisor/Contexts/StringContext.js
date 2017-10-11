@@ -62,6 +62,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             inputConverter = (input) => input;
             languageModule = new LanguageStub_1.MapPredictor(inputConverter);
             break;
+        case Enums_1.LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
             const costModuleFactory = constructCostModuleFactory(languageSpecs);
