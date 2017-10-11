@@ -112,8 +112,8 @@ export declare class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshtei
      * rejected.
      */
     maxEditCostThreshold: number;
-    protected reletiveAcceptanceThreshold: number;
-    constructor(reletiveAcceptanceThreshold: number, rejectCostThreshold: number, flatWeight?: number);
+    protected relativeAcceptanceThreshold: number;
+    constructor(relativeAcceptanceThreshold: number, rejectCostThreshold: number, flatWeight?: number);
     /**
      * @public
      * @method editCostAcceptor

@@ -140,10 +140,10 @@ export class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshteinCostMod
      * rejected.
      */
     public maxEditCostThreshold: number;
-    protected reletiveAcceptanceThreshold: number;
-    constructor(reletiveAcceptanceThreshold: number, rejectCostThreshold: number, flatWeight: number = 1) {
+    protected relativeAcceptanceThreshold: number;
+    constructor(relativeAcceptanceThreshold: number, rejectCostThreshold: number, flatWeight: number = 1) {
         super(rejectCostThreshold, flatWeight);
-        this.reletiveAcceptanceThreshold = reletiveAcceptanceThreshold;
+        this.relativeAcceptanceThreshold = relativeAcceptanceThreshold;
     }
 
     /**
@@ -155,7 +155,7 @@ export class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshteinCostMod
      * @returns {boolean}
      */
     public editCostAcceptor(editCost: number, step: number): boolean {
-        return (editCost < this.rejectCostThreshold) && (editCost <= this.reletiveAcceptanceThreshold * step);
+        return (editCost < this.rejectCostThreshold) && (editCost <= this.relativeAcceptanceThreshold * step);
     }
 }
 

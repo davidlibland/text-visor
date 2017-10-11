@@ -59,9 +59,9 @@ class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
 }
 exports.FlatLevenshteinCostModule = FlatLevenshteinCostModule;
 class FlatLevenshteinRelativeCostModule extends FlatLevenshteinCostModule {
-    constructor(reletiveAcceptanceThreshold, rejectCostThreshold, flatWeight = 1) {
+    constructor(relativeAcceptanceThreshold, rejectCostThreshold, flatWeight = 1) {
         super(rejectCostThreshold, flatWeight);
-        this.reletiveAcceptanceThreshold = reletiveAcceptanceThreshold;
+        this.relativeAcceptanceThreshold = relativeAcceptanceThreshold;
     }
     /**
      * @public
@@ -72,7 +72,7 @@ class FlatLevenshteinRelativeCostModule extends FlatLevenshteinCostModule {
      * @returns {boolean}
      */
     editCostAcceptor(editCost, step) {
-        return (editCost < this.rejectCostThreshold) && (editCost <= this.reletiveAcceptanceThreshold * step);
+        return (editCost < this.rejectCostThreshold) && (editCost <= this.relativeAcceptanceThreshold * step);
     }
 }
 exports.FlatLevenshteinRelativeCostModule = FlatLevenshteinRelativeCostModule;

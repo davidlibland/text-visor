@@ -20,6 +20,13 @@ import {
     MapPredictor,
 } from "../LanguageStub";
 import {
+    charEnglishIntCosts,
+    CostElement,
+    DetailedBalanceCostModule,
+    PairCostElement,
+    qwertyIntCostsWithCaseChange,
+} from "../plaintext/DetailedBalancedCost";
+import {
     FlatLevenshteinCostModule,
     FlatLevenshteinRelativeCostModule,
     FuzzyTriePredictor,
@@ -61,10 +68,24 @@ export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints 
     flatCostUnit?: number;
 }
 
+export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsConstraints {
+    moduleType: "DBFTS";
+    maxRelativeEditDistance: number;
+    caseSensitivity?: CaseSensitivityType;
+    tokenizerType: TokenizerType;
+    symbolPairCosts?: Array<PairCostElement<any>>;
+    symbolCosts?: Array<CostElement<any>>;
+    defaultCost?: number;
+    swapScaleUnit?: number;
+    insertScaleUnit?: number;
+    deleteScaleUnit?: number;
+}
+
 export type LanguageModuleSpecs =
     LanguageModuleSpecsID |
     LanguageModuleSpecsFTS |
     LanguageModuleSpecsRFTS |
+    LanguageModuleSpecsDBFTS |
     {
         moduleType: LanguageModuleType,
         tokenizerType: TokenizerType;
@@ -102,13 +123,13 @@ function constructCostModuleFactory<A>(
 ): (input: A[]) => LevenshteinEditCostModule<A> {
     if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
         const languageSpecsRFTS = languageSpecs as LanguageModuleSpecsRFTS;
-        const maxRetiveEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
+        const maxRelativeEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
             languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
         const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
             languageSpecsRFTS.flatCostUnit : 1;
         return (input: A[]) => {
-            const rejectCostThreshold = maxRetiveEditCost * input.length * 2;
-            return new FlatLevenshteinRelativeCostModule(maxRetiveEditCost, rejectCostThreshold, flatWeight);
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
+            return new FlatLevenshteinRelativeCostModule(maxRelativeEditCost, rejectCostThreshold, flatWeight);
         };
     } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
         const languageSpecsFTS = languageSpecs as LanguageModuleSpecsFTS;
@@ -118,6 +139,31 @@ function constructCostModuleFactory<A>(
             languageSpecsFTS.flatCostUnit : 1;
         const costModule = new FlatLevenshteinCostModule(rejectCostThreshold, flatWeight);
         return (input: A[]) => costModule;
+    } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH) {
+        const languageSpecsDBFTS = languageSpecs as LanguageModuleSpecsDBFTS;
+        const maxRelativeEditCost = languageSpecsDBFTS.maxRelativeEditDistance !== undefined ?
+            languageSpecsDBFTS.maxRelativeEditDistance : 2 / 3;
+        const symbolPairCosts = languageSpecsDBFTS.symbolPairCosts !== undefined ?
+            languageSpecsDBFTS.symbolPairCosts : qwertyIntCostsWithCaseChange;
+        const symbolCosts = languageSpecsDBFTS.symbolCosts !== undefined ?
+            languageSpecsDBFTS.symbolCosts : charEnglishIntCosts;
+        const defaultCost = languageSpecsDBFTS.defaultCost;
+        const swapScaleUnit = languageSpecsDBFTS.swapScaleUnit;
+        const insertScaleUnit = languageSpecsDBFTS.insertScaleUnit;
+        const deleteScaleUnit = languageSpecsDBFTS.deleteScaleUnit;
+        return (input: A[]) => {
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
+            return new DetailedBalanceCostModule<A>(
+                maxRelativeEditCost,
+                rejectCostThreshold,
+                symbolPairCosts,
+                symbolCosts,
+                defaultCost,
+                swapScaleUnit,
+                insertScaleUnit,
+                deleteScaleUnit,
+            );
+        };
     }
 }
 

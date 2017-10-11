@@ -6,6 +6,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const Enums_1 = require("../Enums");
 const LanguageStub_1 = require("../LanguageStub");
+const DetailedBalancedCost_1 = require("../plaintext/DetailedBalancedCost");
 const FuzzyTrieSearch_1 = require("../plaintext/FuzzyTrieSearch");
 const StandardLTVModules_1 = require("../StandardLTVModules");
 // ToDo: properly document this.
@@ -13,13 +14,13 @@ const StandardLTVModules_1 = require("../StandardLTVModules");
 function constructCostModuleFactory(languageSpecs) {
     if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
         const languageSpecsRFTS = languageSpecs;
-        const maxRetiveEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
+        const maxRelativeEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
             languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
         const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
             languageSpecsRFTS.flatCostUnit : 1;
         return (input) => {
-            const rejectCostThreshold = maxRetiveEditCost * input.length * 2;
-            return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxRetiveEditCost, rejectCostThreshold, flatWeight);
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
+            return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxRelativeEditCost, rejectCostThreshold, flatWeight);
         };
     }
     else if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
@@ -30,6 +31,23 @@ function constructCostModuleFactory(languageSpecs) {
             languageSpecsFTS.flatCostUnit : 1;
         const costModule = new FuzzyTrieSearch_1.FlatLevenshteinCostModule(rejectCostThreshold, flatWeight);
         return (input) => costModule;
+    }
+    else if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH) {
+        const languageSpecsDBFTS = languageSpecs;
+        const maxRelativeEditCost = languageSpecsDBFTS.maxRelativeEditDistance !== undefined ?
+            languageSpecsDBFTS.maxRelativeEditDistance : 2 / 3;
+        const symbolPairCosts = languageSpecsDBFTS.symbolPairCosts !== undefined ?
+            languageSpecsDBFTS.symbolPairCosts : DetailedBalancedCost_1.qwertyIntCostsWithCaseChange;
+        const symbolCosts = languageSpecsDBFTS.symbolCosts !== undefined ?
+            languageSpecsDBFTS.symbolCosts : DetailedBalancedCost_1.charEnglishIntCosts;
+        const defaultCost = languageSpecsDBFTS.defaultCost;
+        const swapScaleUnit = languageSpecsDBFTS.swapScaleUnit;
+        const insertScaleUnit = languageSpecsDBFTS.insertScaleUnit;
+        const deleteScaleUnit = languageSpecsDBFTS.deleteScaleUnit;
+        return (input) => {
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
+            return new DetailedBalancedCost_1.DetailedBalanceCostModule(maxRelativeEditCost, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, swapScaleUnit, insertScaleUnit, deleteScaleUnit);
+        };
     }
 }
 // ToDo: Improve the typing of this function (currently uses any types).

@@ -61,11 +61,13 @@ export const REWARD_MODULE_TYPE: EnumTypeValue<RewardModuleType> = {
 
 // These are language module enums.
 export type LanguageModuleType =
+    "DBFTS" |
     "FTS" |
     "RFTS" |
     "ID";
 
 export const LANGUAGE_MODULE_TYPE: EnumTypeValue<LanguageModuleType> = {
+    DETAILED_BALANCED_FUZZY_TRIE_SEARCH: "DBFTS",
     FUZZY_TRIE_SEARCH: "FTS",
     IDENTITY: "ID",
     RELATIVELY_FUZZY_TRIE_SEARCH: "RFTS",

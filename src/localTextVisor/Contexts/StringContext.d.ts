@@ -4,6 +4,7 @@
  */
 import { AbstractPipeline } from "../Abstract";
 import { CaseSensitivityType, LanguageModuleType, RewardModuleType, TokenizerType } from "../Enums";
+import { CostElement, PairCostElement } from "../plaintext/DetailedBalancedCost";
 import { Tree } from "../plaintext/Tree";
 export interface LanguageModuleSpecsConstraints {
     moduleType: LanguageModuleType;
@@ -26,7 +27,19 @@ export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints 
     tokenizerType: TokenizerType;
     flatCostUnit?: number;
 }
-export declare type LanguageModuleSpecs = LanguageModuleSpecsID | LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS | {
+export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsConstraints {
+    moduleType: "DBFTS";
+    maxRelativeEditDistance: number;
+    caseSensitivity?: CaseSensitivityType;
+    tokenizerType: TokenizerType;
+    symbolPairCosts?: Array<PairCostElement<any>>;
+    symbolCosts?: Array<CostElement<any>>;
+    defaultCost?: number;
+    swapScaleUnit?: number;
+    insertScaleUnit?: number;
+    deleteScaleUnit?: number;
+}
+export declare type LanguageModuleSpecs = LanguageModuleSpecsID | LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS | LanguageModuleSpecsDBFTS | {
     moduleType: LanguageModuleType;
     tokenizerType: TokenizerType;
 };
