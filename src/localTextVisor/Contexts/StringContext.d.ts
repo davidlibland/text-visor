@@ -35,9 +35,10 @@ export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsConstraints
     symbolPairCosts?: Array<PairCostElement<any>>;
     symbolCosts?: Array<CostElement<any>>;
     defaultCost?: number;
-    swapScaleUnit?: number;
-    insertScaleUnit?: number;
-    deleteScaleUnit?: number;
+    baseInsertCost?: number;
+    baseDeleteCost?: number;
+    symbolPairCostScaleFactor?: number;
+    symbolCostScaleFactor?: number;
 }
 export declare type LanguageModuleSpecs = LanguageModuleSpecsID | LanguageModuleSpecsFTS | LanguageModuleSpecsRFTS | LanguageModuleSpecsDBFTS | {
     moduleType: LanguageModuleType;

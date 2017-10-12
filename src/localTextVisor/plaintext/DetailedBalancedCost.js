@@ -37,24 +37,33 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @param {Array<CostElement<A>>} symbolCosts The costs
      * correspond to the negative log frequency of the symbols in correct text.
      * @param {number} defaultCost To be used when no cost is specified
-     * @param {number} swapScaleUnit
-     * @param {number} insertScaleUnit
-     * @param {number} deleteScaleUnit
+     * @param {number} baseInsertCost
+     * @param {number} baseDeleteCost
+     * @param {number} symbolPairCostScaleFactor
+     * @param {number} symbolCostScaleFactor
      */
-    constructor(relativeAcceptanceThreshold, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, swapScaleUnit = 1, insertScaleUnit = 1, deleteScaleUnit = 1) {
+    constructor(relativeAcceptanceThreshold, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, baseInsertCost, baseDeleteCost, symbolPairCostScaleFactor = 1, symbolCostScaleFactor = 1) {
         super(relativeAcceptanceThreshold, rejectCostThreshold);
-        const averageCost = Math.ceil([
-            ...symbolPairCosts.map(([key1, key2, cost]) => cost),
-            ...symbolCosts.map(([key, cost]) => cost),
-        ].reduce((avg, cost, i) => ((cost + avg * i) / (i + 1)), 0));
+        // Rescale the Cost data.
+        symbolPairCosts = symbolPairCosts
+            .map(([key1, key2, cost]) => [key1, key2, cost * symbolPairCostScaleFactor]);
+        symbolCosts = symbolCosts
+            .map(([key, cost]) => [key, cost * symbolCostScaleFactor]);
+        // Create the cost maps:
         this.symbolPairCostMap = new Map(symbolPairCosts
             .map(([key1, key2, cost]) => [[key1, key2], cost]));
         this.symbolCostMap = new Map(symbolCosts);
-        this.defaultCost = defaultCost !== undefined ? defaultCost : averageCost;
-        this.swapScaleUnit = swapScaleUnit;
-        this.insertScaleUnit = insertScaleUnit;
-        this.deleteScaleUnit = deleteScaleUnit;
+        // Validate them.
         this.validateCosts();
+        // Compute the average cost (to use as a default):
+        const averageCost = Math.ceil([
+            ...this.symbolPairCostMap.values(),
+            ...this.symbolCostMap.values(),
+        ].reduce((avg, cost, i) => ((cost + avg * i) / (i + 1)), 0));
+        // Fill in the remaining defaults.
+        this.defaultCost = defaultCost !== undefined ? defaultCost : averageCost;
+        this.baseInsertCost = baseInsertCost !== undefined ? baseInsertCost : averageCost;
+        this.baseDeleteCost = baseDeleteCost !== undefined ? baseDeleteCost : averageCost;
     }
     /**
      * @public
@@ -70,7 +79,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
         const targetCost = this.symbolCostMap.has(beta) ?
             this.symbolCostMap.get(beta) : this.defaultCost;
         const cost = transitionCost + targetCost;
-        return alpha === beta ? 0 : Math.max(cost * this.swapScaleUnit, 0);
+        return alpha === beta ? 0 : Math.max(cost, 0);
     }
     /**
      * @public
@@ -80,7 +89,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @returns {number}
      */
     deleteCost(alpha) {
-        return Math.max(this.defaultCost * this.deleteScaleUnit, 0);
+        return Math.max(this.baseDeleteCost, 0);
     }
     /**
      * @public
@@ -92,7 +101,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
     insertCost(alpha) {
         const cost = this.symbolCostMap.has(alpha) ?
             this.symbolCostMap.get(alpha) : this.defaultCost;
-        return Math.max(cost * this.insertScaleUnit, 0);
+        return Math.max(this.baseInsertCost + cost, 0);
     }
     /**
      * Ensures symmetry and positivity.

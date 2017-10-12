@@ -108,8 +108,8 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         }
         let targetNumericState;
         let targetHiddenState;
-        if (this.numericStateTransitions.get(sourceNumericState)) {
-            targetNumericState = this.numericStateTransitions.get(sourceNumericState);
+        if (this.numericStateTransitions.has([sourceNumericState, nextChar])) {
+            targetNumericState = this.numericStateTransitions.get([sourceNumericState, nextChar]);
             targetHiddenState = this.hiddenStateLookup[targetNumericState];
         }
         else {
@@ -119,6 +119,7 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
                 targetHiddenState.push(Math.min(targetHiddenState[i] + this.costModule.deleteCost(this.str[i]), sourceHiddenState[i] + this.costModule.swapCost(this.str[i], nextChar), sourceHiddenState[i + 1] + this.costModule.insertCost(nextChar), this.costModule.rejectCostThreshold));
             }
             targetNumericState = this.getNumericState(targetHiddenState);
+            this.numericStateTransitions.set([sourceNumericState, nextChar], targetNumericState);
         }
         const targetLaState = {
             prefixEditCost: laState.prefixEditCost,

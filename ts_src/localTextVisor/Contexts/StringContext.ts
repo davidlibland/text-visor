@@ -76,9 +76,10 @@ export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsConstraints
     symbolPairCosts?: Array<PairCostElement<any>>;
     symbolCosts?: Array<CostElement<any>>;
     defaultCost?: number;
-    swapScaleUnit?: number;
-    insertScaleUnit?: number;
-    deleteScaleUnit?: number;
+    baseInsertCost?: number;
+    baseDeleteCost?: number;
+    symbolPairCostScaleFactor?: number;
+    symbolCostScaleFactor?: number;
 }
 
 export type LanguageModuleSpecs =
@@ -148,9 +149,10 @@ function constructCostModuleFactory<A>(
         const symbolCosts = languageSpecsDBFTS.symbolCosts !== undefined ?
             languageSpecsDBFTS.symbolCosts : charEnglishIntCosts;
         const defaultCost = languageSpecsDBFTS.defaultCost;
-        const swapScaleUnit = languageSpecsDBFTS.swapScaleUnit;
-        const insertScaleUnit = languageSpecsDBFTS.insertScaleUnit;
-        const deleteScaleUnit = languageSpecsDBFTS.deleteScaleUnit;
+        const baseInsertCost = languageSpecsDBFTS.baseInsertCost;
+        const baseDeleteCost = languageSpecsDBFTS.baseDeleteCost;
+        const symbolPairCostScaleFactor = languageSpecsDBFTS.symbolPairCostScaleFactor;
+        const symbolCostScaleFactor = languageSpecsDBFTS.symbolCostScaleFactor;
         return (input: A[]) => {
             const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
             return new DetailedBalanceCostModule<A>(
@@ -159,9 +161,10 @@ function constructCostModuleFactory<A>(
                 symbolPairCosts,
                 symbolCosts,
                 defaultCost,
-                swapScaleUnit,
-                insertScaleUnit,
-                deleteScaleUnit,
+                baseInsertCost,
+                baseDeleteCost,
+                symbolPairCostScaleFactor,
+                symbolCostScaleFactor,
             );
         };
     }

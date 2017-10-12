@@ -9,9 +9,8 @@ export declare class DetailedBalanceCostModule<A> extends FlatLevenshteinRelativ
     protected symbolPairCostMap: Map<[A, A], number>;
     protected symbolCostMap: Map<A, number>;
     protected defaultCost: number;
-    protected swapScaleUnit: number;
-    protected insertScaleUnit: number;
-    protected deleteScaleUnit: number;
+    protected baseInsertCost: number;
+    protected baseDeleteCost: number;
     /**
      * @desc We assume that the process of editing an incorrect prefix to the
      * correct one can be modeled via a transition matrix which satisfies
@@ -43,11 +42,12 @@ export declare class DetailedBalanceCostModule<A> extends FlatLevenshteinRelativ
      * @param {Array<CostElement<A>>} symbolCosts The costs
      * correspond to the negative log frequency of the symbols in correct text.
      * @param {number} defaultCost To be used when no cost is specified
-     * @param {number} swapScaleUnit
-     * @param {number} insertScaleUnit
-     * @param {number} deleteScaleUnit
+     * @param {number} baseInsertCost
+     * @param {number} baseDeleteCost
+     * @param {number} symbolPairCostScaleFactor
+     * @param {number} symbolCostScaleFactor
      */
-    constructor(relativeAcceptanceThreshold: number, rejectCostThreshold: number, symbolPairCosts: Array<PairCostElement<A>>, symbolCosts: Array<CostElement<A>>, defaultCost?: number, swapScaleUnit?: number, insertScaleUnit?: number, deleteScaleUnit?: number);
+    constructor(relativeAcceptanceThreshold: number, rejectCostThreshold: number, symbolPairCosts: Array<PairCostElement<A>>, symbolCosts: Array<CostElement<A>>, defaultCost?: number, baseInsertCost?: number, baseDeleteCost?: number, symbolPairCostScaleFactor?: number, symbolCostScaleFactor?: number);
     /**
      * @public
      * @method swapCost

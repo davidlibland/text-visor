@@ -4,7 +4,12 @@
  */
 
 import { UnionKeyToValue } from "../Enums";
-import { AbstractAutomaton, StatusContainer, StatusType, STATUS_TYPE } from "./AbstractAutomata";
+import {
+    AbstractAutomaton,
+    STATUS_TYPE,
+    StatusContainer,
+    StatusType,
+} from "./AbstractAutomata";
 
 export interface LAStatus extends StatusContainer {
     status: StatusType;
