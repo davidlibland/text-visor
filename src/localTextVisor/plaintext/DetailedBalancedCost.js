@@ -70,7 +70,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
         const targetCost = this.symbolCostMap.has(beta) ?
             this.symbolCostMap.get(beta) : this.defaultCost;
         const cost = transitionCost + targetCost;
-        return alpha === beta ? 0 : Math.min(cost * this.swapScaleUnit, 0);
+        return alpha === beta ? 0 : Math.max(cost * this.swapScaleUnit, 0);
     }
     /**
      * @public
@@ -80,7 +80,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @returns {number}
      */
     deleteCost(alpha) {
-        return Math.min(this.defaultCost * this.deleteScaleUnit, 0);
+        return Math.max(this.defaultCost * this.deleteScaleUnit, 0);
     }
     /**
      * @public
@@ -92,7 +92,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
     insertCost(alpha) {
         const cost = this.symbolCostMap.has(alpha) ?
             this.symbolCostMap.get(alpha) : this.defaultCost;
-        return Math.min(cost * this.insertScaleUnit, 0);
+        return Math.max(cost * this.insertScaleUnit, 0);
     }
     /**
      * Ensures symmetry and positivity.
@@ -112,6 +112,9 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
             }
         }
         console.log("DB Cost Module Initialized.");
+        console.log(this.symbolPairCostMap);
+        console.log(this.symbolCostMap);
+        console.log(this.defaultCost);
     }
 }
 exports.DetailedBalanceCostModule = DetailedBalanceCostModule;
