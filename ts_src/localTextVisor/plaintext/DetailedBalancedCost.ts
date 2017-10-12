@@ -65,7 +65,7 @@ export class DetailedBalanceCostModule<A> extends FlatLevenshteinRelativeCostMod
         const averageCost = Math.ceil([
             ...symbolPairCosts.map(([key1, key2, cost]) => cost),
             ...symbolCosts.map(([key, cost]) => cost),
-        ].reduce((avg, cost, i) => ((cost + avg * i / (i + 1))), 0));
+        ].reduce((avg, cost, i) => ((cost + avg * i ) / (i + 1)), 0));
         this.symbolPairCostMap = new Map<[A, A], number>(
             symbolPairCosts
                 .map(([key1, key2, cost]: PairCostElement<A>): [[A, A], number] => [[key1, key2], cost]),

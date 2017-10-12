@@ -46,7 +46,7 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
         const averageCost = Math.ceil([
             ...symbolPairCosts.map(([key1, key2, cost]) => cost),
             ...symbolCosts.map(([key, cost]) => cost),
-        ].reduce((avg, cost, i) => ((cost + avg * i / (i + 1))), 0));
+        ].reduce((avg, cost, i) => ((cost + avg * i) / (i + 1)), 0));
         this.symbolPairCostMap = new Map(symbolPairCosts
             .map(([key1, key2, cost]) => [[key1, key2], cost]));
         this.symbolCostMap = new Map(symbolCosts);
