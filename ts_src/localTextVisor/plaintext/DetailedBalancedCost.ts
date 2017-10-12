@@ -136,10 +136,6 @@ export class DetailedBalanceCostModule<A> extends FlatLevenshteinRelativeCostMod
                 throw(new Error("Costs must be Positive."));
             }
         }
-        console.log("DB Cost Module Initialized.");
-        console.log(this.symbolPairCostMap)
-        console.log(this.symbolCostMap)
-        console.log(this.defaultCost)
     }
 }
 

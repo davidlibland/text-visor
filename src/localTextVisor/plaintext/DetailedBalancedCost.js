@@ -111,10 +111,6 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
                 throw (new Error("Costs must be Positive."));
             }
         }
-        console.log("DB Cost Module Initialized.");
-        console.log(this.symbolPairCostMap);
-        console.log(this.symbolCostMap);
-        console.log(this.defaultCost);
     }
 }
 exports.DetailedBalanceCostModule = DetailedBalanceCostModule;
