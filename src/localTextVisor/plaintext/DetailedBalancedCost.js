@@ -65,6 +65,9 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @returns {number}
      */
     swapCost(alpha, beta) {
+        if (alpha === beta) {
+            return 0;
+        }
         const transitionCost = this.symbolPairCostMap.has([alpha, beta]) ?
             this.symbolPairCostMap.get([alpha, beta]) : this.defaultCost;
         const targetCost = this.symbolCostMap.has(beta) ?

@@ -87,6 +87,9 @@ export class DetailedBalanceCostModule<A> extends FlatLevenshteinRelativeCostMod
      * @returns {number}
      */
     public swapCost(alpha: A, beta: A): number {
+        if (alpha === beta) {
+            return 0;
+        }
         const transitionCost = this.symbolPairCostMap.has([alpha, beta]) ?
             this.symbolPairCostMap.get([alpha, beta]) : this.defaultCost;
         const targetCost = this.symbolCostMap.has(beta) ?
