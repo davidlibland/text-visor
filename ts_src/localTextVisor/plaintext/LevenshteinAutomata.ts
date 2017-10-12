@@ -164,7 +164,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
     private costModule;
     private numericStateLookup: Map<number[], number>;
     private hiddenStateLookup: number[][];
-    private numericStateTransitions: Map<number, number>;
+    private numericStateTransitions: Map<[number, A], number>;
     private initialState: LAState;
     private initialHiddenState: number[];
 
@@ -174,7 +174,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         this.costModule = costModule;
         this.numericStateLookup = new Map<number[], number>();
         this.hiddenStateLookup = [];
-        this.numericStateTransitions = new Map<number, number>();
+        this.numericStateTransitions = new Map<[number, A], number>();
         const initialHiddenState = str.reduce<number[]>((accState, char) => {
                 const prevValue = accState[accState.length - 1];
                 costModule.insertCost(char);
@@ -203,8 +203,8 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         }
         let targetNumericState: number;
         let targetHiddenState: number[];
-        if ( this.numericStateTransitions.get(sourceNumericState) ) {
-            targetNumericState = this.numericStateTransitions.get(sourceNumericState);
+        if ( this.numericStateTransitions.has([sourceNumericState, nextChar]) ) {
+            targetNumericState = this.numericStateTransitions.get([sourceNumericState, nextChar]);
             targetHiddenState = this.hiddenStateLookup[targetNumericState];
         } else {
             const sourceHiddenState = this.hiddenStateLookup[laState.state];
@@ -218,6 +218,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
                 ));
             }
             targetNumericState = this.getNumericState(targetHiddenState);
+            this.numericStateTransitions.set([sourceNumericState, nextChar], targetNumericState);
         }
         const targetLaState: LAState = {
             prefixEditCost: laState.prefixEditCost,

@@ -208,8 +208,6 @@ test("FuzzyTreeSearch should find correct completions", () => {
     ].map(plucker));
 });
 
-
-
 test("FuzzyTreeSearch with Rel Edit Distance should find correct completions", () => {
     const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
