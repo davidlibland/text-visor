@@ -87,9 +87,6 @@ export class DetailedBalanceCostModule<A> extends FlatLevenshteinRelativeCostMod
      * @returns {number}
      */
     public swapCost(alpha: A, beta: A): number {
-        if (alpha === beta) {
-            return 0;
-        }
         const transitionCost = this.symbolPairCostMap.has([alpha, beta]) ?
             this.symbolPairCostMap.get([alpha, beta]) : this.defaultCost;
         const targetCost = this.symbolCostMap.has(beta) ?
@@ -306,13 +303,10 @@ const charEnglishPercentages: Array<CostElement<string>> = [
     ["}", 6.10223e-05],
 ];
 
-const normalizePercentagesToCosts = <A>(charPercentages: Array<CostElement<A>>) => {
-    const unNormalizedCharIntCosts: Array<CostElement<A>> = charPercentages
+const convertPercentagesToCosts = <A>(charPercentages: Array<CostElement<A>>) => {
+    return  charPercentages
         .map(([char, freq]: CostElement<A>): CostElement<A> => [char, -Math.log(freq * 0.01)]);
-
-    const minIntCost = Math.min(...unNormalizedCharIntCosts.map(([char, cost]) => cost));
-    return unNormalizedCharIntCosts.map(([char, cost]) => [char, cost - minIntCost]);
 };
 
-export const charEnglishIntCosts: Array<CostElement<string>> = normalizePercentagesToCosts(charEnglishPercentages)
+export const charEnglishIntCosts: Array<CostElement<string>> = convertPercentagesToCosts(charEnglishPercentages)
     .map(([char, cost]: CostElement<string>): CostElement<string> => [char, Math.round(cost)]);

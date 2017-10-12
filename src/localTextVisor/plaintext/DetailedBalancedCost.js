@@ -65,9 +65,6 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @returns {number}
      */
     swapCost(alpha, beta) {
-        if (alpha === beta) {
-            return 0;
-        }
         const transitionCost = this.symbolPairCostMap.has([alpha, beta]) ?
             this.symbolPairCostMap.get([alpha, beta]) : this.defaultCost;
         const targetCost = this.symbolCostMap.has(beta) ?
@@ -270,12 +267,10 @@ const charEnglishPercentages = [
     ["ä", 6.10223e-05],
     ["}", 6.10223e-05],
 ];
-const normalizePercentagesToCosts = (charPercentages) => {
-    const unNormalizedCharIntCosts = charPercentages
+const convertPercentagesToCosts = (charPercentages) => {
+    return charPercentages
         .map(([char, freq]) => [char, -Math.log(freq * 0.01)]);
-    const minIntCost = Math.min(...unNormalizedCharIntCosts.map(([char, cost]) => cost));
-    return unNormalizedCharIntCosts.map(([char, cost]) => [char, cost - minIntCost]);
 };
-exports.charEnglishIntCosts = normalizePercentagesToCosts(charEnglishPercentages)
+exports.charEnglishIntCosts = convertPercentagesToCosts(charEnglishPercentages)
     .map(([char, cost]) => [char, Math.round(cost)]);
 //# sourceMappingURL=DetailedBalancedCost.js.map
