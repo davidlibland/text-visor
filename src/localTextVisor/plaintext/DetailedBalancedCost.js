@@ -62,8 +62,8 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
         ].reduce((avg, cost, i) => ((cost + avg * i) / (i + 1)), 0));
         // Fill in the remaining defaults.
         this.defaultCost = defaultCost !== undefined ? defaultCost : averageCost;
-        this.baseInsertCost = baseInsertCost !== undefined ? baseInsertCost : averageCost;
-        this.baseDeleteCost = baseDeleteCost !== undefined ? baseDeleteCost : averageCost;
+        this.baseInsertCost = baseInsertCost !== undefined ? baseInsertCost : this.defaultCost;
+        this.baseDeleteCost = baseDeleteCost !== undefined ? baseDeleteCost : this.defaultCost;
     }
     /**
      * @public
