@@ -86,13 +86,13 @@ export function buildTreeFromPaths<A, V>(root: A, ...wrappedPaths: Array<{nodePa
 
 export function insert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
     if (token.length > 0) {
-        const currentSymbol = token.shift();
+        const currentSymbol = token[0];
         let branch = tree.children.find((child) => (child.node == currentSymbol));
         if (branch === undefined) {
             branch = { node: currentSymbol, children: [], data: [] };
             tree.children.push(branch);
         }
-        insert(branch, token, data);
+        insert(branch, token.slice(1), data);
     } else if (data) {
         tree.data.push(data);
     }
@@ -106,7 +106,7 @@ interface PotentialIndex {
 
 export function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, comparisonFunc: ((obj1: A, obj2: A) => number) = stdComparisonFunc) {
     if (token.length > 0) {
-        const currentSymbol = token.shift();
+        const currentSymbol = token[0];
         const childNodes = tree.children.map((x) => x.node);
         const potIndex = findObjectIndexInSortedArray<A>(currentSymbol, childNodes, comparisonFunc);
         if (!potIndex.exists) {
@@ -115,7 +115,7 @@ export function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, compa
             const newChild = { node: currentSymbol, children: [], data: [] };
             tree.children = [...leftChildren, newChild, ...rightChildren];
         }
-        sortedInsert(tree.children[potIndex.index], token, data, comparisonFunc);
+        sortedInsert(tree.children[potIndex.index], token.slice(1), data, comparisonFunc);
     } else if (data) {
         tree.data.push(data);
     }
@@ -134,7 +134,7 @@ const stdComparisonFunc = (a, b) => {
 
 export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
     if (token.length > 0) {
-        const currentSymbol = token.shift();
+        const currentSymbol = token[0];
         let branch;
         if (tree.children.length > 0 ? tree.children[tree.children.length - 1].node == currentSymbol : false) {
             branch = tree.children[tree.children.length - 1];
@@ -142,7 +142,7 @@ export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
             branch = { node: currentSymbol, children: [], data: [] };
             tree.children.push(branch);
         }
-        lazyInsert(branch, token, data);
+        lazyInsert(branch, token.slice(1), data);
     } else if (data) {
         tree.data.push(data);
     }
