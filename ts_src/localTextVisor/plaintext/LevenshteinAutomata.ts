@@ -169,7 +169,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
     private costModule;
     private numericStateLookup: {[key: string]: number};
     private hiddenStateLookup: number[][];
-    private numericStateTransitions: Map<[number, A], number>;
+    private numericStateTransitions: Array< Map<A, number>>;
     private initialState: LAState;
     private initialHiddenState: number[];
 
@@ -179,7 +179,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         this.costModule = costModule;
         this.numericStateLookup = {};
         this.hiddenStateLookup = [];
-        this.numericStateTransitions = new Map<[number, A], number>();
+        this.numericStateTransitions = [];
         const initialHiddenState = str.reduce<number[]>((accState, char) => {
                 const prevValue = accState[accState.length - 1];
                 costModule.insertCost(char);
@@ -208,8 +208,8 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         }
         let targetNumericState: number;
         let targetHiddenState: number[];
-        if ( this.numericStateTransitions.has([sourceNumericState, nextChar]) ) {
-            targetNumericState = this.numericStateTransitions.get([sourceNumericState, nextChar]);
+        if ( this.numericStateTransitions[sourceNumericState].has( nextChar) ) {
+            targetNumericState = this.numericStateTransitions[sourceNumericState].get( nextChar);
             targetHiddenState = this.hiddenStateLookup[targetNumericState];
         } else {
             const sourceHiddenState = this.hiddenStateLookup[laState.state];
@@ -226,7 +226,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
                 ));
             }
             targetNumericState = this.getNumericState(targetHiddenState);
-            this.numericStateTransitions.set([sourceNumericState, nextChar], targetNumericState);
+            this.numericStateTransitions[sourceNumericState].set(nextChar, targetNumericState);
         }
         const targetLaState: LAState = {
             prefixEditCost: laState.prefixEditCost,
@@ -300,6 +300,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             const newNumericState = this.hiddenStateLookup.length;
             this.numericStateLookup[state.toString()] = newNumericState;
             this.hiddenStateLookup.push(state);
+            this.numericStateTransitions.push(new Map<A, number>());
             return newNumericState;
         }
         return numericState;

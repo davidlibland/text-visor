@@ -83,7 +83,7 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         this.costModule = costModule;
         this.numericStateLookup = {};
         this.hiddenStateLookup = [];
-        this.numericStateTransitions = new Map();
+        this.numericStateTransitions = [];
         const initialHiddenState = str.reduce((accState, char) => {
             const prevValue = accState[accState.length - 1];
             costModule.insertCost(char);
@@ -108,8 +108,8 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         }
         let targetNumericState;
         let targetHiddenState;
-        if (this.numericStateTransitions.has([sourceNumericState, nextChar])) {
-            targetNumericState = this.numericStateTransitions.get([sourceNumericState, nextChar]);
+        if (this.numericStateTransitions[sourceNumericState].has(nextChar)) {
+            targetNumericState = this.numericStateTransitions[sourceNumericState].get(nextChar);
             targetHiddenState = this.hiddenStateLookup[targetNumericState];
         }
         else {
@@ -119,7 +119,7 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
                 targetHiddenState.push(Math.min(targetHiddenState[i] + this.costModule.deleteCost(this.str[i]), sourceHiddenState[i] + this.costModule.swapCost(this.str[i], nextChar), sourceHiddenState[i + 1] + this.costModule.insertCost(nextChar), this.costModule.rejectCostThreshold));
             }
             targetNumericState = this.getNumericState(targetHiddenState);
-            this.numericStateTransitions.set([sourceNumericState, nextChar], targetNumericState);
+            this.numericStateTransitions[sourceNumericState].set(nextChar, targetNumericState);
         }
         const targetLaState = {
             prefixEditCost: laState.prefixEditCost,
@@ -194,6 +194,7 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
             const newNumericState = this.hiddenStateLookup.length;
             this.numericStateLookup[state.toString()] = newNumericState;
             this.hiddenStateLookup.push(state);
+            this.numericStateTransitions.push(new Map());
             return newNumericState;
         }
         return numericState;
