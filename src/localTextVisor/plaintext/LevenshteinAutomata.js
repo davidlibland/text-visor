@@ -189,10 +189,10 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         }
     }
     getNumericState(state) {
-        const numericState = this.numericStateLookup.get(state);
+        const numericState = this.numericStateLookup.get(state.toString());
         if (numericState === undefined) {
             const newNumericState = this.hiddenStateLookup.length;
-            this.numericStateLookup.set(state, newNumericState);
+            this.numericStateLookup.set(state.toString(), newNumericState);
             this.hiddenStateLookup.push(state);
             return newNumericState;
         }

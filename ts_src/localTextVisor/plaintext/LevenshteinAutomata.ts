@@ -167,7 +167,7 @@ export class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshteinCostMod
 export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LAStatus> {
     private str: A[];
     private costModule;
-    private numericStateLookup: Map<number[], number>;
+    private numericStateLookup: Map<string, number>;
     private hiddenStateLookup: number[][];
     private numericStateTransitions: Map<[number, A], number>;
     private initialState: LAState;
@@ -177,7 +177,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         super();
         this.str = str;
         this.costModule = costModule;
-        this.numericStateLookup = new Map<number[], number>();
+        this.numericStateLookup = new Map<string, number>();
         this.hiddenStateLookup = [];
         this.numericStateTransitions = new Map<[number, A], number>();
         const initialHiddenState = str.reduce<number[]>((accState, char) => {
@@ -295,10 +295,10 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
     }
 
     private getNumericState(state: number[]): number {
-        const numericState = this.numericStateLookup.get(state);
+        const numericState = this.numericStateLookup.get(state.toString());
         if (numericState === undefined) {
             const newNumericState = this.hiddenStateLookup.length;
-            this.numericStateLookup.set(state, newNumericState);
+            this.numericStateLookup.set(state.toString(), newNumericState);
             this.hiddenStateLookup.push(state);
             return newNumericState;
         }
