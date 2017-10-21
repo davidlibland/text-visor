@@ -213,7 +213,10 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             targetHiddenState = this.hiddenStateLookup[targetNumericState];
         } else {
             const sourceHiddenState = this.hiddenStateLookup[laState.state];
-            targetHiddenState = [Math.min(sourceHiddenState[0] + this.costModule.insertCost(nextChar))];
+            targetHiddenState = [Math.min(
+                sourceHiddenState[0] + this.costModule.insertCost(nextChar),
+                this.costModule.rejectCostThreshold,
+            )];
             for (let i = 0; i < sourceHiddenState.length - 1; i++) {
                 targetHiddenState.push(Math.min(
                     targetHiddenState[i] + this.costModule.deleteCost(this.str[i]),
