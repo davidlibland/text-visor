@@ -81,7 +81,7 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         super();
         this.str = str;
         this.costModule = costModule;
-        this.numericStateLookup = new Map();
+        this.numericStateLookup = {};
         this.hiddenStateLookup = [];
         this.numericStateTransitions = new Map();
         const initialHiddenState = str.reduce((accState, char) => {
@@ -189,10 +189,10 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         }
     }
     getNumericState(state) {
-        const numericState = this.numericStateLookup.get(state.toString());
+        const numericState = this.numericStateLookup[state.toString()];
         if (numericState === undefined) {
             const newNumericState = this.hiddenStateLookup.length;
-            this.numericStateLookup.set(state.toString(), newNumericState);
+            this.numericStateLookup[state.toString()] = newNumericState;
             this.hiddenStateLookup.push(state);
             return newNumericState;
         }
