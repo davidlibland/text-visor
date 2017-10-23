@@ -169,7 +169,8 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
     private costModule;
     private stateIdLookup: {[key: string]: number};
     private hiddenStateLookup: number[][];
-    private hiddenStateLookupMin: number[];
+    private editCostLookup: number[];
+    private editCostLowerBoundLookup: number[];
     private stateIdTransitions: Array< Map<A, number>>;
     private initialState: LAState;
     private initialHiddenState: number[];
@@ -180,7 +181,8 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         this.costModule = costModule;
         this.stateIdLookup = {};
         this.hiddenStateLookup = [];
-        this.hiddenStateLookupMin = [];
+        this.editCostLookup = [];
+        this.editCostLowerBoundLookup = [];
         this.stateIdTransitions = [];
         const initialHiddenState = str.reduce<number[]>((accState, char) => {
                 const prevValue = accState[accState.length - 1];
@@ -214,12 +216,12 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             return sourceState;
         }
         let targetStateId: number = this.stateIdTransitions[sourceStateId].get( nextChar);
-        let targetHiddenState: number[];
+        let targetEditCost: number;
         if ( targetStateId !== undefined) {
-            targetHiddenState = this.hiddenStateLookup[targetStateId];
+            targetEditCost = this.editCostLookup[targetStateId];
         } else {
             const sourceHiddenState = this.hiddenStateLookup[sourceStateId];
-            targetHiddenState = new Array(sourceHiddenState.length);
+            const targetHiddenState = new Array(sourceHiddenState.length);
             targetHiddenState[0] = Math.min(
                 sourceHiddenState[0] + this.costModule.insertCost(nextChar),
                 this.costModule.rejectCostThreshold,
@@ -233,6 +235,7 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
                 ));
             }
             targetStateId = this.getStateId(targetHiddenState);
+            targetEditCost = targetHiddenState[targetHiddenState.length - 1];
             this.stateIdTransitions[sourceStateId].set(nextChar, targetStateId);
         }
         const targetStep = sourceState.step + 1;
@@ -241,16 +244,14 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             stateId: targetStateId,
             step: targetStep,
         };
-        const targetStateAccepted = this.costModule.editCostAcceptor(
-            targetHiddenState[targetHiddenState.length - 1],
-            targetStep);
+        const targetStateAccepted = this.costModule.editCostAcceptor(targetEditCost, targetStep);
         if (targetStateAccepted) {
             const sourceStateAccepted = sourceState.acceptedPrefixData !== undefined;
             const targetStateCloser = sourceStateAccepted ?
-                targetHiddenState[targetHiddenState.length - 1] <= sourceState.acceptedPrefixData.editCost : true;
+                targetEditCost <= sourceState.acceptedPrefixData.editCost : true;
             if (targetStateCloser) {
                 targetLAStateProposal.acceptedPrefixData = {
-                    editCost: targetHiddenState[targetHiddenState.length - 1],
+                    editCost: targetEditCost,
                     step: targetStep,
                 };
             }
@@ -270,25 +271,23 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             };
         }
         if (state.acceptedPrefixData !== undefined) {
-            const curState = this.hiddenStateLookup[state.stateId];
             return {
-                editCost: curState[curState.length - 1],
+                editCost: this.editCostLookup[state.stateId],
                 prefixEditCost: state.acceptedPrefixData.editCost,
                 status: STATUS_TYPE.ACCEPT,
                 step: state.acceptedPrefixData.step,
             };
-        } else if (this.costModule.editCostAcceptor(this.hiddenStateLookupMin[state.stateId], state.step)) {
-            const curState = this.hiddenStateLookup[state.stateId];
+        } else if (this.costModule.editCostAcceptor(this.editCostLowerBoundLookup[state.stateId], state.step)) {
+            const editCost = this.editCostLookup[state.stateId];
             return {
-                editCost: curState[curState.length - 1],
-                prefixEditCost: curState[curState.length - 1],
+                editCost,
+                prefixEditCost: editCost,
                 status: STATUS_TYPE.UNKNOWN,
                 step: state.step,
             };
         } else {
-            const curState = this.hiddenStateLookup[state.stateId];
             return {
-                editCost: curState[curState.length - 1],
+                editCost: this.editCostLookup[state.stateId],
                 prefixEditCost: this.costModule.rejectCostThreshold,
                 status: STATUS_TYPE.REJECT,
                 step: state.step,
@@ -302,7 +301,8 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             const newStateId = this.hiddenStateLookup.length;
             this.stateIdLookup[state.toString()] = newStateId;
             this.hiddenStateLookup.push(state);
-            this.hiddenStateLookupMin.push(Math.min(...state));
+            this.editCostLookup.push(state[state.length - 1]);
+            this.editCostLowerBoundLookup.push(Math.min(...state));
             this.stateIdTransitions.push(new Map<A, number>());
             return newStateId;
         }
