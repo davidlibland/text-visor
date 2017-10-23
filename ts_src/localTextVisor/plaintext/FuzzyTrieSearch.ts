@@ -30,7 +30,6 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
     private trie: Tree<A, { prediction: T } & V>;
     private splitter: SplitterType<T, A>;
     private costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>;
-    private emptyInputDefault: Array< LAStatus & { prediction: T } & V>;
 
     constructor(
         trie: Tree<A, { prediction: T } & V>,
@@ -41,19 +40,12 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
         this.trie = trie;
         this.splitter = splitter;
         this.costModuleFactory = costModuleFactory;
-        const leven = new LevenshteinAutomaton([], this.costModuleFactory([]));
-        this.emptyInputDefault = automatonTreeSearch(this.trie, leven, leven.start());
     }
 
     public predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType> {
         const chars = this.splitter(input);
-        let fuzzyCompletions: Array< LAStatus & { prediction: T } & V>;
-        if (chars.length === 0) {
-            fuzzyCompletions = this.emptyInputDefault;
-        } else {
-            const leven = new LevenshteinAutomaton(chars, this.costModuleFactory(chars));
-            fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
-        }
+        const leven = new LevenshteinAutomaton(chars, this.costModuleFactory(chars));
+        const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
         const addMetadata = (completion) => {
             return {
                 ...completion,
