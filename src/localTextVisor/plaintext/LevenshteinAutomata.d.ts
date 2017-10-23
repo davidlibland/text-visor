@@ -129,7 +129,8 @@ export declare class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, 
     private costModule;
     private stateIdLookup;
     private hiddenStateLookup;
-    private hiddenStateLookupMin;
+    private editCostLookup;
+    private editCostLowerBoundLookup;
     private stateIdTransitions;
     private initialState;
     private initialHiddenState;

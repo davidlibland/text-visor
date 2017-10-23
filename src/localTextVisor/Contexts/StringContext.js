@@ -46,7 +46,7 @@ function constructCostModuleFactory(languageSpecs) {
         const symbolPairCostScaleFactor = languageSpecsDBFTS.symbolPairCostScaleFactor;
         const symbolCostScaleFactor = languageSpecsDBFTS.symbolCostScaleFactor;
         return (input) => {
-            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2 + 1;
             return new DetailedBalancedCost_1.DetailedBalanceCostModule(maxRelativeEditCost, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, baseInsertCost, baseDeleteCost, symbolPairCostScaleFactor, symbolCostScaleFactor);
         };
     }
