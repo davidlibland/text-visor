@@ -6,7 +6,7 @@ export interface LAStatus extends StatusContainer {
     editCost: number;
 }
 export interface LAState {
-    prefixEditCost: {
+    prefixEditCost?: {
         editCost: number;
         step: number;
     };
@@ -129,6 +129,7 @@ export declare class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, 
     private costModule;
     private numericStateLookup;
     private hiddenStateLookup;
+    private hiddenStateLookupMin;
     private numericStateTransitions;
     private initialState;
     private initialHiddenState;
