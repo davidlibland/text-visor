@@ -135,7 +135,7 @@ export declare class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, 
     private initialHiddenState;
     constructor(str: A[], costModule: LevenshteinEditCostModule<A>);
     start(): LAState;
-    step(laState: LAState, nextChar: A): LAState;
+    step(sourceState: LAState, nextChar: A): LAState;
     status(state: LAState): LAStatus;
     private getStateId(state);
 }

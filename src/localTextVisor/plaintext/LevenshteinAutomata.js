@@ -88,7 +88,10 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
         const initialHiddenState = str.reduce((accState, char) => {
             const prevValue = accState[accState.length - 1];
             costModule.insertCost(char);
-            return [...accState, prevValue + costModule.deleteCost(char)];
+            return [
+                ...accState,
+                Math.min(prevValue + costModule.deleteCost(char), this.costModule.rejectCostThreshold)
+            ];
         }, [0]);
         const initialStateId = this.getStateId(initialHiddenState);
         const prefixEditCost = this.costModule.editCostAcceptor(initialHiddenState[initialHiddenState.length - 1], 0) ?
@@ -102,12 +105,12 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
     start() {
         return this.initialState;
     }
-    step(laState, nextChar) {
-        const sourceStateId = laState.stateId;
+    step(sourceState, nextChar) {
+        const sourceStateId = sourceState.stateId;
         if (sourceStateId >= this.hiddenStateLookup.length) {
             console.warn(`The State ${sourceStateId} has never been seen before.` +
                 `Pass only allowed states to the automaton's step method.`);
-            return laState;
+            return sourceState;
         }
         let targetStateId = this.stateIdTransitions[sourceStateId].get(nextChar);
         let targetHiddenState;
@@ -124,26 +127,23 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
             targetStateId = this.getStateId(targetHiddenState);
             this.stateIdTransitions[sourceStateId].set(nextChar, targetStateId);
         }
-        const targetStep = laState.step + 1;
-        const prefixEditCost = this.costModule.editCostAcceptor(targetHiddenState[targetHiddenState.length - 1], targetStep) ?
-            {
-                editCost: targetHiddenState[targetHiddenState.length - 1],
-                step: targetStep,
-            } : undefined;
+        const targetStep = sourceState.step + 1;
         const targetLAStateProposal = {
-            acceptedPrefixData: prefixEditCost,
+            acceptedPrefixData: sourceState.acceptedPrefixData,
             stateId: targetStateId,
             step: targetStep,
         };
-        if (prefixEditCost !== undefined) {
-            if (this.status(laState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT) {
-                if (targetHiddenState[targetHiddenState.length - 1] > laState.acceptedPrefixData.editCost) {
-                    targetLAStateProposal.acceptedPrefixData = laState.acceptedPrefixData;
-                }
+        const targetStateAccepted = this.costModule.editCostAcceptor(targetHiddenState[targetHiddenState.length - 1], targetStep);
+        if (targetStateAccepted) {
+            const sourceStateAccepted = sourceState.acceptedPrefixData !== undefined;
+            const targetStateCloser = sourceStateAccepted ?
+                targetHiddenState[targetHiddenState.length - 1] <= sourceState.acceptedPrefixData.editCost : true;
+            if (targetStateCloser) {
+                targetLAStateProposal.acceptedPrefixData = {
+                    editCost: targetHiddenState[targetHiddenState.length - 1],
+                    step: targetStep,
+                };
             }
-        }
-        else {
-            targetLAStateProposal.acceptedPrefixData = laState.acceptedPrefixData;
         }
         return targetLAStateProposal;
     }

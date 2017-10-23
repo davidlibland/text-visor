@@ -185,7 +185,10 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         const initialHiddenState = str.reduce<number[]>((accState, char) => {
                 const prevValue = accState[accState.length - 1];
                 costModule.insertCost(char);
-                return [...accState, prevValue + costModule.deleteCost(char)];
+                return [
+                    ...accState,
+                    Math.min(prevValue + costModule.deleteCost(char), this.costModule.rejectCostThreshold)
+                ];
             },
             [0],
         );
@@ -203,12 +206,12 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
         return this.initialState;
     }
 
-    public step(laState: LAState, nextChar: A): LAState {
-        const sourceStateId = laState.stateId;
+    public step(sourceState: LAState, nextChar: A): LAState {
+        const sourceStateId = sourceState.stateId;
         if (sourceStateId >= this.hiddenStateLookup.length) {
             console.warn(`The State ${sourceStateId} has never been seen before.` +
                 `Pass only allowed states to the automaton's step method.`);
-            return laState;
+            return sourceState;
         }
         let targetStateId: number = this.stateIdTransitions[sourceStateId].get( nextChar);
         let targetHiddenState: number[];
@@ -232,27 +235,25 @@ export class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LASta
             targetStateId = this.getStateId(targetHiddenState);
             this.stateIdTransitions[sourceStateId].set(nextChar, targetStateId);
         }
-        const targetStep = laState.step + 1;
-        const prefixEditCost = this.costModule.editCostAcceptor(
-            targetHiddenState[targetHiddenState.length - 1],
-            targetStep) ?
-            {
-                editCost: targetHiddenState[targetHiddenState.length - 1],
-                step: targetStep,
-            } : undefined;
+        const targetStep = sourceState.step + 1;
         const targetLAStateProposal: LAState = {
-            acceptedPrefixData: prefixEditCost,
+            acceptedPrefixData: sourceState.acceptedPrefixData,
             stateId: targetStateId,
             step: targetStep,
         };
-        if (prefixEditCost !== undefined) {
-            if (this.status(laState).status === STATUS_TYPE.ACCEPT) {
-                if (targetHiddenState[targetHiddenState.length - 1] > laState.acceptedPrefixData.editCost) {
-                    targetLAStateProposal.acceptedPrefixData = laState.acceptedPrefixData;
-                }
+        const targetStateAccepted = this.costModule.editCostAcceptor(
+            targetHiddenState[targetHiddenState.length - 1],
+            targetStep);
+        if (targetStateAccepted) {
+            const sourceStateAccepted = sourceState.acceptedPrefixData !== undefined;
+            const targetStateCloser = sourceStateAccepted ?
+                targetHiddenState[targetHiddenState.length - 1] <= sourceState.acceptedPrefixData.editCost : true;
+            if (targetStateCloser) {
+                targetLAStateProposal.acceptedPrefixData = {
+                    editCost: targetHiddenState[targetHiddenState.length - 1],
+                    step: targetStep,
+                };
             }
-        } else {
-            targetLAStateProposal.acceptedPrefixData = laState.acceptedPrefixData;
         }
         return targetLAStateProposal;
     }
