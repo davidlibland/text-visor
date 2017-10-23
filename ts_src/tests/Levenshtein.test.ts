@@ -82,7 +82,7 @@ class CustomCostModule<A> extends LevenshteinEditCostModule<A> {
         return this.insertCostC;
     }
     public editCostAcceptor(editCost: number, step: number): boolean {
-        //console.log(`acceptor: prefixEditCost: ${prefixEditCost} step: ${step} rejCost: ${this.rejectCostThreshold}` );
+        //console.log(`acceptor: acceptedPrefixData: ${acceptedPrefixData} step: ${step} rejCost: ${this.rejectCostThreshold}` );
         return (editCost < this.rejectCostThreshold);
     }
 }

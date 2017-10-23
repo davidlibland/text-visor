@@ -6,11 +6,11 @@ export interface LAStatus extends StatusContainer {
     editCost: number;
 }
 export interface LAState {
-    prefixEditCost?: {
+    acceptedPrefixData?: {
         editCost: number;
         step: number;
     };
-    state: number;
+    stateId: number;
     step: number;
 }
 export declare abstract class LevenshteinEditCostModule<A> {
@@ -127,15 +127,15 @@ export declare class FlatLevenshteinRelativeCostModule<A> extends FlatLevenshtei
 export declare class LevenshteinAutomaton<A> extends AbstractAutomaton<LAState, A, LAStatus> {
     private str;
     private costModule;
-    private numericStateLookup;
+    private stateIdLookup;
     private hiddenStateLookup;
     private hiddenStateLookupMin;
-    private numericStateTransitions;
+    private stateIdTransitions;
     private initialState;
     private initialHiddenState;
     constructor(str: A[], costModule: LevenshteinEditCostModule<A>);
     start(): LAState;
     step(laState: LAState, nextChar: A): LAState;
     status(state: LAState): LAStatus;
-    private getNumericState(state);
+    private getStateId(state);
 }
