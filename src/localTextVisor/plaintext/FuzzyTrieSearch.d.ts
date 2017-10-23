@@ -19,6 +19,7 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends object
     private trie;
     private splitter;
     private costModuleFactory;
+    private emptyInputDefault;
     constructor(trie: Tree<A, {
         prediction: T;
     } & V>, splitter: SplitterType<T, A>, costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>);
