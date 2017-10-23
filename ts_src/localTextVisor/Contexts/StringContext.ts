@@ -129,7 +129,7 @@ function constructCostModuleFactory<A>(
         const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
             languageSpecsRFTS.flatCostUnit : 1;
         return (input: A[]) => {
-            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2 + 1;
             return new FlatLevenshteinRelativeCostModule(maxRelativeEditCost, rejectCostThreshold, flatWeight);
         };
     } else if (languageSpecs.moduleType === LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
