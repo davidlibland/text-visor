@@ -177,7 +177,7 @@ test("FuzzyTreeSearch should find correct completions", () => {
     sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
     sortedInsert(testTree, "heal".split(""), { token: "heal" });
     sortedInsert(testTree, "heat".split(""), { token: "heat" });
-    const plucker = (result) => pluck(result, ["status", "acceptedPrefixData", "token"]);
+    const plucker = (result) => pluck(result, ["status", "prefixEditCost", "token"]);
     let costModule = new FlatLevenshteinCostModule(1);
     let leven = new LevenshteinAutomaton("heal".split(""), costModule);
     let results = automatonTreeSearch(testTree, leven, leven.start());
@@ -215,7 +215,7 @@ test("FuzzyTreeSearch with Rel Edit Distance should find correct completions", (
     sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
     sortedInsert(testTree, "heal".split(""), { token: "heal" });
     sortedInsert(testTree, "heat".split(""), { token: "heat" });
-    const plucker = (result) => pluck(result, ["status", "acceptedPrefixData", "token"]);
+    const plucker = (result) => pluck(result, ["status", "prefixEditCost", "token"]);
     let costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     let leven = new LevenshteinAutomaton("heal".split(""), costModule);
     let results = automatonTreeSearch(testTree, leven, leven.start());
