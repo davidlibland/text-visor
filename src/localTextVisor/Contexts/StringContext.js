@@ -19,7 +19,7 @@ function constructCostModuleFactory(languageSpecs) {
         const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
             languageSpecsRFTS.flatCostUnit : 1;
         return (input) => {
-            const rejectCostThreshold = maxRelativeEditCost * input.length * 2 + 1;
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
             return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxRelativeEditCost, rejectCostThreshold, flatWeight);
         };
     }
@@ -46,7 +46,7 @@ function constructCostModuleFactory(languageSpecs) {
         const symbolPairCostScaleFactor = languageSpecsDBFTS.symbolPairCostScaleFactor;
         const symbolCostScaleFactor = languageSpecsDBFTS.symbolCostScaleFactor;
         return (input) => {
-            const rejectCostThreshold = maxRelativeEditCost * input.length * 2 + 1;
+            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
             return new DetailedBalancedCost_1.DetailedBalanceCostModule(maxRelativeEditCost, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, baseInsertCost, baseDeleteCost, symbolPairCostScaleFactor, symbolCostScaleFactor);
         };
     }
