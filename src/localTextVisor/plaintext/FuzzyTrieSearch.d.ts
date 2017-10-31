@@ -23,6 +23,19 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends object
     private cacheEarlyResultsFlag;
     private cacheCutoff;
     private cacheSize;
+    /**
+     * Constructs a fuzzy tree predictor using the Levenshtein automata.
+     * @param {Tree<A, {prediction: T} & V>} trie The tree to be used by the
+     * Levenshtein automata.
+     * @param {SplitterType<T, A>} splitter A function which splits the input
+     * characters parsed one-by-one by the automata.
+     * @param {(input: A[]) => LevenshteinEditCostModule<A>} costModuleFactory
+     * A factory which produces a cost module used by the automata to prune the
+     * tree.
+     * @param {number} cacheCutoff If not undefined, then this class
+     * caches results for inputs with cacheCutoff or fewer characters.
+     * @param {number} cacheSize This limits the size of the cache.
+     */
     constructor(trie: Tree<A, {
         prediction: T;
     } & V>, splitter: SplitterType<T, A>, costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>, cacheCutoff?: number, cacheSize?: number);

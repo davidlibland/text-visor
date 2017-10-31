@@ -9,6 +9,19 @@ const Abstract_1 = require("../Abstract");
 const LevenshteinAutomata_1 = require("./LevenshteinAutomata");
 const Tree_1 = require("./Tree");
 class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
+    /**
+     * Constructs a fuzzy tree predictor using the Levenshtein automata.
+     * @param {Tree<A, {prediction: T} & V>} trie The tree to be used by the
+     * Levenshtein automata.
+     * @param {SplitterType<T, A>} splitter A function which splits the input
+     * characters parsed one-by-one by the automata.
+     * @param {(input: A[]) => LevenshteinEditCostModule<A>} costModuleFactory
+     * A factory which produces a cost module used by the automata to prune the
+     * tree.
+     * @param {number} cacheCutoff If not undefined, then this class
+     * caches results for inputs with cacheCutoff or fewer characters.
+     * @param {number} cacheSize This limits the size of the cache.
+     */
     constructor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize = 1000) {
         super();
         this.trie = trie;
@@ -24,7 +37,7 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
     predict(prior, input) {
         const chars = this.splitter(input);
         let fuzzyCompletions;
-        if (this.cacheEarlyResultsFlag && chars.length < this.cacheCutoff) {
+        if (this.cacheEarlyResultsFlag && chars.length <= this.cacheCutoff) {
             fuzzyCompletions = this.cache.get(input);
             if (this.cache.has(input)) {
                 fuzzyCompletions = this.cache.get(input);
