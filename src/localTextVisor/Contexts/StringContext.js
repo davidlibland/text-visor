@@ -66,6 +66,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
         case Enums_1.LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
+            const fuzzyTreeSearchSpecs = languageSpecs;
             const costModuleFactory = constructCostModuleFactory(languageSpecs);
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
@@ -78,10 +79,10 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             }
             const priorObj = data.prior;
             const charTokenizer = (token) => token.split("");
-            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, costModuleFactory);
+            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize);
             let contextTokenizer;
             let contextJoiner;
-            switch (languageSpecs.tokenizerType) {
+            switch (fuzzyTreeSearchSpecs.tokenizerType) {
                 case Enums_1.TOKENIZER_TYPE.CHARACTER:
                     contextTokenizer = (input) => input.split("");
                     contextJoiner = (...tokens) => tokens.join("");

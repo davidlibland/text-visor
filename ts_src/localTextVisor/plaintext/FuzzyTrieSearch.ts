@@ -30,22 +30,47 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
     private trie: Tree<A, { prediction: T } & V>;
     private splitter: SplitterType<T, A>;
     private costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>;
+    private cache: Map<T, Array<V & {prediction: T} & LAStatus>>;
+    private cacheEarlyResultsFlag: boolean;
+    private cacheCutoff: number;
+    private cacheSize: number;
 
     constructor(
         trie: Tree<A, { prediction: T } & V>,
         splitter: SplitterType<T, A>,
         costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>,
+        cacheCutoff?: number,
+        cacheSize: number = 1000,
     ) {
         super();
         this.trie = trie;
         this.splitter = splitter;
         this.costModuleFactory = costModuleFactory;
+        this.cacheEarlyResultsFlag = (cacheCutoff !== undefined);
+        if (this.cacheEarlyResultsFlag) {
+            this.cacheCutoff = cacheCutoff;
+            this.cacheSize = cacheSize;
+            this.cache = new Map<T, Array<V & {prediction: T} & LAStatus>>();
+        }
     }
 
     public predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType> {
         const chars = this.splitter(input);
-        const leven = new LevenshteinAutomaton(chars, this.costModuleFactory(chars));
-        const fuzzyCompletions = automatonTreeSearch(this.trie, leven, leven.start());
+        let fuzzyCompletions;
+        if (this.cacheEarlyResultsFlag && chars.length < this.cacheCutoff) {
+            fuzzyCompletions = this.cache.get(input);
+            if (this.cache.has(input)) {
+                fuzzyCompletions = this.cache.get(input);
+            } else {
+                fuzzyCompletions = this.computeFuzzyCompletions(chars);
+                const fuzzyCompletionsLimited = fuzzyCompletions.sort(
+                    (a, b) => a.prefixEditCost - b.prefixEditCost,
+                ).slice(0, this.cacheSize);
+                this.cache.set(input, fuzzyCompletions);
+            }
+        } else {
+            fuzzyCompletions = this.computeFuzzyCompletions(chars);
+        }
         const addMetadata = (completion) => {
             return {
                 ...completion,
@@ -56,6 +81,11 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
         return fuzzyCompletions
             .map(addMetadata)
             .filter((completion) => (completion.weight > 0));
+    }
+
+    protected computeFuzzyCompletions(chars: A[]): Array<V & {prediction: T} & LAStatus> {
+        const leven = new LevenshteinAutomaton(chars, this.costModuleFactory(chars));
+        return automatonTreeSearch(this.trie, leven, leven.start());
     }
 }
 

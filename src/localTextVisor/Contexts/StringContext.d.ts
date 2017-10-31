@@ -13,25 +13,25 @@ export interface LanguageModuleSpecsID extends LanguageModuleSpecsConstraints {
     moduleType: "ID";
     tokenizerType: TokenizerType;
 }
-export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
+export interface LanguageModuleSpecsFTSCore extends LanguageModuleSpecsConstraints {
+    caseSensitivity?: CaseSensitivityType;
+    tokenizerType: TokenizerType;
+    cacheCutoff?: number;
+    cacheSize?: number;
+}
+export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "FTS";
     maxEditDistance: number;
-    caseSensitivity?: CaseSensitivityType;
-    tokenizerType: TokenizerType;
     flatCostUnit?: number;
 }
-export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints {
+export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "RFTS";
     maxRelativeEditDistance: number;
-    caseSensitivity?: CaseSensitivityType;
-    tokenizerType: TokenizerType;
     flatCostUnit?: number;
 }
-export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsConstraints {
+export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "DBFTS";
     maxRelativeEditDistance: number;
-    caseSensitivity?: CaseSensitivityType;
-    tokenizerType: TokenizerType;
     symbolPairCosts?: Array<PairCostElement<any>>;
     symbolCosts?: Array<CostElement<any>>;
     defaultCost?: number;

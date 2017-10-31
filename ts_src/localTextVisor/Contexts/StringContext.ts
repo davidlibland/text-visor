@@ -52,27 +52,28 @@ export interface LanguageModuleSpecsID extends LanguageModuleSpecsConstraints {
     tokenizerType: TokenizerType;
 }
 
-export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsConstraints {
+export interface LanguageModuleSpecsFTSCore extends LanguageModuleSpecsConstraints {
+    caseSensitivity?: CaseSensitivityType;
+    tokenizerType: TokenizerType;
+    cacheCutoff?: number;
+    cacheSize?: number;
+}
+
+export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "FTS";
     maxEditDistance: number;
-    caseSensitivity?: CaseSensitivityType;
-    tokenizerType: TokenizerType;
     flatCostUnit?: number;
 }
 
-export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsConstraints {
+export interface LanguageModuleSpecsRFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "RFTS";
     maxRelativeEditDistance: number;
-    caseSensitivity?: CaseSensitivityType;
-    tokenizerType: TokenizerType;
     flatCostUnit?: number;
 }
 
-export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsConstraints {
+export interface LanguageModuleSpecsDBFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "DBFTS";
     maxRelativeEditDistance: number;
-    caseSensitivity?: CaseSensitivityType;
-    tokenizerType: TokenizerType;
     symbolPairCosts?: Array<PairCostElement<any>>;
     symbolCosts?: Array<CostElement<any>>;
     defaultCost?: number;
@@ -185,6 +186,7 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
         case LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
         case LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
         case LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
+            const fuzzyTreeSearchSpecs = languageSpecs as LanguageModuleSpecsFTSCore;
             const costModuleFactory = constructCostModuleFactory(languageSpecs);
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
@@ -201,10 +203,12 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
                 trie,
                 charTokenizer,
                 costModuleFactory,
+                fuzzyTreeSearchSpecs.cacheCutoff,
+                fuzzyTreeSearchSpecs.cacheSize,
             );
             let contextTokenizer: (input: string) => string[];
             let contextJoiner: (...tokens) => string;
-            switch (languageSpecs.tokenizerType) {
+            switch (fuzzyTreeSearchSpecs.tokenizerType) {
                 case TOKENIZER_TYPE.CHARACTER:
                     contextTokenizer = (input) => input.split("");
                     contextJoiner = (...tokens) => tokens.join("");
