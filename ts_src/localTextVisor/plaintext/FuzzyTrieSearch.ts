@@ -18,7 +18,7 @@ import {
 } from "./LevenshteinAutomata";
 import {
     automatonTreeSearch,
-    cancelableAutomatonTreeSearch,
+    abortableAutomatonTreeSearch,
     Tree,
 } from "./Tree";
 
@@ -36,7 +36,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
     private cacheEarlyResultsFlag: boolean;
     private cacheCutoff: number;
     private cacheSize: number;
-    private cancellable: boolean;
+    private abortableCnt: number;
     private currentInput: T;
 
     /**
@@ -51,10 +51,10 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
      * @param {number} cacheCutoff If not undefined, then this class
      * caches results for inputs with cacheCutoff or fewer characters.
      * @param {number} cacheSize This limits the size of the cache.
-     * @param {boolean} cancellable If this is set to true, then any prior
-     * predict computations will be immediately cancelled if a subsequent
-     * predict call is made. The prior predict call will return a rejected
-     * promise.
+     * @param {number} abortableCnt If this is set to a positive integer,
+     * then any prior predict computations will be immediately cancelled if a
+     * subsequent predict call is made. The prior predict call will return a
+     * rejected promise.
      */
     constructor(
         trie: Tree<A, { prediction: T } & V>,
@@ -62,7 +62,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
         costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>,
         cacheCutoff?: number,
         cacheSize: number = 1000,
-        cancellable: boolean = false,
+        abortableCnt?: number,
     ) {
         super();
         this.trie = trie;
@@ -74,7 +74,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
             this.cacheSize = cacheSize;
             this.cache = new Map<T, Array<V & {prediction: T} & LAStatus>>();
         }
-        this.cancellable = cancellable;
+        this.abortableCnt = abortableCnt;
     }
 
     public predict(prior: MapPrior<T>, input: T): Promise<Array<WeightedPrediction<T> & V & CursorPositionType>> {
@@ -111,11 +111,17 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
 
     protected computeFuzzyCompletions(chars: A[], input: T): Promise<Array<V & {prediction: T} & LAStatus>> {
         const leven = new LevenshteinAutomaton(chars, this.costModuleFactory(chars));
-        if ( this.cancellable ) {
+        if ( this.abortableCnt !== undefined &&  this.abortableCnt > 0 ) {
             const cancelCallback = () => {
                 return this.currentInput !== input;
             };
-            return cancelableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback);
+            return abortableAutomatonTreeSearch(
+                this.trie,
+                leven,
+                leven.start(),
+                cancelCallback,
+                this.abortableCnt,
+                {i: 0});
         } else {
             return Promise.resolve(automatonTreeSearch(this.trie, leven, leven.start()));
         }

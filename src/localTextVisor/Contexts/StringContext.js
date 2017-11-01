@@ -79,7 +79,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             }
             const priorObj = data.prior;
             const charTokenizer = (token) => token.split("");
-            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize, fuzzyTreeSearchSpecs.cancellable);
+            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize, fuzzyTreeSearchSpecs.abortableCnt);
             let contextTokenizer;
             let contextJoiner;
             switch (fuzzyTreeSearchSpecs.tokenizerType) {

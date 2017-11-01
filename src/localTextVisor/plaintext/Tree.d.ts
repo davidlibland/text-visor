@@ -71,4 +71,20 @@ export declare function insert<A, V>(tree: Tree<A, V>, token: A[], data?: V): Tr
 export declare function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, comparisonFunc?: ((obj1: A, obj2: A) => number)): Tree<A, V>;
 export declare function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V): Tree<A, V>;
 export declare function automatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S): Array<V & E>;
-export declare function cancelableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S, cancelCallback: () => boolean): Promise<Array<V & E>>;
+/**
+ * Performs an automaton tree search which can be aborted midway.
+ * @param {Tree<A, V extends Object>} tree The tree to search.
+ * @param {AbstractAutomaton<S, A, E extends StatusContainer>} automata
+ * The automata to use for the search.
+ * @param {S} state The initial state.
+ * @param {() => boolean} abortCallback This is a callback which should return
+ * true if the computation is to be aborted, false otherwise.
+ * @param {number} checkCount The number of steps to take before checking if
+ * the computation should be aborted.
+ * @param {{i: number}} counter A counter to keep track of how many steps have
+ * been taken during the search.
+ * @returns {Promise<Array<V & E>>}
+ */
+export declare function abortableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S, abortCallback: () => boolean, checkCount?: number, counter?: {
+    i: number;
+}): Promise<Array<V & E>>;

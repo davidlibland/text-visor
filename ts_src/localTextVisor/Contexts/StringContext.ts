@@ -57,7 +57,7 @@ export interface LanguageModuleSpecsFTSCore extends LanguageModuleSpecsConstrain
     tokenizerType: TokenizerType;
     cacheCutoff?: number;
     cacheSize?: number;
-    cancellable?: boolean;
+    abortableCnt?: number;
 }
 
 export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsFTSCore {
@@ -209,7 +209,7 @@ export function initializeLTVWithContext(
                 costModuleFactory,
                 fuzzyTreeSearchSpecs.cacheCutoff,
                 fuzzyTreeSearchSpecs.cacheSize,
-                fuzzyTreeSearchSpecs.cancellable,
+                fuzzyTreeSearchSpecs.abortableCnt,
             );
             let contextTokenizer: (input: string) => string[];
             let contextJoiner: (...tokens) => string;

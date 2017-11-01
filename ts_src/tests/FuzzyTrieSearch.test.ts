@@ -155,7 +155,7 @@ test("Cancellable FuzzyTriePredictor with flat cost 1 should find correct comple
         costModuleFactory,
         undefined,
         undefined,
-        true,
+        1,
     );
     const resultsP = fuzzyPredictor.predict(prior, "heal");
     expect.assertions(1);
@@ -176,7 +176,7 @@ test("Cancellable FuzzyTriePredictor should abort all but last predict call.", (
         costModuleFactory,
         undefined,
         undefined,
-        true,
+        1,
     );
     const resultsP = fuzzyPredictor.predict(prior, "heal");
     // Call it again with a different input, this should abort the first call.

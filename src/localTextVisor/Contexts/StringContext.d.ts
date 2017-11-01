@@ -18,7 +18,7 @@ export interface LanguageModuleSpecsFTSCore extends LanguageModuleSpecsConstrain
     tokenizerType: TokenizerType;
     cacheCutoff?: number;
     cacheSize?: number;
-    cancellable?: boolean;
+    abortableCnt?: number;
 }
 export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsFTSCore {
     moduleType: "FTS";

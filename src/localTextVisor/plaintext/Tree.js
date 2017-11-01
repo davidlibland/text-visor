@@ -178,32 +178,53 @@ function automatonTreeSearch(tree, automata, state) {
         .reduce((results, result) => results.concat(result), localSearchResult);
 }
 exports.automatonTreeSearch = automatonTreeSearch;
-function cancelableAutomatonTreeSearch(tree, automata, state, cancelCallback) {
+/**
+ * Performs an automaton tree search which can be aborted midway.
+ * @param {Tree<A, V extends Object>} tree The tree to search.
+ * @param {AbstractAutomaton<S, A, E extends StatusContainer>} automata
+ * The automata to use for the search.
+ * @param {S} state The initial state.
+ * @param {() => boolean} abortCallback This is a callback which should return
+ * true if the computation is to be aborted, false otherwise.
+ * @param {number} checkCount The number of steps to take before checking if
+ * the computation should be aborted.
+ * @param {{i: number}} counter A counter to keep track of how many steps have
+ * been taken during the search.
+ * @returns {Promise<Array<V & E>>}
+ */
+function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, checkCount = 1, counter = { i: 0 }) {
+    counter.i++;
     const addStatusToData = (data, internalState) => data.map((dataPt) => Object.assign({}, automata.status(internalState), dataPt));
     const isAcceptedState = (internalState) => (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
+    const subcomputation = (resolve) => {
+        const resultsP = tree.children
+            .map((child) => ({
+            child,
+            state: automata.step(state, child.node),
+        }))
+            .filter((childAndState) => isNotRejectedState(childAndState.state))
+            .map((childAndState) => abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, counter));
+        Promise.all(resultsP)
+            .then((results) => results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
+            .then(resolve);
+    };
     return new Promise((resolve, reject) => {
-        setImmediate(() => {
-            if (!cancelCallback()) {
-                const resultsP = tree.children
-                    .map((child) => ({
-                    child,
-                    state: automata.step(state, child.node),
-                }))
-                    .filter((childAndState) => isNotRejectedState(childAndState.state))
-                    .map((childAndState) => {
-                    return cancelableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, cancelCallback);
-                });
-                Promise.all(resultsP)
-                    .then((results) => results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
-                    .then(resolve);
-            }
-            else {
-                reject("Tree search aborted.");
-            }
-        });
+        if (counter.i % checkCount === 0) {
+            setImmediate(() => {
+                if (!abortCallback()) {
+                    subcomputation(resolve);
+                }
+                else {
+                    reject("Tree search aborted.");
+                }
+            });
+        }
+        else {
+            subcomputation(resolve);
+        }
     });
 }
-exports.cancelableAutomatonTreeSearch = cancelableAutomatonTreeSearch;
+exports.abortableAutomatonTreeSearch = abortableAutomatonTreeSearch;
 //# sourceMappingURL=Tree.js.map

@@ -212,40 +212,66 @@ export function automatonTreeSearch<S, A, V extends object, E extends StatusCont
         .reduce((results, result) => results.concat(result), localSearchResult);
 }
 
-export function cancelableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(
+/**
+ * Performs an automaton tree search which can be aborted midway.
+ * @param {Tree<A, V extends Object>} tree The tree to search.
+ * @param {AbstractAutomaton<S, A, E extends StatusContainer>} automata
+ * The automata to use for the search.
+ * @param {S} state The initial state.
+ * @param {() => boolean} abortCallback This is a callback which should return
+ * true if the computation is to be aborted, false otherwise.
+ * @param {number} checkCount The number of steps to take before checking if
+ * the computation should be aborted.
+ * @param {{i: number}} counter A counter to keep track of how many steps have
+ * been taken during the search.
+ * @returns {Promise<Array<V & E>>}
+ */
+export function abortableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(
     tree: Tree<A, V>,
     automata: AbstractAutomaton<S, A, E>,
     state: S,
-    cancelCallback: () => boolean): Promise<Array<V & E>> {
+    abortCallback: () => boolean,
+    checkCount: number = 1,
+    counter: {i: number} = {i: 0}): Promise<Array<V & E>> {
+    counter.i++;
     const addStatusToData = (data: V[], internalState: S) => data.map(
         (dataPt) => Object.assign({}, automata.status(internalState), dataPt),
     );
     const isAcceptedState = (internalState) => (automata.status(internalState).status === STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (internalState) => (automata.status(internalState).status !== STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
+    const subcomputation = (resolve) => {
+        const resultsP = tree.children
+            .map((child) => ({
+                child,
+                state: automata.step(state, child.node),
+            }))
+            .filter((childAndState) => isNotRejectedState(childAndState.state))
+            .map((childAndState) =>
+                abortableAutomatonTreeSearch<S, A, V, E>(
+                    childAndState.child,
+                    automata,
+                    childAndState.state,
+                    abortCallback,
+                    checkCount,
+                    counter,
+                    ));
+        Promise.all(resultsP)
+            .then((results) =>
+                results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
+            .then(resolve);
+    };
     return new Promise((resolve, reject) => {
-        setImmediate( () => {
-            if (!cancelCallback()) {
-                const resultsP = tree.children
-                    .map((child) => ({
-                        child,
-                        state: automata.step(state, child.node),
-                    }))
-                    .filter((childAndState) => isNotRejectedState(childAndState.state))
-                    .map((childAndState) => {
-                        return cancelableAutomatonTreeSearch<S, A, V, E>(
-                            childAndState.child,
-                            automata,
-                            childAndState.state,
-                            cancelCallback);
-                    });
-                Promise.all(resultsP)
-                    .then((results) =>
-                        results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
-                    .then(resolve);
-            } else {
-                reject("Tree search aborted.");
-            }
-        });
+        if (counter.i % checkCount === 0) {
+            setImmediate( () => {
+                if (!abortCallback()) {
+                    subcomputation(resolve);
+                } else {
+                    reject("Tree search aborted.");
+                }
+            });
+        } else {
+            subcomputation(resolve);
+        }
     });
 }

@@ -21,12 +21,12 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
      * @param {number} cacheCutoff If not undefined, then this class
      * caches results for inputs with cacheCutoff or fewer characters.
      * @param {number} cacheSize This limits the size of the cache.
-     * @param {boolean} cancellable If this is set to true, then any prior
-     * predict computations will be immediately cancelled if a subsequent
-     * predict call is made. The prior predict call will return a rejected
-     * promise.
+     * @param {number} abortableCnt If this is set to a positive integer,
+     * then any prior predict computations will be immediately cancelled if a
+     * subsequent predict call is made. The prior predict call will return a
+     * rejected promise.
      */
-    constructor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize = 1000, cancellable = false) {
+    constructor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize = 1000, abortableCnt) {
         super();
         this.trie = trie;
         this.splitter = splitter;
@@ -37,7 +37,7 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
             this.cacheSize = cacheSize;
             this.cache = new Map();
         }
-        this.cancellable = cancellable;
+        this.abortableCnt = abortableCnt;
     }
     predict(prior, input) {
         this.currentInput = input;
@@ -67,11 +67,11 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
     }
     computeFuzzyCompletions(chars, input) {
         const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
-        if (this.cancellable) {
+        if (this.abortableCnt !== undefined && this.abortableCnt > 0) {
             const cancelCallback = () => {
                 return this.currentInput !== input;
             };
-            return Tree_1.cancelableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback);
+            return Tree_1.abortableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback, this.abortableCnt, { i: 0 });
         }
         else {
             return Promise.resolve(Tree_1.automatonTreeSearch(this.trie, leven, leven.start()));

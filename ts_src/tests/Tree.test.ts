@@ -13,7 +13,7 @@ import {
     automatonTreeSearch,
     buildSortedTreeFromPaths,
     buildSortedTreeFromSortedPaths,
-    cancelableAutomatonTreeSearch,
+    abortableAutomatonTreeSearch,
     insert,
     sortedInsert,
     Tree,
@@ -256,7 +256,7 @@ test("Cancelable FuzzyTreeSearch should be cancellable", () => {
     sortedInsert(testTree, "heat".split(""), { token: "heat" });
     const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     const leven = new LevenshteinAutomaton("heal".split(""), costModule);
-    const resultsP = cancelableAutomatonTreeSearch(testTree, leven, leven.start(), () => true);
+    const resultsP = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => true);
     expect.assertions(1);
     return expect(resultsP).rejects.toEqual("Tree search aborted.");
 });
@@ -271,7 +271,7 @@ test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () =>
     const plucker = (result) => pluck(result, ["status", "prefixEditCost", "token"]);
     const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     const leven = new LevenshteinAutomaton("heal".split(""), costModule);
-    const resultsP = cancelableAutomatonTreeSearch(testTree, leven, leven.start(), () => false)
+    const resultsP = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => false)
         .then((results) => results.map(plucker));
     expect.assertions(1);
     return expect(resultsP).resolves.toEqual([
