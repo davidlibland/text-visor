@@ -144,3 +144,44 @@ test("Contextified FuzzyTriePredictor with edit cost 3 should find correct compl
         { prediction: "what would you like to hepatitis later today?", weight: Math.exp(-2), cursorPosition: 32 },
     ].map(plucker));
 });
+
+test("Cancellable FuzzyTriePredictor with flat cost 1 should find correct completions", () => {
+    const prior = (token) => 1;
+    const plucker = (result) => pluck(result, ["cursorPosition", "prediction", "weight"]);
+    const costModuleFactory = (ignored) => new FlatLevenshteinCostModule(1);
+    const fuzzyPredictor = new FuzzyTriePredictor(
+        testTree,
+        (token) => token.split(""),
+        costModuleFactory,
+        undefined,
+        undefined,
+        true,
+    );
+    const resultsP = fuzzyPredictor.predict(prior, "heal");
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map(plucker)))
+        .resolves.toEqual([
+            {cursorPosition: 4, prediction: "heal", weight: 1},
+            {cursorPosition: 11, prediction: "health risk", weight: 1},
+        ].map(plucker));
+});
+
+test("Cancellable FuzzyTriePredictor should abort all but last predict call.", () => {
+    const prior = (token) => 1;
+    const plucker = (result) => pluck(result, ["cursorPosition", "prediction", "weight"]);
+    const costModuleFactory = (ignored) => new FlatLevenshteinCostModule(1);
+    const fuzzyPredictor = new FuzzyTriePredictor(
+        testTree,
+        (token) => token.split(""),
+        costModuleFactory,
+        undefined,
+        undefined,
+        true,
+    );
+    const resultsP = fuzzyPredictor.predict(prior, "heal");
+    // Call it again with a different input, this should abort the first call.
+    fuzzyPredictor.predict(prior, "healing");
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map(plucker)))
+        .rejects.toEqual("Tree search aborted.");
+});

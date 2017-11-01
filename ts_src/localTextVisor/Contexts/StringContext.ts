@@ -57,6 +57,7 @@ export interface LanguageModuleSpecsFTSCore extends LanguageModuleSpecsConstrain
     tokenizerType: TokenizerType;
     cacheCutoff?: number;
     cacheSize?: number;
+    cancellable?: boolean;
 }
 
 export interface LanguageModuleSpecsFTS extends LanguageModuleSpecsFTSCore {
@@ -172,7 +173,10 @@ function constructCostModuleFactory<A>(
 }
 
 // ToDo: Improve the typing of this function (currently uses any types).
-export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any> {
+export function initializeLTVWithContext(
+    languageSpecs: LanguageModuleSpecs,
+    rewardSpecs: RewardModuleSpecs,
+    data: ContextDataType): AbstractPipeline<any, any, any> {
     let languageModule: AbstractPredictor<any, any>;
     let rewardModule: AbstractValueDifferential<any>;
     let prior: () => any;
@@ -205,6 +209,7 @@ export function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rew
                 costModuleFactory,
                 fuzzyTreeSearchSpecs.cacheCutoff,
                 fuzzyTreeSearchSpecs.cacheSize,
+                fuzzyTreeSearchSpecs.cancellable,
             );
             let contextTokenizer: (input: string) => string[];
             let contextJoiner: (...tokens) => string;

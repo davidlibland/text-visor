@@ -21,8 +21,12 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
      * @param {number} cacheCutoff If not undefined, then this class
      * caches results for inputs with cacheCutoff or fewer characters.
      * @param {number} cacheSize This limits the size of the cache.
+     * @param {boolean} cancellable If this is set to true, then any prior
+     * predict computations will be immediately cancelled if a subsequent
+     * predict call is made. The prior predict call will return a rejected
+     * promise.
      */
-    constructor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize = 1000) {
+    constructor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize = 1000, cancellable = false) {
         super();
         this.trie = trie;
         this.splitter = splitter;
@@ -33,34 +37,45 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
             this.cacheSize = cacheSize;
             this.cache = new Map();
         }
+        this.cancellable = cancellable;
     }
     predict(prior, input) {
+        this.currentInput = input;
         const chars = this.splitter(input);
-        let fuzzyCompletions;
+        let fuzzyCompletionsP;
         if (this.cacheEarlyResultsFlag && chars.length <= this.cacheCutoff) {
-            fuzzyCompletions = this.cache.get(input);
             if (this.cache.has(input)) {
-                fuzzyCompletions = this.cache.get(input);
+                fuzzyCompletionsP = Promise.resolve(this.cache.get(input));
             }
             else {
-                fuzzyCompletions = this.computeFuzzyCompletions(chars);
-                const fuzzyCompletionsLimited = fuzzyCompletions.sort((a, b) => a.prefixEditCost - b.prefixEditCost).slice(0, this.cacheSize);
-                this.cache.set(input, fuzzyCompletionsLimited);
+                fuzzyCompletionsP = this.computeFuzzyCompletions(chars, input);
+                fuzzyCompletionsP.then((fuzzyCompletions) => {
+                    const fuzzyCompletionsLimited = fuzzyCompletions.sort((a, b) => a.prefixEditCost - b.prefixEditCost).slice(0, this.cacheSize);
+                    this.cache.set(input, fuzzyCompletionsLimited);
+                }).catch();
             }
         }
         else {
-            fuzzyCompletions = this.computeFuzzyCompletions(chars);
+            fuzzyCompletionsP = this.computeFuzzyCompletions(chars, input);
         }
         const addMetadata = (completion) => {
             return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: Math.exp(-completion.prefixEditCost) * prior(completion.prediction) });
         };
-        return Promise.resolve(fuzzyCompletions
+        return fuzzyCompletionsP.then((fuzzyCompletions) => fuzzyCompletions
             .map(addMetadata)
             .filter((completion) => (completion.weight > 0)));
     }
-    computeFuzzyCompletions(chars) {
+    computeFuzzyCompletions(chars, input) {
         const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
-        return Tree_1.automatonTreeSearch(this.trie, leven, leven.start());
+        if (this.cancellable) {
+            const cancelCallback = () => {
+                return this.currentInput !== input;
+            };
+            return Tree_1.cancelableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback);
+        }
+        else {
+            return Promise.resolve(Tree_1.automatonTreeSearch(this.trie, leven, leven.start()));
+        }
     }
 }
 exports.FuzzyTriePredictor = FuzzyTriePredictor;

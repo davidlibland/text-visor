@@ -23,6 +23,8 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends object
     private cacheEarlyResultsFlag;
     private cacheCutoff;
     private cacheSize;
+    private cancellable;
+    private currentInput;
     /**
      * Constructs a fuzzy tree predictor using the Levenshtein automata.
      * @param {Tree<A, {prediction: T} & V>} trie The tree to be used by the
@@ -35,14 +37,18 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends object
      * @param {number} cacheCutoff If not undefined, then this class
      * caches results for inputs with cacheCutoff or fewer characters.
      * @param {number} cacheSize This limits the size of the cache.
+     * @param {boolean} cancellable If this is set to true, then any prior
+     * predict computations will be immediately cancelled if a subsequent
+     * predict call is made. The prior predict call will return a rejected
+     * promise.
      */
     constructor(trie: Tree<A, {
         prediction: T;
-    } & V>, splitter: SplitterType<T, A>, costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>, cacheCutoff?: number, cacheSize?: number);
+    } & V>, splitter: SplitterType<T, A>, costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>, cacheCutoff?: number, cacheSize?: number, cancellable?: boolean);
     predict(prior: MapPrior<T>, input: T): Promise<Array<WeightedPrediction<T> & V & CursorPositionType>>;
-    protected computeFuzzyCompletions(chars: A[]): Array<V & {
+    protected computeFuzzyCompletions(chars: A[], input: T): Promise<Array<V & {
         prediction: T;
-    } & LAStatus>;
+    } & LAStatus>>;
 }
 export declare class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends object = object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V & CursorPositionType> {
     private splitter;
