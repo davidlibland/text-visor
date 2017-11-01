@@ -233,14 +233,13 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
     abortCallback: () => boolean,
     checkCount: number = 1,
     counter: {i: number} = {i: 0}): Promise<Array<V & E>> {
-    counter.i++;
     const addStatusToData = (data: V[], internalState: S) => data.map(
         (dataPt) => Object.assign({}, automata.status(internalState), dataPt),
     );
     const isAcceptedState = (internalState) => (automata.status(internalState).status === STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (internalState) => (automata.status(internalState).status !== STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
-    const subcomputation = (resolve) => {
+    const subcomputation = () => {
         const resultsP = tree.children
             .map((child) => ({
                 child,
@@ -254,24 +253,24 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                     childAndState.state,
                     abortCallback,
                     checkCount,
-                    counter,
+                    {i:counter.i+1},
                     ));
-        Promise.all(resultsP)
+        return Promise.all(resultsP)
             .then((results) =>
-                results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
-            .then(resolve);
+                results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult));
     };
-    return new Promise((resolve, reject) => {
-        if (counter.i % checkCount === 0) {
-            setImmediate( () => {
-                if (!abortCallback()) {
-                    subcomputation(resolve);
-                } else {
-                    reject("Tree search aborted.");
-                }
-            });
-        } else {
-            subcomputation(resolve);
-        }
-    });
+    //return new Promise((resolve, reject) => {
+    if (counter.i % checkCount === 0) {
+        return new Promise((resolve, reject) => {
+            //setImmediate( () => {
+            if (!abortCallback()) {
+                resolve(subcomputation());
+            } else {
+                reject("Tree search aborted.");
+            }
+            //});
+        });
+    } else {
+        return subcomputation();
+    }
 }

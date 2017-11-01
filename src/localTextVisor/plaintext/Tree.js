@@ -193,38 +193,37 @@ exports.automatonTreeSearch = automatonTreeSearch;
  * @returns {Promise<Array<V & E>>}
  */
 function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, checkCount = 1, counter = { i: 0 }) {
-    counter.i++;
     const addStatusToData = (data, internalState) => data.map((dataPt) => Object.assign({}, automata.status(internalState), dataPt));
     const isAcceptedState = (internalState) => (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
-    const subcomputation = (resolve) => {
+    const subcomputation = () => {
         const resultsP = tree.children
             .map((child) => ({
             child,
             state: automata.step(state, child.node),
         }))
             .filter((childAndState) => isNotRejectedState(childAndState.state))
-            .map((childAndState) => abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, counter));
-        Promise.all(resultsP)
-            .then((results) => results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
-            .then(resolve);
+            .map((childAndState) => abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, { i: counter.i + 1 }));
+        return Promise.all(resultsP)
+            .then((results) => results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult));
     };
-    return new Promise((resolve, reject) => {
-        if (counter.i % checkCount === 0) {
-            setImmediate(() => {
-                if (!abortCallback()) {
-                    subcomputation(resolve);
-                }
-                else {
-                    reject("Tree search aborted.");
-                }
-            });
-        }
-        else {
-            subcomputation(resolve);
-        }
-    });
+    //return new Promise((resolve, reject) => {
+    if (counter.i % checkCount === 0) {
+        return new Promise((resolve, reject) => {
+            //setImmediate( () => {
+            if (!abortCallback()) {
+                resolve(subcomputation());
+            }
+            else {
+                reject("Tree search aborted.");
+            }
+            //});
+        });
+    }
+    else {
+        return subcomputation();
+    }
 }
 exports.abortableAutomatonTreeSearch = abortableAutomatonTreeSearch;
 //# sourceMappingURL=Tree.js.map
