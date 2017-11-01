@@ -13,6 +13,7 @@ import {
     automatonTreeSearch,
     buildSortedTreeFromPaths,
     buildSortedTreeFromSortedPaths,
+    cancelableAutomatonTreeSearch,
     insert,
     sortedInsert,
     Tree,
@@ -243,5 +244,38 @@ test("FuzzyTreeSearch with Rel Edit Distance should find correct completions", (
         { status: "ACCEPT", prefixEditCost: 1, token: "heart attack" },
         { status: "ACCEPT", prefixEditCost: 1, token: "heat" },
         { status: "ACCEPT", prefixEditCost: 2, token: "hepatitis" },
+    ].map(plucker));
+});
+
+test("Cancelable FuzzyTreeSearch should be cancellable", () => {
+    const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
+    sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
+    sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
+    sortedInsert(testTree, "heal".split(""), { token: "heal" });
+    sortedInsert(testTree, "heat".split(""), { token: "heat" });
+    const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
+    const leven = new LevenshteinAutomaton("heal".split(""), costModule);
+    const resultsP = cancelableAutomatonTreeSearch(testTree, leven, leven.start(), () => true);
+    expect.assertions(1);
+    return expect(resultsP).rejects.toEqual("Tree search aborted.");
+});
+
+test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () => {
+    const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
+    sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
+    sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
+    sortedInsert(testTree, "heal".split(""), { token: "heal" });
+    sortedInsert(testTree, "heat".split(""), { token: "heat" });
+    const plucker = (result) => pluck(result, ["status", "prefixEditCost", "token"]);
+    const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
+    const leven = new LevenshteinAutomaton("heal".split(""), costModule);
+    const resultsP = cancelableAutomatonTreeSearch(testTree, leven, leven.start(), () => false)
+        .then((results) => results.map(plucker));
+    expect.assertions(1);
+    return expect(resultsP).resolves.toEqual([
+        { status: "ACCEPT", prefixEditCost: 0, token: "heal" },
+        { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },
     ].map(plucker));
 });

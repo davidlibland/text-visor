@@ -186,16 +186,18 @@ function cancelableAutomatonTreeSearch(tree, automata, state, cancelCallback) {
     return new Promise((resolve, reject) => {
         setImmediate(() => {
             if (!cancelCallback()) {
-                resolve(tree.children
+                const resultsP = tree.children
                     .map((child) => ({
                     child,
                     state: automata.step(state, child.node),
                 }))
                     .filter((childAndState) => isNotRejectedState(childAndState.state))
                     .map((childAndState) => {
-                    return automatonTreeSearch(childAndState.child, automata, childAndState.state);
-                })
-                    .reduce((results, result) => results.concat(result), localSearchResult));
+                    return cancelableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, cancelCallback);
+                });
+                Promise.all(resultsP)
+                    .then((results) => results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult))
+                    .then(resolve);
             }
             else {
                 reject("Tree search aborted.");

@@ -11,22 +11,36 @@ import {
 import { LANGUAGE_MODULE_TYPE, QUALITY_MODULE_TYPE, REWARD_MODULE_TYPE, TOKENIZER_TYPE } from "../localTextVisor/Enums";
 import { sortedInsert, Tree } from "../localTextVisor/plaintext/Tree";
 
-test("Initialize LTV with Identity Predictor", () => {
+test("Initialize LTV with Identity Predictor and test confidence quality.", () => {
     const idPipeline = initializeLTVWithContext(
-        { moduleType: LANGUAGE_MODULE_TYPE.IDENTITY, tokenizerType: TOKENIZER_TYPE.CHARACTER },
-        { moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE },
+        {
+            moduleType: LANGUAGE_MODULE_TYPE.IDENTITY,
+            tokenizerType: TOKENIZER_TYPE.CHARACTER,
+        },
+        {moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE},
         {trie: {node: "", children: [], data: []}, prior: {}},
-        );
-
-    let resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE);
-    resultsP.then((results) =>
-        expect(results.map((wPred) => wPred.prediction)).toEqual(["abracadabra"]),
     );
 
-    resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
-    resultsP.then((results) =>
-        expect(results.map((wPred) => wPred.prediction)).toEqual([]),
+    const resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE);
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
+        .resolves.toEqual(["abracadabra"]);
+});
+
+test("Initialize LTV with Identity Predictor and test expected reward quality.", () => {
+    const idPipeline = initializeLTVWithContext(
+        {
+            moduleType: LANGUAGE_MODULE_TYPE.IDENTITY,
+            tokenizerType: TOKENIZER_TYPE.CHARACTER,
+        },
+        {moduleType: REWARD_MODULE_TYPE.LENGTH_DIFFERENCE},
+        {trie: {node: "", children: [], data: []}, prior: {}},
     );
+
+    const resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
+        .resolves.toEqual([]);
 });
 
 interface TokenData {
@@ -61,13 +75,14 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and string length differen
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we hea", cursorPosition: 15 };
     const resultsP = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
-    resultsP.then((results) =>
-        expect(results.map((wPred) => wPred.prediction)).toEqual([
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
+        .resolves.toEqual([
             "who should we heart attack",
             "who should we health risk",
             "who should we hepatitis",
             "who should we heal",
-    ]));
+    ]);
 });
 
 test("Initialize LTV with Fuzzy Tree Search Predictor and prob-not-reject reward", () => {
@@ -83,13 +98,14 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and prob-not-reject reward
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we hea", cursorPosition: 15 };
     const resultsP = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
-    resultsP.then((results) =>
-        expect(results.map((wPred) => wPred.prediction)).toEqual([
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
+        .resolves.toEqual([
             "who should we heart attack",
             "who should we hepatitis",
             "who should we heal",
             "who should we health risk",
-    ]));
+    ]);
 });
 
 test("Predictions are returned even when there is no word to complete.", () => {
@@ -105,12 +121,13 @@ test("Predictions are returned even when there is no word to complete.", () => {
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we ", cursorPosition: 14 };
     const resultsP = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
-    resultsP.then((results) =>
-        expect(results.map((wPred) => wPred.prediction)).toEqual([
+    expect.assertions(1);
+    return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
+        .resolves.toEqual([
             "who should we jaundice",
             "who should we hepatitis",
             "who should we heart attack",
             "who should we heal",
             "who should we health risk",
-    ]));
+    ]);
 });

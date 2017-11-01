@@ -26,7 +26,8 @@ export type CombinerType<T, A> = (...components: A[]) => T;
 export interface CursorPositionType { cursorPosition: number; }
 export type InputAndPositionType<T> = { input: T } & CursorPositionType;
 
-export class FuzzyTriePredictor<T = string, A = string, V extends object = object> extends AbstractPredictor<T, T, MapPrior<T>, V & CursorPositionType> {
+export class FuzzyTriePredictor<T = string, A = string, V extends object = object>
+    extends AbstractPredictor<T, T, MapPrior<T>, V & CursorPositionType> {
     private trie: Tree<A, { prediction: T } & V>;
     private splitter: SplitterType<T, A>;
     private costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>;
