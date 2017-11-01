@@ -18,13 +18,15 @@ test("Initialize LTV with Identity Predictor", () => {
         {trie: {node: "", children: [], data: []}, prior: {}},
         );
 
-    let result = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE)
-        .map((wPred) => wPred.prediction);
-    expect(result).toEqual(["abracadabra"]);
+    let resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE);
+    resultsP.then((results) =>
+        expect(results.map((wPred) => wPred.prediction)).toEqual(["abracadabra"]),
+    );
 
-    result = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
-        .map((wPred) => wPred.prediction);
-    expect(result).toEqual([]);
+    resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
+    resultsP.then((results) =>
+        expect(results.map((wPred) => wPred.prediction)).toEqual([]),
+    );
 });
 
 interface TokenData {
@@ -58,14 +60,14 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and string length differen
     };
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we hea", cursorPosition: 15 };
-    const results = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
-        .map((wPred) => wPred.prediction);
-    expect(results).toEqual([
-        "who should we heart attack",
-        "who should we health risk",
-        "who should we hepatitis",
-        "who should we heal",
-    ]);
+    const resultsP = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
+    resultsP.then((results) =>
+        expect(results.map((wPred) => wPred.prediction)).toEqual([
+            "who should we heart attack",
+            "who should we health risk",
+            "who should we hepatitis",
+            "who should we heal",
+    ]));
 });
 
 test("Initialize LTV with Fuzzy Tree Search Predictor and prob-not-reject reward", () => {
@@ -80,14 +82,14 @@ test("Initialize LTV with Fuzzy Tree Search Predictor and prob-not-reject reward
     };
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we hea", cursorPosition: 15 };
-    const results = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
-        .map((wPred) => wPred.prediction);
-    expect(results).toEqual([
-        "who should we heart attack",
-        "who should we hepatitis",
-        "who should we heal",
-        "who should we health risk",
-    ]);
+    const resultsP = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
+    resultsP.then((results) =>
+        expect(results.map((wPred) => wPred.prediction)).toEqual([
+            "who should we heart attack",
+            "who should we hepatitis",
+            "who should we heal",
+            "who should we health risk",
+    ]));
 });
 
 test("Predictions are returned even when there is no word to complete.", () => {
@@ -102,13 +104,13 @@ test("Predictions are returned even when there is no word to complete.", () => {
     };
     const triePipeline = initializeLTVWithContext(languageSpecs, rewardSpecs, { trie: testTree, prior });
     const input = { input: "who should we ", cursorPosition: 14 };
-    const results = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD)
-        .map((wPred) => wPred.prediction);
-    expect(results).toEqual([
-        "who should we jaundice",
-        "who should we hepatitis",
-        "who should we heart attack",
-        "who should we heal",
-        "who should we health risk",
-    ]);
+    const resultsP = triePipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
+    resultsP.then((results) =>
+        expect(results.map((wPred) => wPred.prediction)).toEqual([
+            "who should we jaundice",
+            "who should we hepatitis",
+            "who should we heart attack",
+            "who should we heal",
+            "who should we health risk",
+    ]));
 });

@@ -85,8 +85,8 @@ class StandardPipeline extends Abstract_1.AbstractPipeline {
         this.priorCallback = priorCallback;
     }
     predict(input, limit, offset = 0, qualityType = Enums_1.QUALITY_MODULE_TYPE.EXPECTED_REWARD) {
-        const predictions = this.predictor.predict(this.priorCallback(), input);
-        return this.qualityAssessor.assess(input, predictions, limit, offset, qualityType);
+        return this.predictor.predict(this.priorCallback(), input)
+            .then((predictions) => this.qualityAssessor.assess(input, predictions, limit, offset, qualityType));
     }
 }
 exports.StandardPipeline = StandardPipeline;

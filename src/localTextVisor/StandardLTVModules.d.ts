@@ -40,5 +40,5 @@ export declare class StandardPipeline<S, T, P, E extends object> extends Abstrac
      * @param {() => P} priorCallback
      */
     constructor(predictor: AbstractPredictor<S, T, P>, qualityAssessor: AbstractQualityAssessor<S, T, E>, priorCallback: () => P);
-    predict(input: S, limit: number, offset?: number, qualityType?: QualityModuleType): Array<(WeightedPrediction<T> & E)>;
+    predict(input: S, limit: number, offset?: number, qualityType?: QualityModuleType): Promise<Array<(WeightedPrediction<T> & E)>>;
 }

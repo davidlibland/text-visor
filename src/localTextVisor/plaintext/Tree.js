@@ -14,7 +14,7 @@ const AbstractAutomata_1 = require("./AbstractAutomata");
  * incorrectly built. Complexity is O(nm) on the number n of the wrappedPaths,
  * and max-length m of a nodePath.
  * @param {A} root The node label for the root of the tree.
- * @param {{nodePath: A[]; data?: V}} wrappedPaths A (sorted) list of nodePaths
+ * @param {Array<{nodePath: A[]; data?: V}>} wrappedPaths A (sorted) list of nodePaths
  * along with associated data. For each wrappedPath, the resulting tree will
  * contain the specified nodePath (from the root) and the associated data will
  * be placed at that node in the tree.
@@ -36,7 +36,7 @@ exports.buildSortedTreeFromSortedPaths = buildSortedTreeFromSortedPaths;
  * on the order of k^m, so that the complexity is roughly O(nln(n)), the same as
  * a sort.
  * @param {A} root The node label for the root of the tree.
- * @param {{nodePath: A[]; data?: V}} wrappedPaths A list of nodePaths
+ * @param {Array<{nodePath: A[]; data?: V}>} wrappedPaths A list of nodePaths
  * along with associated data. For each wrappedPath, the resulting tree will
  * contain the specified nodePath (from the root) and the associated data will
  * be placed at that node in the tree.
@@ -56,7 +56,7 @@ exports.buildSortedTreeFromPaths = buildSortedTreeFromPaths;
  * max-length m of a nodePath, and size k of the symbol set. Average complexity
  * is on the order of n^2.
  * @param {A} root The node label for the root of the tree.
- * @param {{nodePath: A[]; data?: V}} wrappedPaths A list of nodePaths
+ * @param {Array<{nodePath: A[]; data?: V}>} wrappedPaths A list of nodePaths
  * along with associated data. For each wrappedPath, the resulting tree will
  * contain the specified nodePath (from the root) and the associated data will
  * be placed at that node in the tree.
@@ -70,7 +70,7 @@ exports.buildTreeFromPaths = buildTreeFromPaths;
 function insert(tree, token, data) {
     if (token.length > 0) {
         const currentSymbol = token[0];
-        let branch = tree.children.find((child) => (child.node == currentSymbol));
+        let branch = tree.children.find((child) => (child.node === currentSymbol));
         if (branch === undefined) {
             branch = { node: currentSymbol, children: [], data: [] };
             tree.children.push(branch);
@@ -115,7 +115,7 @@ function lazyInsert(tree, token, data) {
     if (token.length > 0) {
         const currentSymbol = token[0];
         let branch;
-        if (tree.children.length > 0 ? tree.children[tree.children.length - 1].node == currentSymbol : false) {
+        if (tree.children.length > 0 ? tree.children[tree.children.length - 1].node === currentSymbol : false) {
             branch = tree.children[tree.children.length - 1];
         }
         else {
@@ -139,7 +139,7 @@ exports.lazyInsert = lazyInsert;
  * @param comparisonFunc Compares two objects with respect to an order.
  * Returns -1 if the first object is smaller than the second, 1 if the
  * second object is smaller, and 0 otherwise.
- * @returns {exists: bool, index: number} The index is where the item is or
+ * @returns {PotentialIndex} The index is where the item is or
  * should-be-inserted, exists reflect whether the item is already there.
  */
 function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc) {
@@ -167,9 +167,9 @@ function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc)
     return { exists: false, index: low };
 }
 function automatonTreeSearch(tree, automata, state) {
-    const addStatusToData = (data, state) => data.map((dataPt) => Object.assign({}, automata.status(state), dataPt));
-    const isAcceptedState = (state) => (automata.status(state).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
-    const isNotRejectedState = (state) => (automata.status(state).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
+    const addStatusToData = (data, internalState) => data.map((dataPt) => Object.assign({}, automata.status(internalState), dataPt));
+    const isAcceptedState = (internalState) => (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
+    const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
     return tree.children
         .map((child) => ({ child, state: automata.step(state, child.node) }))
@@ -178,4 +178,30 @@ function automatonTreeSearch(tree, automata, state) {
         .reduce((results, result) => results.concat(result), localSearchResult);
 }
 exports.automatonTreeSearch = automatonTreeSearch;
+function cancelableAutomatonTreeSearch(tree, automata, state, cancelCallback) {
+    const addStatusToData = (data, internalState) => data.map((dataPt) => Object.assign({}, automata.status(internalState), dataPt));
+    const isAcceptedState = (internalState) => (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
+    const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
+    const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
+    return new Promise((resolve, reject) => {
+        setImmediate(() => {
+            if (!cancelCallback()) {
+                resolve(tree.children
+                    .map((child) => ({
+                    child,
+                    state: automata.step(state, child.node),
+                }))
+                    .filter((childAndState) => isNotRejectedState(childAndState.state))
+                    .map((childAndState) => {
+                    return automatonTreeSearch(childAndState.child, automata, childAndState.state);
+                })
+                    .reduce((results, result) => results.concat(result), localSearchResult));
+            }
+            else {
+                reject("Tree search aborted.");
+            }
+        });
+    });
+}
+exports.cancelableAutomatonTreeSearch = cancelableAutomatonTreeSearch;
 //# sourceMappingURL=Tree.js.map

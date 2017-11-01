@@ -11,7 +11,7 @@ class MapPredictor extends Abstract_1.AbstractPredictor {
         this.map = map;
     }
     predict(prior, input) {
-        return [{ weight: 1, prediction: this.map(input) }];
+        return Promise.resolve([{ weight: 1, prediction: this.map(input) }]);
     }
 }
 exports.MapPredictor = MapPredictor;

@@ -45,7 +45,7 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
             else {
                 fuzzyCompletions = this.computeFuzzyCompletions(chars);
                 const fuzzyCompletionsLimited = fuzzyCompletions.sort((a, b) => a.prefixEditCost - b.prefixEditCost).slice(0, this.cacheSize);
-                this.cache.set(input, fuzzyCompletions);
+                this.cache.set(input, fuzzyCompletionsLimited);
             }
         }
         else {
@@ -54,9 +54,9 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
         const addMetadata = (completion) => {
             return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: Math.exp(-completion.prefixEditCost) * prior(completion.prediction) });
         };
-        return fuzzyCompletions
+        return Promise.resolve(fuzzyCompletions
             .map(addMetadata)
-            .filter((completion) => (completion.weight > 0));
+            .filter((completion) => (completion.weight > 0)));
     }
     computeFuzzyCompletions(chars) {
         const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
@@ -83,9 +83,9 @@ class TokenizingPredictor extends Abstract_1.AbstractPredictor {
             token = suffix.shift();
         }
         if (token === undefined) {
-            return [];
+            return Promise.resolve([]);
         }
-        const results = this.childPredictor.predict(prior, token);
+        const resultsP = this.childPredictor.predict(prior, token);
         const contextifyResult = (result) => {
             const cursPos = this.combiner(...prefix, result.prediction).length
                 - this.combiner(result.prediction).length + result.cursorPosition;
@@ -94,7 +94,7 @@ class TokenizingPredictor extends Abstract_1.AbstractPredictor {
                 prediction: this.combiner(...prefix, result.prediction, ...suffix),
             });
         };
-        return results.map(contextifyResult);
+        return resultsP.then((results) => (results.map(contextifyResult)));
     }
 }
 exports.TokenizingPredictor = TokenizingPredictor;

@@ -19,13 +19,15 @@ export interface Tree<A, V> {
  * incorrectly built. Complexity is O(nm) on the number n of the wrappedPaths,
  * and max-length m of a nodePath.
  * @param {A} root The node label for the root of the tree.
- * @param {{nodePath: A[]; data?: V}} wrappedPaths A (sorted) list of nodePaths
+ * @param {Array<{nodePath: A[]; data?: V}>} wrappedPaths A (sorted) list of nodePaths
  * along with associated data. For each wrappedPath, the resulting tree will
  * contain the specified nodePath (from the root) and the associated data will
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-export function buildSortedTreeFromSortedPaths<A, V>(root: A, ...wrappedPaths: Array<{nodePath: A[], data?: V}>): Tree<A, V> {
+export function buildSortedTreeFromSortedPaths<A, V>(
+    root: A,
+    ...wrappedPaths: Array<{nodePath: A[], data?: V}>): Tree<A, V> {
     const reducer = (tree: Tree<A, V>, wrappedPath: {nodePath: A[], data: V}) =>
         lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data);
     return wrappedPaths.reduce<Tree<A, V>>(
@@ -45,7 +47,7 @@ export function buildSortedTreeFromSortedPaths<A, V>(root: A, ...wrappedPaths: A
  * on the order of k^m, so that the complexity is roughly O(nln(n)), the same as
  * a sort.
  * @param {A} root The node label for the root of the tree.
- * @param {{nodePath: A[]; data?: V}} wrappedPaths A list of nodePaths
+ * @param {Array<{nodePath: A[]; data?: V}>} wrappedPaths A list of nodePaths
  * along with associated data. For each wrappedPath, the resulting tree will
  * contain the specified nodePath (from the root) and the associated data will
  * be placed at that node in the tree.
@@ -69,7 +71,7 @@ export function buildSortedTreeFromPaths<A, V>(root: A, ...wrappedPaths: Array<{
  * max-length m of a nodePath, and size k of the symbol set. Average complexity
  * is on the order of n^2.
  * @param {A} root The node label for the root of the tree.
- * @param {{nodePath: A[]; data?: V}} wrappedPaths A list of nodePaths
+ * @param {Array<{nodePath: A[]; data?: V}>} wrappedPaths A list of nodePaths
  * along with associated data. For each wrappedPath, the resulting tree will
  * contain the specified nodePath (from the root) and the associated data will
  * be placed at that node in the tree.
@@ -87,7 +89,7 @@ export function buildTreeFromPaths<A, V>(root: A, ...wrappedPaths: Array<{nodePa
 export function insert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
     if (token.length > 0) {
         const currentSymbol = token[0];
-        let branch = tree.children.find((child) => (child.node == currentSymbol));
+        let branch = tree.children.find((child) => (child.node === currentSymbol));
         if (branch === undefined) {
             branch = { node: currentSymbol, children: [], data: [] };
             tree.children.push(branch);
@@ -104,7 +106,11 @@ interface PotentialIndex {
     index: number;
 }
 
-export function sortedInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V, comparisonFunc: ((obj1: A, obj2: A) => number) = stdComparisonFunc) {
+export function sortedInsert<A, V>(
+    tree: Tree<A, V>,
+    token: A[],
+    data?: V,
+    comparisonFunc: ((obj1: A, obj2: A) => number) = stdComparisonFunc) {
     if (token.length > 0) {
         const currentSymbol = token[0];
         const childNodes = tree.children.map((x) => x.node);
@@ -136,7 +142,7 @@ export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
     if (token.length > 0) {
         const currentSymbol = token[0];
         let branch;
-        if (tree.children.length > 0 ? tree.children[tree.children.length - 1].node == currentSymbol : false) {
+        if (tree.children.length > 0 ? tree.children[tree.children.length - 1].node === currentSymbol : false) {
             branch = tree.children[tree.children.length - 1];
         } else {
             branch = { node: currentSymbol, children: [], data: [] };
@@ -158,7 +164,7 @@ export function lazyInsert<A, V>(tree: Tree<A, V>, token: A[], data?: V) {
  * @param comparisonFunc Compares two objects with respect to an order.
  * Returns -1 if the first object is smaller than the second, 1 if the
  * second object is smaller, and 0 otherwise.
- * @returns {exists: bool, index: number} The index is where the item is or
+ * @returns {PotentialIndex} The index is where the item is or
  * should-be-inserted, exists reflect whether the item is already there.
  */
 function findObjectIndexInSortedArray<A>(
@@ -189,16 +195,50 @@ function findObjectIndexInSortedArray<A>(
     return { exists: false, index: low };
 }
 
-export function automatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S): Array<V & E> {
-    const addStatusToData = (data: V[], state: S) => data.map(
-        (dataPt) => Object.assign({}, automata.status(state), dataPt),
+export function automatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(
+    tree: Tree<A, V>,
+    automata: AbstractAutomaton<S, A, E>,
+    state: S): Array<V & E> {
+    const addStatusToData = (data: V[], internalState: S) => data.map(
+        (dataPt) => Object.assign({}, automata.status(internalState), dataPt),
     );
-    const isAcceptedState = (state) => (automata.status(state).status === STATUS_TYPE.ACCEPT);
-    const isNotRejectedState = (state) => (automata.status(state).status !== STATUS_TYPE.REJECT);
+    const isAcceptedState = (internalState) => (automata.status(internalState).status === STATUS_TYPE.ACCEPT);
+    const isNotRejectedState = (internalState) => (automata.status(internalState).status !== STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
     return tree.children
         .map((child) => ({child, state: automata.step(state, child.node)}))
         .filter((childAndState) => isNotRejectedState(childAndState.state))
         .map((childAndState) => automatonTreeSearch<S, A, V, E>(childAndState.child, automata, childAndState.state))
         .reduce((results, result) => results.concat(result), localSearchResult);
+}
+
+export function cancelableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(
+    tree: Tree<A, V>,
+    automata: AbstractAutomaton<S, A, E>,
+    state: S,
+    cancelCallback: () => boolean): Promise<Array<V & E>> {
+    const addStatusToData = (data: V[], internalState: S) => data.map(
+        (dataPt) => Object.assign({}, automata.status(internalState), dataPt),
+    );
+    const isAcceptedState = (internalState) => (automata.status(internalState).status === STATUS_TYPE.ACCEPT);
+    const isNotRejectedState = (internalState) => (automata.status(internalState).status !== STATUS_TYPE.REJECT);
+    const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
+    return new Promise((resolve, reject) => {
+        setImmediate( () => {
+            if (!cancelCallback()) {
+                resolve(tree.children
+                    .map((child) => ({
+                        child,
+                        state: automata.step(state, child.node),
+                    }))
+                    .filter((childAndState) => isNotRejectedState(childAndState.state))
+                    .map((childAndState) => {
+                        return automatonTreeSearch<S, A, V, E>(childAndState.child, automata, childAndState.state);
+                    })
+                    .reduce((results, result) => results.concat(result), localSearchResult));
+            } else {
+                reject("Tree search aborted.");
+            }
+        });
+    });
 }

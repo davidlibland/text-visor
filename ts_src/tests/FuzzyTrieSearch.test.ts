@@ -12,7 +12,7 @@ import {
 } from "../localTextVisor/plaintext/FuzzyTrieSearch";
 import { sortedInsert, Tree } from "../localTextVisor/plaintext/Tree";
 
-interface tokenData {
+interface TokenData {
     prediction: string;
 }
 
@@ -20,7 +20,7 @@ function pluck<T, K extends keyof T>(o: T, names: K[]): Array<T[K]> {
     return names.map((n) => o[n]);
 }
 
-const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+const testTree: Tree<string, TokenData> = { node: "root", children: [], data: [] };
 sortedInsert(testTree, "heart attack".split(""), { prediction: "heart attack" });
 sortedInsert(testTree, "health risk".split(""), { prediction: "health risk" });
 sortedInsert(testTree, "hepatitis".split(""), { prediction: "hepatitis" });
@@ -32,32 +32,35 @@ test("FuzzyTriePredictor should find correct completions", () => {
     const plucker = (result) => pluck(result, ["cursorPosition", "prediction", "weight"]);
     let costModuleFactory = (ignored) => new FlatLevenshteinCostModule(1);
     let fuzzyPredictor = new FuzzyTriePredictor(testTree, (token) => token.split(""), costModuleFactory);
-    let results = fuzzyPredictor.predict(prior, "heal");
+    let resultsP = fuzzyPredictor.predict(prior, "heal");
+    resultsP.then((results) =>
     expect(results.map(plucker)).toEqual([
         { cursorPosition: 4, prediction: "heal", weight: 1 },
         { cursorPosition: 11, prediction: "health risk", weight: 1 },
-    ].map(plucker));
+    ].map(plucker)));
 
     costModuleFactory = (ignored) => new FlatLevenshteinCostModule(2);
     fuzzyPredictor = new FuzzyTriePredictor(testTree, (token) => token.split(""), costModuleFactory);
-    results = fuzzyPredictor.predict(prior, "heal");
+    resultsP = fuzzyPredictor.predict(prior, "heal");
+    resultsP.then((results) =>
     expect(results.map(plucker)).toEqual([
         { prediction: "heal", weight: 1, cursorPosition: 4 },
         { prediction: "health risk", weight: 1, cursorPosition: 11 },
         { prediction: "heart attack", weight: Math.exp(-1), cursorPosition: 12 },
         { prediction: "heat", weight: Math.exp(-1), cursorPosition: 4 },
-    ].map(plucker));
+    ].map(plucker)));
 
     costModuleFactory = (ignored) => new FlatLevenshteinCostModule(3);
     fuzzyPredictor = new FuzzyTriePredictor(testTree, (token) => token.split(""), costModuleFactory);
-    results = fuzzyPredictor.predict(prior, "heal");
+    resultsP = fuzzyPredictor.predict(prior, "heal");
+    resultsP.then((results) =>
     expect(results.map(plucker)).toEqual([
         { prediction: "heal", weight: 1, cursorPosition: 4 },
         { prediction: "health risk", weight: 1, cursorPosition: 11 },
         { prediction: "heart attack", weight: Math.exp(-1), cursorPosition: 12 },
         { prediction: "heat", weight: Math.exp(-1), cursorPosition: 4 },
         { prediction: "hepatitis", weight: Math.exp(-2), cursorPosition: 9 },
-    ].map(plucker));
+    ].map(plucker)));
 });
 
 test("Contextified FuzzyTriePredictor should find correct completions", () => {
@@ -68,33 +71,43 @@ test("Contextified FuzzyTriePredictor should find correct completions", () => {
     const input = { input: "what would you like to heal", cursorPosition: curPos };
     let costModuleFactory = (ignored) => new FlatLevenshteinCostModule(1);
     let fuzzyPredictor = new FuzzyTriePredictor(testTree, (token) => token.split(""), costModuleFactory);
-    let contextifiedPredictor = new TokenizingPredictor((token) => token.split(" "), (...x) => x.join(" "), fuzzyPredictor);
-    let results = contextifiedPredictor.predict(prior, input);
+    let contextifiedPredictor = new TokenizingPredictor(
+        (token) => token.split(" "),
+        (...x) => x.join(" "),
+        fuzzyPredictor,
+    );
+    let resultsP = contextifiedPredictor.predict(prior, input);
+    resultsP.then((results) =>
     expect(results.map(plucker)).toEqual([
         { cursorPosition: 27, prediction: "what would you like to heal", weight: 1 },
         { cursorPosition: 34, prediction: "what would you like to health risk", weight: 1 },
-    ].map(plucker));
+    ].map(plucker)));
 
     costModuleFactory = (ignored) => new FlatLevenshteinCostModule(2);
     fuzzyPredictor = new FuzzyTriePredictor(testTree, (token) => token.split(""), costModuleFactory);
     contextifiedPredictor = new TokenizingPredictor((token) => token.split(" "), (...x) => x.join(" "), fuzzyPredictor);
-    results = contextifiedPredictor.predict(prior, input);
+    resultsP = contextifiedPredictor.predict(prior, input);
+    resultsP.then((results) =>
     expect(results.map(plucker)).toEqual([
         { prediction: "what would you like to heal", weight: 1, cursorPosition: 27 },
         { prediction: "what would you like to health risk", weight: 1, cursorPosition: 34 },
         { prediction: "what would you like to heart attack", weight: Math.exp(-1), cursorPosition: 35 },
         { prediction: "what would you like to heat", weight: Math.exp(-1), cursorPosition: 27 },
-    ].map(plucker));
+    ].map(plucker)));
 
     costModuleFactory = (ignored) => new FlatLevenshteinCostModule(3);
     fuzzyPredictor = new FuzzyTriePredictor(testTree, (token) => token.split(""), costModuleFactory);
     contextifiedPredictor = new TokenizingPredictor((token) => token.split(" "), (...x) => x.join(" "), fuzzyPredictor);
-    results = contextifiedPredictor.predict(prior, { input: "what would you like to heal later today?", cursorPosition: curPos });
+    resultsP = contextifiedPredictor.predict(
+        prior,
+        { input: "what would you like to heal later today?", cursorPosition: curPos },
+    );
+    resultsP.then((results) =>
     expect(results.map(plucker)).toEqual([
         { prediction: "what would you like to heal later today?", weight: 1, cursorPosition: 27 },
         { prediction: "what would you like to health risk later today?", weight: 1, cursorPosition: 34 },
         { prediction: "what would you like to heart attack later today?", weight: Math.exp(-1), cursorPosition: 35 },
         { prediction: "what would you like to heat later today?", weight: Math.exp(-1), cursorPosition: 27 },
         { prediction: "what would you like to hepatitis later today?", weight: Math.exp(-2), cursorPosition: 32 },
-    ].map(plucker));
+    ].map(plucker)));
 });

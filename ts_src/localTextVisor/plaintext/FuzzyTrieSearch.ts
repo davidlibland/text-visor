@@ -67,7 +67,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
         }
     }
 
-    public predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType> {
+    public predict(prior: MapPrior<T>, input: T): Promise<Array<WeightedPrediction<T> & V & CursorPositionType>> {
         const chars = this.splitter(input);
         let fuzzyCompletions;
         if (this.cacheEarlyResultsFlag && chars.length <= this.cacheCutoff) {
@@ -79,7 +79,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
                 const fuzzyCompletionsLimited = fuzzyCompletions.sort(
                     (a, b) => a.prefixEditCost - b.prefixEditCost,
                 ).slice(0, this.cacheSize);
-                this.cache.set(input, fuzzyCompletions);
+                this.cache.set(input, fuzzyCompletionsLimited);
             }
         } else {
             fuzzyCompletions = this.computeFuzzyCompletions(chars);
@@ -91,9 +91,9 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
                 weight: Math.exp(-completion.prefixEditCost) * prior(completion.prediction),
             };
         };
-        return fuzzyCompletions
+        return Promise.resolve(fuzzyCompletions
             .map(addMetadata)
-            .filter((completion) => (completion.weight > 0));
+            .filter((completion) => (completion.weight > 0)));
     }
 
     protected computeFuzzyCompletions(chars: A[]): Array<V & {prediction: T} & LAStatus> {
@@ -102,7 +102,8 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
     }
 }
 
-export class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends object = object, P = MapPrior<A>> extends AbstractPredictor<InputAndPositionType<T>, T, P, V  & CursorPositionType> {
+export class TokenizingPredictor<T extends HasLengthType = string, A = string, V extends object = object, P = MapPrior<A>>
+    extends AbstractPredictor<InputAndPositionType<T>, T, P, V  & CursorPositionType> {
     private splitter: SplitterType<T, A>;
     private combiner: CombinerType<T, A>;
     private childPredictor: AbstractPredictor<A, A, P, V & CursorPositionType>;
@@ -121,7 +122,7 @@ export class TokenizingPredictor<T extends HasLengthType = string, A = string, V
     public predict(
         prior: P,
         wrappedInput: InputAndPositionType<T>,
-    ): Array<WeightedPrediction<T> & V & { cursorPosition: number }> {
+    ): Promise<Array<WeightedPrediction<T> & V & { cursorPosition: number }>> {
         const suffix = this.splitter(wrappedInput.input);
         const prefix: A[] = [];
         let token: A = suffix.shift();
@@ -133,9 +134,9 @@ export class TokenizingPredictor<T extends HasLengthType = string, A = string, V
             token = suffix.shift();
         }
         if (token === undefined) {
-            return [];
+            return Promise.resolve([]);
         }
-        const results = this.childPredictor.predict(prior, token);
+        const resultsP = this.childPredictor.predict(prior, token);
         const contextifyResult = (result: (WeightedPrediction<A> & V & { cursorPosition: number })) => {
             const cursPos = this.combiner(...prefix, result.prediction).length
                 - this.combiner(result.prediction).length + result.cursorPosition;
@@ -144,8 +145,12 @@ export class TokenizingPredictor<T extends HasLengthType = string, A = string, V
                 prediction: this.combiner(...prefix, result.prediction, ...suffix),
             });
         };
-        return results.map(contextifyResult);
+        return resultsP.then((results) => (results.map(contextifyResult)));
     }
 }
 
-export { FlatLevenshteinRelativeCostModule, FlatLevenshteinCostModule, LevenshteinEditCostModule } from "./LevenshteinAutomata";
+export {
+    FlatLevenshteinRelativeCostModule,
+    FlatLevenshteinCostModule,
+    LevenshteinEditCostModule,
+} from "./LevenshteinAutomata";

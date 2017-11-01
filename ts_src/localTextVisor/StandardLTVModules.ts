@@ -125,8 +125,8 @@ export class StandardPipeline<S, T, P, E extends object> extends AbstractPipelin
         limit: number,
         offset: number = 0,
         qualityType: QualityModuleType = QUALITY_MODULE_TYPE.EXPECTED_REWARD,
-    ): Array<(WeightedPrediction<T> & E)> {
-        const predictions = this.predictor.predict(this.priorCallback(), input);
-        return this.qualityAssessor.assess(input, predictions, limit, offset, qualityType);
+    ): Promise<Array<(WeightedPrediction<T> & E)>> {
+        return this.predictor.predict(this.priorCallback(), input)
+                .then((predictions) => this.qualityAssessor.assess(input, predictions, limit, offset, qualityType));
     }
 }

@@ -39,7 +39,7 @@ export declare class FuzzyTriePredictor<T = string, A = string, V extends object
     constructor(trie: Tree<A, {
         prediction: T;
     } & V>, splitter: SplitterType<T, A>, costModuleFactory: (input: A[]) => LevenshteinEditCostModule<A>, cacheCutoff?: number, cacheSize?: number);
-    predict(prior: MapPrior<T>, input: T): Array<WeightedPrediction<T> & V & CursorPositionType>;
+    predict(prior: MapPrior<T>, input: T): Promise<Array<WeightedPrediction<T> & V & CursorPositionType>>;
     protected computeFuzzyCompletions(chars: A[]): Array<V & {
         prediction: T;
     } & LAStatus>;
@@ -49,8 +49,8 @@ export declare class TokenizingPredictor<T extends HasLengthType = string, A = s
     private combiner;
     private childPredictor;
     constructor(splitter: SplitterType<T, A>, combiner: CombinerType<T, A>, childPredictor: AbstractPredictor<A, A, P, V & CursorPositionType>);
-    predict(prior: P, wrappedInput: InputAndPositionType<T>): Array<WeightedPrediction<T> & V & {
+    predict(prior: P, wrappedInput: InputAndPositionType<T>): Promise<Array<WeightedPrediction<T> & V & {
         cursorPosition: number;
-    }>;
+    }>>;
 }
 export { FlatLevenshteinRelativeCostModule, FlatLevenshteinCostModule, LevenshteinEditCostModule } from "./LevenshteinAutomata";

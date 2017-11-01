@@ -15,7 +15,7 @@ export class MapPredictor<S = string, T = string> extends AbstractPredictor<S, T
         super();
         this.map = map;
     }
-    predict(prior: any, input: S): WeightedPrediction<T>[] {
-        return [{ weight: 1, prediction: this.map(input) }];
+    public predict(prior: any, input: S): Promise<Array<WeightedPrediction<T>>> {
+        return Promise.resolve([{ weight: 1, prediction: this.map(input) }]);
     }
 }

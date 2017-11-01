@@ -20,7 +20,7 @@ export interface WeightedPrediction<T = string> {
 }
 
 export abstract class AbstractPredictor<S = string, T = string, P = MapPrior<T>, E extends object = object> {
-    public abstract predict(prior: P, input: S): Array<WeightedPrediction<T> & E>;
+    public abstract predict(prior: P, input: S): Promise<Array<WeightedPrediction<T> & E>>;
 }
 
 export abstract class AbstractValueDifferential<T = string> {
@@ -34,7 +34,7 @@ export abstract class AbstractQualityAssessor<S = string, T = string, E = object
         this.valueDifferential = valueDifferential;
     }
 
-    //ToDo: Should incorporate display name.
+    // ToDo: Should incorporate display name.
     public abstract assess(
         input: S,
         predictions: Array<(WeightedPrediction<T> & E)>,
@@ -57,5 +57,5 @@ export abstract class AbstractPipeline<S, T, E extends object> {
         limit: number,
         offset: number,
         qualityType: QualityModuleType,
-    ): Array<WeightedPrediction<T> & E>;
+    ): Promise<Array<WeightedPrediction<T> & E>>;
 }

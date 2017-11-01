@@ -14,7 +14,7 @@ export interface WeightedPrediction<T = string> {
     prediction: T;
 }
 export declare abstract class AbstractPredictor<S = string, T = string, P = MapPrior<T>, E extends object = object> {
-    abstract predict(prior: P, input: S): Array<WeightedPrediction<T> & E>;
+    abstract predict(prior: P, input: S): Promise<Array<WeightedPrediction<T> & E>>;
 }
 export declare abstract class AbstractValueDifferential<T = string> {
     abstract evaluate(alpha: T, beta: T): number;
@@ -28,5 +28,5 @@ export declare abstract class AbstractPipeline<S, T, E extends object> {
     protected predictor: AbstractPredictor<S, T, any, E>;
     protected qualityAssessor: AbstractQualityAssessor<S, T>;
     constructor(predictor: AbstractPredictor<S, T, any, E>, qualityAssessor: AbstractQualityAssessor<S, T>);
-    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): Array<WeightedPrediction<T> & E>;
+    abstract predict(input: S, limit: number, offset: number, qualityType: QualityModuleType): Promise<Array<WeightedPrediction<T> & E>>;
 }
