@@ -232,15 +232,15 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
     state: S,
     abortCallback: () => boolean,
     checkCount: number = 1,
-    counter: {i: number} = {i: 0}): Promise<Array<V & E>> {
+    counter: {i: number} = {i: 0}): Accumulator<V & E> {
     const addStatusToData = (data: V[], internalState: S) => data.map(
         (dataPt) => Object.assign({}, automata.status(internalState), dataPt),
     );
     const isAcceptedState = (internalState) => (automata.status(internalState).status === STATUS_TYPE.ACCEPT);
     const isNotRejectedState = (internalState) => (automata.status(internalState).status !== STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
-    const subcomputation = () => {
-        const resultsP = tree.children
+    const subcomputation = (): Accumulator<V & E> => {
+        const resultsA: Array<Accumulator<V & E>> = tree.children
             .map((child) => ({
                 child,
                 state: automata.step(state, child.node),
@@ -255,22 +255,53 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                     checkCount,
                     {i:counter.i+1},
                     ));
-        return Promise.all(resultsP)
-            .then((results) =>
-                results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult));
+        return Accumulator.concat<V & E>(...resultsA, Accumulator.resolve(localSearchResult));
     };
-    //return new Promise((resolve, reject) => {
     if (counter.i % checkCount === 0) {
-        return new Promise((resolve, reject) => {
-            //setImmediate( () => {
-            if (!abortCallback()) {
-                resolve(subcomputation());
-            } else {
-                reject("Tree search aborted.");
-            }
-            //});
+        return new Accumulator<V & E>((resolve) => {
+            setImmediate( () => {
+                if (!abortCallback()) {
+                    subcomputation().consume(resolve);
+                } else {
+                    resolve([]);
+                }
+            });
         });
     } else {
         return subcomputation();
+    }
+}
+
+export class Accumulator<T> {
+    public static resolve<T>(results: T[]): Accumulator<T> {
+        return new Accumulator((resolve) => {
+            resolve(results);
+        });
+    }
+    public static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T> {
+        const reducer = (leftAcc: Accumulator<T>, rightAcc: Accumulator<T>) => {
+            return new Accumulator<T>((resolve) => {
+                const curryRight = (leftResults: T[]) => {
+                    rightAcc.resoluter((rightResults: T[]) => resolve(leftResults.concat(...rightResults)));
+                };
+                leftAcc.resoluter(curryRight);
+            });
+        };
+        return accumulators.reduce(reducer, Accumulator.resolve([]));
+    }
+    private resoluter: (resolve: (results: T[]) => void) => void;
+    constructor(resoluter: (resolve: (results: T[]) => void) => void) {
+        this.resoluter = resoluter;
+    }
+
+    public then<S>(chain: (results: T[]) => S[]) {
+        return new Accumulator<S>((resolve) => {
+            this.resoluter((results: T[]) => {
+                resolve(chain(results));
+            });
+        });
+    }
+    public consume(consumer: (results: T[]) => void): void {
+        this.resoluter(consumer);
     }
 }

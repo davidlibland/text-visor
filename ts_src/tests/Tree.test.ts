@@ -10,10 +10,11 @@ import {
     LevenshteinAutomaton,
 } from "../localTextVisor/plaintext/LevenshteinAutomata";
 import {
+    abortableAutomatonTreeSearch,
+    Accumulator,
     automatonTreeSearch,
     buildSortedTreeFromPaths,
     buildSortedTreeFromSortedPaths,
-    abortableAutomatonTreeSearch,
     insert,
     sortedInsert,
     Tree,
@@ -256,9 +257,8 @@ test("Cancelable FuzzyTreeSearch should be cancellable", () => {
     sortedInsert(testTree, "heat".split(""), { token: "heat" });
     const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     const leven = new LevenshteinAutomaton("heal".split(""), costModule);
-    const resultsP = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => true);
-    expect.assertions(1);
-    return expect(resultsP).rejects.toEqual("Tree search aborted.");
+    const resultsA = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => true);
+    resultsA.consume((results) => expect(results).toEqual([]));
 });
 
 test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () => {
@@ -271,11 +271,12 @@ test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () =>
     const plucker = (result) => pluck(result, ["status", "prefixEditCost", "token"]);
     const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     const leven = new LevenshteinAutomaton("heal".split(""), costModule);
-    const resultsP = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => false)
+    const resultsA = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => false)
         .then((results) => results.map(plucker));
-    expect.assertions(1);
-    return expect(resultsP).resolves.toEqual([
-        { status: "ACCEPT", prefixEditCost: 0, token: "heal" },
-        { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },
-    ].map(plucker));
+    resultsA.consume((results) => {
+        expect(results).toEqual([
+            { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },
+            { status: "ACCEPT", prefixEditCost: 0, token: "heal" },
+        ].map(plucker));
+    });
 });

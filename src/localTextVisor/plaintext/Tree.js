@@ -198,27 +198,25 @@ function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, chec
     const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
     const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
     const subcomputation = () => {
-        const resultsP = tree.children
+        const resultsA = tree.children
             .map((child) => ({
             child,
             state: automata.step(state, child.node),
         }))
             .filter((childAndState) => isNotRejectedState(childAndState.state))
             .map((childAndState) => abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, { i: counter.i + 1 }));
-        return Promise.all(resultsP)
-            .then((results) => results.reduce((resultsPartial, result) => resultsPartial.concat(result), localSearchResult));
+        return Accumulator.concat(...resultsA, Accumulator.resolve(localSearchResult));
     };
-    //return new Promise((resolve, reject) => {
     if (counter.i % checkCount === 0) {
-        return new Promise((resolve, reject) => {
-            //setImmediate( () => {
-            if (!abortCallback()) {
-                resolve(subcomputation());
-            }
-            else {
-                reject("Tree search aborted.");
-            }
-            //});
+        return new Accumulator((resolve) => {
+            setImmediate(() => {
+                if (!abortCallback()) {
+                    subcomputation().consume(resolve);
+                }
+                else {
+                    resolve([]);
+                }
+            });
         });
     }
     else {
@@ -226,4 +224,36 @@ function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, chec
     }
 }
 exports.abortableAutomatonTreeSearch = abortableAutomatonTreeSearch;
+class Accumulator {
+    constructor(resoluter) {
+        this.resoluter = resoluter;
+    }
+    static resolve(results) {
+        return new Accumulator((resolve) => {
+            resolve(results);
+        });
+    }
+    static concat(...accumulators) {
+        const reducer = (leftAcc, rightAcc) => {
+            return new Accumulator((resolve) => {
+                const curryRight = (leftResults) => {
+                    rightAcc.resoluter((rightResults) => resolve(leftResults.concat(...rightResults)));
+                };
+                leftAcc.resoluter(curryRight);
+            });
+        };
+        return accumulators.reduce(reducer, Accumulator.resolve([]));
+    }
+    then(chain) {
+        return new Accumulator((resolve) => {
+            this.resoluter((results) => {
+                resolve(chain(results));
+            });
+        });
+    }
+    consume(consumer) {
+        this.resoluter(consumer);
+    }
+}
+exports.Accumulator = Accumulator;
 //# sourceMappingURL=Tree.js.map

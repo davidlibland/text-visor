@@ -17,8 +17,8 @@ import {
     LevenshteinEditCostModule,
 } from "./LevenshteinAutomata";
 import {
-    automatonTreeSearch,
     abortableAutomatonTreeSearch,
+    automatonTreeSearch,
     Tree,
 } from "./Tree";
 
@@ -115,13 +115,16 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
             const cancelCallback = () => {
                 return this.currentInput !== input;
             };
-            return abortableAutomatonTreeSearch(
-                this.trie,
-                leven,
-                leven.start(),
-                cancelCallback,
-                this.abortableCnt,
-                {i: 0});
+            return new Promise( (resolve, reject) => {
+                abortableAutomatonTreeSearch(
+                    this.trie,
+                    leven,
+                    leven.start(),
+                    cancelCallback,
+                    this.abortableCnt,
+                    {i: 0})
+                    .consume(resolve);
+            });
         } else {
             return Promise.resolve(automatonTreeSearch(this.trie, leven, leven.start()));
         }

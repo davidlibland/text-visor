@@ -87,4 +87,12 @@ export declare function automatonTreeSearch<S, A, V extends object, E extends St
  */
 export declare function abortableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S, abortCallback: () => boolean, checkCount?: number, counter?: {
     i: number;
-}): Promise<Array<V & E>>;
+}): Accumulator<V & E>;
+export declare class Accumulator<T> {
+    static resolve<T>(results: T[]): Accumulator<T>;
+    static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T>;
+    private resoluter;
+    constructor(resoluter: (resolve: (results: T[]) => void) => void);
+    then<S>(chain: (results: T[]) => S[]): Accumulator<S>;
+    consume(consumer: (results: T[]) => void): void;
+}
