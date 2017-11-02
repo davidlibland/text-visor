@@ -276,27 +276,41 @@ export class Accumulator<T> {
     public static resolve<T>(results: T[]): Accumulator<T> {
         return new Accumulator((resolve) => {
             resolve(results);
-        });
+        }, results);
     }
     public static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T> {
         return new Accumulator<T>((resolve) => {
             // We use this trick of a constant pointer to a list of length one
             // to resolve call stack issues.
             const curried = [resolve];
-            for (const resoluter of accumulators.map((acc) => acc.resoluterA[0]) ) {
-                curried.push((rightResults: T[]) => {
-                    resoluter((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
-                });
+            for (const acc of accumulators ) {
+                if (acc.value !== undefined) {
+                    curried.push((rightResults: T[]) => {
+                        curried.pop()([...acc.value, ...rightResults]);
+                    });
+                } else {
+                    curried.push((rightResults: T[]) => {
+                        acc.resoluterA[0]((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
+                    });
+                }
             }
             curried.pop()([]);
         });
     }
     private resoluterA: Array<(resolve: (results: T[]) => void) => void>;
-    constructor(resoluter: (resolve: (results: T[]) => void) => void) {
-        this.resoluterA = [resoluter];
+    private value?: T[];
+    constructor(resoluter: (resolve: (results: T[]) => void) => void, value?: T[]) {
+        if (value !== undefined) {
+            this.value = value;
+        } else {
+            this.resoluterA = [resoluter];
+        }
     }
 
     public then<S>(chain: (results: T[]) => S[]) {
+        if (this.value !== undefined) {
+            return Accumulator.resolve(chain(this.value));
+        }
         return new Accumulator<S>((resolve) => {
             this.resoluterA[0]((results: T[]) => {
                 resolve(chain(results));
@@ -304,6 +318,10 @@ export class Accumulator<T> {
         });
     }
     public consume(consumer: (results: T[]) => void): void {
-        this.resoluterA[0](consumer);
+        if (this.value !== undefined) {
+            consumer(this.value);
+        } else {
+            this.resoluterA[0](consumer);
+        }
     }
 }

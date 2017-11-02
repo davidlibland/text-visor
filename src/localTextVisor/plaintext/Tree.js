@@ -225,28 +225,43 @@ function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, chec
 }
 exports.abortableAutomatonTreeSearch = abortableAutomatonTreeSearch;
 class Accumulator {
-    constructor(resoluter) {
-        this.resoluterA = [resoluter];
+    constructor(resoluter, value) {
+        if (value !== undefined) {
+            this.value = value;
+        }
+        else {
+            this.resoluterA = [resoluter];
+        }
     }
     static resolve(results) {
         return new Accumulator((resolve) => {
             resolve(results);
-        });
+        }, results);
     }
     static concat(...accumulators) {
         return new Accumulator((resolve) => {
             // We use this trick of a constant pointer to a list of length one
             // to resolve call stack issues.
             const curried = [resolve];
-            for (const resoluter of accumulators.map((acc) => acc.resoluterA[0])) {
-                curried.push((rightResults) => {
-                    resoluter((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
-                });
+            for (const acc of accumulators) {
+                if (acc.value !== undefined) {
+                    curried.push((rightResults) => {
+                        curried.pop()([...acc.value, ...rightResults]);
+                    });
+                }
+                else {
+                    curried.push((rightResults) => {
+                        acc.resoluterA[0]((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
+                    });
+                }
             }
             curried.pop()([]);
         });
     }
     then(chain) {
+        if (this.value !== undefined) {
+            return Accumulator.resolve(chain(this.value));
+        }
         return new Accumulator((resolve) => {
             this.resoluterA[0]((results) => {
                 resolve(chain(results));
@@ -254,7 +269,12 @@ class Accumulator {
         });
     }
     consume(consumer) {
-        this.resoluterA[0](consumer);
+        if (this.value !== undefined) {
+            consumer(this.value);
+        }
+        else {
+            this.resoluterA[0](consumer);
+        }
     }
 }
 exports.Accumulator = Accumulator;
