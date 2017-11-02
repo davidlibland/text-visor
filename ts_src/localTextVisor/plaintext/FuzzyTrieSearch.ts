@@ -112,10 +112,13 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
     protected computeFuzzyCompletions(chars: A[], input: T): Promise<Array<V & {prediction: T} & LAStatus>> {
         const leven = new LevenshteinAutomaton(chars, this.costModuleFactory(chars));
         if ( this.abortableCnt !== undefined &&  this.abortableCnt > 0 ) {
-            const cancelCallback = () => {
-                return this.currentInput !== input;
-            };
             return new Promise( (resolve, reject) => {
+                const cancelCallback = () => {
+                    if (this.currentInput !== input) {
+                        reject("Tree search aborted.");
+                    }
+                    return this.currentInput !== input;
+                };
                 abortableAutomatonTreeSearch(
                     this.trie,
                     leven,

@@ -68,10 +68,13 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
     computeFuzzyCompletions(chars, input) {
         const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
         if (this.abortableCnt !== undefined && this.abortableCnt > 0) {
-            const cancelCallback = () => {
-                return this.currentInput !== input;
-            };
             return new Promise((resolve, reject) => {
+                const cancelCallback = () => {
+                    if (this.currentInput !== input) {
+                        reject("Tree search aborted.");
+                    }
+                    return this.currentInput !== input;
+                };
                 Tree_1.abortableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback, this.abortableCnt, 0)
                     .consume(resolve);
             });

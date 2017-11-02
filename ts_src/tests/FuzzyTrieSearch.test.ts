@@ -183,5 +183,5 @@ test("Cancellable FuzzyTriePredictor should abort all but last predict call.", (
     fuzzyPredictor.predict(prior, "healing");
     expect.assertions(1);
     return expect(resultsP.then((results) => results.map(plucker)))
-        .resolves.toEqual([]);
+        .rejects.toEqual("Tree search aborted.");
 });
