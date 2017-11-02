@@ -225,33 +225,36 @@ function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, chec
 }
 exports.abortableAutomatonTreeSearch = abortableAutomatonTreeSearch;
 class Accumulator {
-    constructor(resoluter, value) {
-        if (value !== undefined) {
-            this.value = value;
+    constructor(resoluter, values) {
+        if (values !== undefined) {
+            this.values = values;
         }
         else {
-            this.resoluterA = [resoluter];
+            this.resoluter = resoluter;
         }
     }
-    static resolve(results) {
+    static resolve(values) {
         return new Accumulator((resolve) => {
-            resolve(results);
-        }, results);
+            resolve(values);
+        }, values);
     }
     static concat(...accumulators) {
+        if (accumulators.every((acc) => acc.values !== undefined)) {
+            return Accumulator.resolve([].concat(...accumulators.map((acc) => acc.values)));
+        }
         return new Accumulator((resolve) => {
             // We use this trick of a constant pointer to a list of length one
             // to resolve call stack issues.
             const curried = [resolve];
             for (const acc of accumulators) {
-                if (acc.value !== undefined) {
+                if (acc.values !== undefined) {
                     curried.push((rightResults) => {
-                        curried.pop()([...acc.value, ...rightResults]);
+                        curried.pop()([...acc.values, ...rightResults]);
                     });
                 }
                 else {
                     curried.push((rightResults) => {
-                        acc.resoluterA[0]((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
+                        acc.resoluter((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
                     });
                 }
             }
@@ -259,21 +262,21 @@ class Accumulator {
         });
     }
     then(chain) {
-        if (this.value !== undefined) {
-            return Accumulator.resolve(chain(this.value));
+        if (this.values !== undefined) {
+            return Accumulator.resolve(chain(this.values));
         }
         return new Accumulator((resolve) => {
-            this.resoluterA[0]((results) => {
+            this.resoluter((results) => {
                 resolve(chain(results));
             });
         });
     }
     consume(consumer) {
-        if (this.value !== undefined) {
-            consumer(this.value);
+        if (this.values !== undefined) {
+            consumer(this.values);
         }
         else {
-            this.resoluterA[0](consumer);
+            this.resoluter(consumer);
         }
     }
 }

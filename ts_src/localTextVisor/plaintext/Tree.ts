@@ -273,55 +273,58 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
 }
 
 export class Accumulator<T> {
-    public static resolve<T>(results: T[]): Accumulator<T> {
+    public static resolve<T>(values: T[]): Accumulator<T> {
         return new Accumulator((resolve) => {
-            resolve(results);
-        }, results);
+            resolve(values);
+        }, values);
     }
     public static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T> {
+        if (accumulators.every((acc) => acc.values !== undefined)) {
+            return Accumulator.resolve([].concat(...accumulators.map((acc) => acc.values)));
+        }
         return new Accumulator<T>((resolve) => {
             // We use this trick of a constant pointer to a list of length one
             // to resolve call stack issues.
             const curried = [resolve];
             for (const acc of accumulators ) {
-                if (acc.value !== undefined) {
+                if (acc.values !== undefined) {
                     curried.push((rightResults: T[]) => {
-                        curried.pop()([...acc.value, ...rightResults]);
+                        curried.pop()([...acc.values, ...rightResults]);
                     });
                 } else {
                     curried.push((rightResults: T[]) => {
-                        acc.resoluterA[0]((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
+                        acc.resoluter((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
                     });
                 }
             }
             curried.pop()([]);
         });
     }
-    private resoluterA: Array<(resolve: (results: T[]) => void) => void>;
-    private value?: T[];
-    constructor(resoluter: (resolve: (results: T[]) => void) => void, value?: T[]) {
-        if (value !== undefined) {
-            this.value = value;
+    private resoluter: (resolve: (results: T[]) => void) => void;
+    private values?: T[];
+    constructor(resoluter: (resolve: (results: T[]) => void) => void, values?: T[]) {
+        if (values !== undefined) {
+            this.values = values;
         } else {
-            this.resoluterA = [resoluter];
+            this.resoluter = resoluter;
         }
     }
 
     public then<S>(chain: (results: T[]) => S[]) {
-        if (this.value !== undefined) {
-            return Accumulator.resolve(chain(this.value));
+        if (this.values !== undefined) {
+            return Accumulator.resolve(chain(this.values));
         }
         return new Accumulator<S>((resolve) => {
-            this.resoluterA[0]((results: T[]) => {
+            this.resoluter((results: T[]) => {
                 resolve(chain(results));
             });
         });
     }
     public consume(consumer: (results: T[]) => void): void {
-        if (this.value !== undefined) {
-            consumer(this.value);
+        if (this.values !== undefined) {
+            consumer(this.values);
         } else {
-            this.resoluterA[0](consumer);
+            this.resoluter(consumer);
         }
     }
 }

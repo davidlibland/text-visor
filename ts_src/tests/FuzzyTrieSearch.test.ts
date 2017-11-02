@@ -158,7 +158,6 @@ test("Cancellable FuzzyTriePredictor with flat cost 1 should find correct comple
         1,
     );
     const resultsP = fuzzyPredictor.predict(prior, "heal");
-    resultsP.then((res) => console.log("hi")).catch(console.error);
     expect.assertions(1);
     return expect(resultsP.then((results) => results.map(plucker)))
         .resolves.toEqual([
