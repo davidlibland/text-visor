@@ -275,8 +275,18 @@ test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () =>
         .then((results) => results.map(plucker));
     resultsA.consume((results) => {
         expect(results).toEqual([
-            { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },
             { status: "ACCEPT", prefixEditCost: 0, token: "heal" },
+            { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },
         ].map(plucker));
     });
+});
+
+test("Concat Accumulators", () => {
+    const acc1 = Accumulator.resolve([1]);
+    const acc2 = Accumulator.resolve([2]);
+    Accumulator.concat(acc1, acc2).consume((results) => expect(results).toEqual([1, 2]));
+});
+
+test("Resolve Accumulators", () => {
+    Accumulator.resolve([1]).consume((results) => expect(results).toEqual([1]));
 });

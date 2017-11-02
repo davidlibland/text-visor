@@ -234,15 +234,41 @@ class Accumulator {
         });
     }
     static concat(...accumulators) {
-        const reducer = (leftAcc, rightAcc) => {
-            return new Accumulator((resolve) => {
-                const curryRight = (leftResults) => {
-                    rightAcc.resoluter((rightResults) => resolve(leftResults.concat(...rightResults)));
-                };
-                leftAcc.resoluter(curryRight);
-            });
-        };
-        return accumulators.reduce(reducer, Accumulator.resolve([]));
+        return new Accumulator((resolve) => {
+            const curried = [resolve];
+            for (const acc of accumulators) {
+                curried.push((rightResults) => {
+                    acc.resoluter((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
+                });
+            }
+            curried.pop()([]);
+            // const curried1 = (leftResults: T[]) => {
+            //     accumulators[0].resoluter((rightResults: T[]) => resolve(leftResults.concat(...rightResults)));
+            // };
+            // const curried2 = (leftResults: T[]) => {
+            //     accumulators[1].resoluter((rightResults: T[]) => curried1(leftResults.concat(...rightResults)));
+            // };
+            // curried2([]);
+            // resolve(allResults)
+            // const manyResolver = (manyResults: T[][]) => {
+            //     const results: T[] = [].concat(...manyResults);
+            //     resolve(results);
+            // };
+            // const reducer = (leftAcc: Accumulator<T>, rightAcc: Accumulator<T>) => {
+            //         const curryRight = (leftResults: T[]) => {
+            //             rightAcc.resoluter((rightResults: T[]) => resolve(leftResults.concat(...rightResults)));
+            //         };
+            //         leftAcc.resoluter(curryRight);
+            // };
+            // const reducer = (resoluter: (resolve: (results: T[]) => void) => void, multiResoluter: (multiResolve: (manyResults: T[][]) => void) => void) => {
+            //     return (multiResolve: (manyResults: T[][]) => void) => {
+            //
+            //     }
+            // }
+            // return accumulators.reduce(reducer, Accumulator.resolve([]));
+        });
+        // const multiResolver(resolve: (results : T[]) => void) => {
+        // }
     }
     then(chain) {
         return new Accumulator((resolve) => {
