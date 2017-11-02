@@ -238,9 +238,9 @@ class Accumulator {
             // We use this trick of a constant pointer to a list of length one
             // to resolve call stack issues.
             const curried = [resolve];
-            for (const acc of accumulators) {
+            for (const resoluter of accumulators.map((acc) => acc.resoluterA[0])) {
                 curried.push((rightResults) => {
-                    acc.resoluterA[0]((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
+                    resoluter((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
                 });
             }
             curried.pop()([]);
