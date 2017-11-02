@@ -3,6 +3,7 @@
  * @desc A Tree data structure.
  */
 import { AbstractAutomaton, StatusContainer } from "./AbstractAutomata";
+import { Accumulator } from "./Accumulator";
 export interface Tree<A, V> {
     node: A;
     children: Array<Tree<A, V>>;
@@ -85,15 +86,4 @@ export declare function automatonTreeSearch<S, A, V extends object, E extends St
  * been taken during the search.
  * @returns {Promise<Array<V & E>>}
  */
-export declare function abortableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S, abortCallback: () => boolean, checkCount?: number, counter?: {
-    i: number;
-}): Accumulator<V & E>;
-export declare class Accumulator<T> {
-    static resolve<T>(values: T[]): Accumulator<T>;
-    static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T>;
-    private resoluter;
-    private values?;
-    constructor(resoluter: (resolve: (results: T[]) => void) => void, values?: T[]);
-    then<S>(chain: (results: T[]) => S[]): Accumulator<S>;
-    consume(consumer: (results: T[]) => void): void;
-}
+export declare function abortableAutomatonTreeSearch<S, A, V extends object, E extends StatusContainer = StatusContainer>(tree: Tree<A, V>, automata: AbstractAutomaton<S, A, E>, state: S, abortCallback: () => boolean, checkCount?: number, counter?: number): Accumulator<V & E>;

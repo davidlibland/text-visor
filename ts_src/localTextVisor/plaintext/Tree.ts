@@ -3,6 +3,7 @@
  * @desc A Tree data structure.
  */
 import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutomata";
+import { Accumulator } from "./Accumulator";
 
 export interface Tree<A, V> {
     node: A;
@@ -232,7 +233,7 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
     state: S,
     abortCallback: () => boolean,
     checkCount: number = 1,
-    counter: {i: number} = {i: 0}): Accumulator<V & E> {
+    counter: number = 0): Accumulator<V & E> {
     const addStatusToData = (data: V[], internalState: S) => data.map(
         (dataPt) => Object.assign({}, automata.status(internalState), dataPt),
     );
@@ -253,11 +254,11 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                     childAndState.state,
                     abortCallback,
                     checkCount,
-                    {i:counter.i+1},
+                    counter + 1,
                     ));
         return Accumulator.concat<V & E>(...resultsA, Accumulator.resolve(localSearchResult));
     };
-    if (counter.i % checkCount === 0) {
+    if (counter % checkCount === 0) {
         return new Accumulator<V & E>((resolve) => {
             setImmediate( () => {
                 if (!abortCallback()) {
@@ -269,62 +270,5 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
         });
     } else {
         return subcomputation();
-    }
-}
-
-export class Accumulator<T> {
-    public static resolve<T>(values: T[]): Accumulator<T> {
-        return new Accumulator((resolve) => {
-            resolve(values);
-        }, values);
-    }
-    public static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T> {
-        if (accumulators.every((acc) => acc.values !== undefined)) {
-            return Accumulator.resolve([].concat(...accumulators.map((acc) => acc.values)));
-        }
-        return new Accumulator<T>((resolve) => {
-            // We use this trick of a constant pointer to a list of length one
-            // to resolve call stack issues.
-            const curried = [resolve];
-            for (const acc of accumulators ) {
-                if (acc.values !== undefined) {
-                    curried.push((rightResults: T[]) => {
-                        curried.pop()([...acc.values, ...rightResults]);
-                    });
-                } else {
-                    curried.push((rightResults: T[]) => {
-                        acc.resoluter((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
-                    });
-                }
-            }
-            curried.pop()([]);
-        });
-    }
-    private resoluter: (resolve: (results: T[]) => void) => void;
-    private values?: T[];
-    constructor(resoluter: (resolve: (results: T[]) => void) => void, values?: T[]) {
-        if (values !== undefined) {
-            this.values = values;
-        } else {
-            this.resoluter = resoluter;
-        }
-    }
-
-    public then<S>(chain: (results: T[]) => S[]) {
-        if (this.values !== undefined) {
-            return Accumulator.resolve(chain(this.values));
-        }
-        return new Accumulator<S>((resolve) => {
-            this.resoluter((results: T[]) => {
-                resolve(chain(results));
-            });
-        });
-    }
-    public consume(consumer: (results: T[]) => void): void {
-        if (this.values !== undefined) {
-            consumer(this.values);
-        } else {
-            this.resoluter(consumer);
-        }
     }
 }

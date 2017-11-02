@@ -166,14 +166,14 @@ test("Testing buildSortedTreeFromSortedPaths", () => {
 
 // Automaton Tree Search
 
-interface tokenData { token: string; }
+interface TokenData { token: string; }
 
 function pluck<T, K extends keyof T>(o: T, names: K[]): Array<T[K]> {
     return names.map((n) => o[n]);
 }
 
 test("FuzzyTreeSearch should find correct completions", () => {
-    const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    const testTree: Tree<string, TokenData> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
     sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
     sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
@@ -211,7 +211,7 @@ test("FuzzyTreeSearch should find correct completions", () => {
 });
 
 test("FuzzyTreeSearch with Rel Edit Distance should find correct completions", () => {
-    const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    const testTree: Tree<string, TokenData> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
     sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
     sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
@@ -249,7 +249,7 @@ test("FuzzyTreeSearch with Rel Edit Distance should find correct completions", (
 });
 
 test("Cancelable FuzzyTreeSearch should be cancellable", () => {
-    const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    const testTree: Tree<string, TokenData> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
     sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
     sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
@@ -262,7 +262,7 @@ test("Cancelable FuzzyTreeSearch should be cancellable", () => {
 });
 
 test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () => {
-    const testTree: Tree<string, tokenData> = { node: "root", children: [], data: [] };
+    const testTree: Tree<string, TokenData> = { node: "root", children: [], data: [] };
     sortedInsert(testTree, "heart attack".split(""), { token: "heart attack" });
     sortedInsert(testTree, "health risk".split(""), { token: "health risk" });
     sortedInsert(testTree, "hepatitis".split(""), { token: "hepatitis" });
@@ -279,14 +279,4 @@ test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () =>
             { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },
         ].map(plucker));
     });
-});
-
-test("Concat Accumulators", () => {
-    const acc1 = Accumulator.resolve([1]);
-    const acc2 = Accumulator.resolve([2]);
-    Accumulator.concat(acc1, acc2).consume((results) => expect(results).toEqual([1, 2]));
-});
-
-test("Resolve Accumulators", () => {
-    Accumulator.resolve([1]).consume((results) => expect(results).toEqual([1]));
 });

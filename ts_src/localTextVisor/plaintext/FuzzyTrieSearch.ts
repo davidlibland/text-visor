@@ -122,7 +122,7 @@ export class FuzzyTriePredictor<T = string, A = string, V extends object = objec
                     leven.start(),
                     cancelCallback,
                     this.abortableCnt,
-                    {i: 0})
+                    0)
                     .consume(resolve);
             });
         } else {

@@ -72,7 +72,7 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
                 return this.currentInput !== input;
             };
             return new Promise((resolve, reject) => {
-                Tree_1.abortableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback, this.abortableCnt, { i: 0 })
+                Tree_1.abortableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback, this.abortableCnt, 0)
                     .consume(resolve);
             });
         }
