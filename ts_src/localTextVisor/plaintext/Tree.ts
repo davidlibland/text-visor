@@ -280,54 +280,30 @@ export class Accumulator<T> {
     }
     public static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T> {
         return new Accumulator<T>((resolve) => {
+            // We use this trick of a constant pointer to a list of length one
+            // to resolve call stack issues.
             const curried = [resolve];
             for (const acc of accumulators ) {
                 curried.push((rightResults: T[]) => {
-                    acc.resoluter((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
+                    acc.resoluterA[0]((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
                 });
             }
             curried.pop()([]);
-            // const curried1 = (leftResults: T[]) => {
-            //     accumulators[0].resoluter((rightResults: T[]) => resolve(leftResults.concat(...rightResults)));
-            // };
-            // const curried2 = (leftResults: T[]) => {
-            //     accumulators[1].resoluter((rightResults: T[]) => curried1(leftResults.concat(...rightResults)));
-            // };
-            // curried2([]);
-            // resolve(allResults)
-            // const manyResolver = (manyResults: T[][]) => {
-            //     const results: T[] = [].concat(...manyResults);
-            //     resolve(results);
-            // };
-            // const reducer = (leftAcc: Accumulator<T>, rightAcc: Accumulator<T>) => {
-            //         const curryRight = (leftResults: T[]) => {
-            //             rightAcc.resoluter((rightResults: T[]) => resolve(leftResults.concat(...rightResults)));
-            //         };
-            //         leftAcc.resoluter(curryRight);
-            // };
-            // const reducer = (resoluter: (resolve: (results: T[]) => void) => void, multiResoluter: (multiResolve: (manyResults: T[][]) => void) => void) => {
-            //     return (multiResolve: (manyResults: T[][]) => void) => {
-            //
-            //     }
-            // }
-            // return accumulators.reduce(reducer, Accumulator.resolve([]));
         });
-        // const multiResolver(resolve: (results : T[]) => void) => {
-        // }
     }
-    private resoluter: (resolve: (results: T[]) => void) => void;
+    private resoluterA: Array<(resolve: (results: T[]) => void) => void>;
     constructor(resoluter: (resolve: (results: T[]) => void) => void) {
-        this.resoluter = resoluter;
+        this.resoluterA = [resoluter];
     }
 
     public then<S>(chain: (results: T[]) => S[]) {
         return new Accumulator<S>((resolve) => {
-            this.resoluter((results: T[]) => {
+            this.resoluterA[0]((results: T[]) => {
                 resolve(chain(results));
             });
         });
     }
     public consume(consumer: (results: T[]) => void): void {
-        this.resoluter(consumer);
+        this.resoluterA[0](consumer);
     }
 }
