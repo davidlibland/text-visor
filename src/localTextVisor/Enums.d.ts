@@ -5,15 +5,18 @@
 export declare type UnionKeyToValue<U extends string> = {
     [K in U]: K;
 };
-export declare type ScoreTypes = "QUALITY" | "CONFIDENCE";
-export declare const SCORE_TYPE: UnionKeyToValue<ScoreTypes>;
-export declare type QualityType = "EXPECTED_REWARD" | "CONFIDENCE";
-export declare const QUALITY_TYPE: UnionKeyToValue<QualityType>;
-export declare type TokenizerType = "CHARACTER" | "WORD" | "SPLIT_PUNCTUATION";
-export declare const TOKENIZER_TYPE: UnionKeyToValue<TokenizerType>;
-export declare type RewardType = "LENGTH_DIFFERENCE" | "EDIT_DISTANCE";
-export declare const REWARD_TYPE: UnionKeyToValue<RewardType>;
-export declare type LanguageAlgorithmType = "TRIE_SEARCH" | "IDENTITY";
-export declare const LANGUAGE_ALGORITHM_TYPE: UnionKeyToValue<LanguageAlgorithmType>;
-export declare type CaseSensitivityType = "INSENSITIVE_MATCH";
-export declare const CASE_SENSITIVITY_TYPE: UnionKeyToValue<CaseSensitivityType>;
+export declare type EnumTypeValue<U extends string> = {
+    [key: string]: U;
+};
+export declare type ScoreType = "QUALITY" | "CONFIDENCE";
+export declare const SCORE_TYPE: UnionKeyToValue<ScoreType>;
+export declare type QualityModuleType = "ER" | "C";
+export declare const QUALITY_MODULE_TYPE: EnumTypeValue<QualityModuleType>;
+export declare type TokenizerType = "CH" | "WS" | "DWT" | "S";
+export declare const TOKENIZER_TYPE: EnumTypeValue<TokenizerType>;
+export declare type RewardModuleType = "C" | "SLD" | "ED" | "PSG";
+export declare const REWARD_MODULE_TYPE: EnumTypeValue<RewardModuleType>;
+export declare type LanguageModuleType = "DBFTS" | "FTS" | "RFTS" | "ID";
+export declare const LANGUAGE_MODULE_TYPE: EnumTypeValue<LanguageModuleType>;
+export declare type CaseSensitivityType = "I" | "S";
+export declare const CASE_SENSITIVITY_TYPE: EnumTypeValue<CaseSensitivityType>;

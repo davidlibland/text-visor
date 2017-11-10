@@ -5,10 +5,14 @@
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 const Abstract_1 = require("./Abstract");
-class IdentityPredictor extends Abstract_1.AbstractPredictor {
+class MapPredictor extends Abstract_1.AbstractPredictor {
+    constructor(map) {
+        super();
+        this.map = map;
+    }
     predict(prior, input) {
-        return [{ weight: 1, prediction: input }];
+        return Promise.resolve([{ weight: 1, prediction: this.map(input) }]);
     }
 }
-exports.IdentityPredictor = IdentityPredictor;
+exports.MapPredictor = MapPredictor;
 //# sourceMappingURL=LanguageStub.js.map
