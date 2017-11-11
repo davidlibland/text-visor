@@ -257,7 +257,7 @@ test("Cancelable FuzzyTreeSearch should be cancellable", () => {
     const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     const leven = new LevenshteinAutomaton("heal".split(""), costModule);
     const resultsA = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => true);
-    resultsA.consume((results) => expect(results).toEqual([]));
+    resultsA.fold((results) => expect(results).toEqual([]));
 });
 
 test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () => {
@@ -271,8 +271,8 @@ test("Cancelable FuzzyTreeSearch should return results if not cancelled.", () =>
     const costModule = new FlatLevenshteinRelativeCostModule(0, 4);
     const leven = new LevenshteinAutomaton("heal".split(""), costModule);
     const resultsA = abortableAutomatonTreeSearch(testTree, leven, leven.start(), () => false)
-        .then((results) => results.map(plucker));
-    resultsA.consume((results) => {
+        .map((results) => results.map(plucker));
+    resultsA.fold((results) => {
         expect(results).toEqual([
             { status: "ACCEPT", prefixEditCost: 0, token: "heal" },
             { status: "ACCEPT", prefixEditCost: 0, token: "health risk" },

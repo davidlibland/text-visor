@@ -5,61 +5,30 @@
  * @todo Implement all the monad methods and improve documentation.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-class Accumulator {
-    constructor(resoluter, values) {
-        if (values !== undefined) {
-            this.values = values;
+exports.nowAccumulator = (values) => ({
+    concat: (...more) => {
+        if (more.length === 0) {
+            return exports.nowAccumulator(values);
         }
         else {
-            this.resoluter = resoluter;
+            return more[0].map((nextValues) => [...values, ...nextValues]).concat(...more.slice(1, more.length));
         }
-    }
-    static resolve(values) {
-        return new Accumulator((resolve) => {
-            resolve(values);
-        }, values);
-    }
-    static concat(...accumulators) {
-        if (accumulators.every((acc) => acc.values !== undefined)) {
-            return Accumulator.resolve([].concat(...accumulators.map((acc) => acc.values)));
-        }
-        return new Accumulator((resolve) => {
-            // We use this trick of a constant pointer to a list of length one
-            // to resolve call stack issues.
-            const curried = [resolve];
-            for (const acc of accumulators) {
-                if (acc.values !== undefined) {
-                    curried.push((rightResults) => {
-                        curried.pop()([...acc.values, ...rightResults]);
-                    });
-                }
-                else {
-                    curried.push((rightResults) => {
-                        acc.resoluter((leftResults) => curried.pop()(leftResults.concat(...rightResults)));
-                    });
-                }
-            }
-            curried.pop()([]);
-        });
-    }
-    then(chain) {
-        if (this.values !== undefined) {
-            return Accumulator.resolve(chain(this.values));
-        }
-        return new Accumulator((resolve) => {
-            this.resoluter((results) => {
-                resolve(chain(results));
-            });
-        });
-    }
-    consume(consumer) {
-        if (this.values !== undefined) {
-            consumer(this.values);
+    },
+    fold: (consumer) => consumer(values),
+    map: (chain) => exports.nowAccumulator(chain(values)),
+});
+exports.futureAccumulator = (futureConsumption) => ({
+    concat: (...more) => {
+        if (more.length === 0) {
+            return exports.futureAccumulator(futureConsumption);
         }
         else {
-            this.resoluter(consumer);
+            return exports.futureAccumulator((futureConsumer) => {
+                more[0].fold((nextValues) => futureConsumption((values) => futureConsumer([...values, ...nextValues])));
+            }).concat(...more.slice(1, more.length));
         }
-    }
-}
-exports.Accumulator = Accumulator;
+    },
+    fold: (consumer) => futureConsumption(consumer),
+    map: (chain) => exports.futureAccumulator((futureConsumer) => futureConsumption((futureValues) => futureConsumer(chain(futureValues)))),
+});
 //# sourceMappingURL=Accumulator.js.map

@@ -206,13 +206,13 @@ function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, chec
         }))
             .filter((childAndState) => isNotRejectedState(childAndState.state))
             .map((childAndState) => abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, counter + 1));
-        return Accumulator_1.Accumulator.concat(...resultsA, Accumulator_1.Accumulator.resolve(localSearchResult));
+        return Accumulator_1.nowAccumulator([]).concat(...resultsA, Accumulator_1.nowAccumulator(localSearchResult));
     };
     if (counter % checkCount === 0) {
-        return new Accumulator_1.Accumulator((resolve) => {
+        return Accumulator_1.futureAccumulator((resolve) => {
             setImmediate(() => {
                 if (!abortCallback()) {
-                    subcomputation().consume(resolve);
+                    subcomputation().fold(resolve);
                 }
                 else {
                     resolve([]);

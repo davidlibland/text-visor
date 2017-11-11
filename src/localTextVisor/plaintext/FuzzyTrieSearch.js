@@ -76,7 +76,7 @@ class FuzzyTriePredictor extends AbstractPredictor_1.default {
                     return this.currentInput !== input;
                 };
                 Tree_1.abortableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback, this.abortableCnt, 0)
-                    .consume(resolve);
+                    .fold(resolve);
             });
         }
         else {

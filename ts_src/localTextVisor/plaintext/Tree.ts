@@ -3,7 +3,7 @@
  * @desc A Tree data structure.
  */
 import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutomata";
-import { Accumulator } from "./Accumulator";
+import { Accumulator, futureAccumulator, nowAccumulator } from "./Accumulator";
 
 interface Tree<A, V> {
     node: A;
@@ -257,13 +257,13 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                     checkCount,
                     counter + 1,
                     ));
-        return Accumulator.concat<V & E>(...resultsA, Accumulator.resolve(localSearchResult));
+        return nowAccumulator([]).concat(...resultsA, nowAccumulator(localSearchResult));
     };
     if (counter % checkCount === 0) {
-        return new Accumulator<V & E>((resolve) => {
+        return futureAccumulator<V & E>((resolve) => {
             setImmediate( () => {
                 if (!abortCallback()) {
-                    subcomputation().consume(resolve);
+                    subcomputation().fold(resolve);
                 } else {
                     resolve([]);
                 }
