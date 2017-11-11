@@ -11,13 +11,12 @@ import {
 } from "../localTextVisor/plaintext/LevenshteinAutomata";
 import {
     abortableAutomatonTreeSearch,
-    Accumulator,
     automatonTreeSearch,
     buildSortedTreeFromPaths,
     buildSortedTreeFromSortedPaths,
+    default as Tree,
     insert,
     sortedInsert,
-    Tree,
 } from "../localTextVisor/plaintext/Tree";
 
 const str1 = "hello";

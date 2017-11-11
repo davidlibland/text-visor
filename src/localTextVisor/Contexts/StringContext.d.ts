@@ -2,10 +2,14 @@
  * @file Context.ts
  * @desc The context module used to set up a local text visor.
  */
-import { AbstractPipeline } from "../Abstract";
+/**
+ * Imports:
+ */
+import AbstractPipeline from "../abstract/AbstractPipeline";
 import { CaseSensitivityType, LanguageModuleType, RewardModuleType, TokenizerType } from "../Enums";
 import { CostElement, PairCostElement } from "../plaintext/DetailedBalancedCost";
-import { Tree } from "../plaintext/Tree";
+import { InputAndPositionType } from "../plaintext/TokenizingPredictor";
+import Tree from "../plaintext/Tree";
 export interface LanguageModuleSpecsConstraints {
     moduleType: LanguageModuleType;
 }
@@ -66,4 +70,4 @@ export interface ContextDataType {
         [key: string]: number;
     };
 }
-export declare function initializeLTVWithContext(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<any, any, any>;
+export declare function initializeLTVWithContext<S extends InputAndPositionType<string>>(languageSpecs: LanguageModuleSpecs, rewardSpecs: RewardModuleSpecs, data: ContextDataType): AbstractPipeline<S, string, any>;

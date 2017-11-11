@@ -5,10 +5,10 @@
  * corrections/completions.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const Abstract_1 = require("../Abstract");
+const AbstractPredictor_1 = require("../abstract/AbstractPredictor");
 const LevenshteinAutomata_1 = require("./LevenshteinAutomata");
 const Tree_1 = require("./Tree");
-class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
+class FuzzyTriePredictor extends AbstractPredictor_1.default {
     /**
      * Constructs a fuzzy tree predictor using the Levenshtein automata.
      * @param {Tree<A, {prediction: T} & V>} trie The tree to be used by the
@@ -84,41 +84,7 @@ class FuzzyTriePredictor extends Abstract_1.AbstractPredictor {
         }
     }
 }
-exports.FuzzyTriePredictor = FuzzyTriePredictor;
-class TokenizingPredictor extends Abstract_1.AbstractPredictor {
-    constructor(splitter, combiner, childPredictor) {
-        super();
-        this.splitter = splitter;
-        this.combiner = combiner;
-        this.childPredictor = childPredictor;
-    }
-    predict(prior, wrappedInput) {
-        const suffix = this.splitter(wrappedInput.input);
-        const prefix = [];
-        let token = suffix.shift();
-        while (token) {
-            if (this.combiner(...prefix, token).length >= wrappedInput.cursorPosition) {
-                break;
-            }
-            prefix.push(token);
-            token = suffix.shift();
-        }
-        if (token === undefined) {
-            return Promise.resolve([]);
-        }
-        const resultsP = this.childPredictor.predict(prior, token);
-        const contextifyResult = (result) => {
-            const cursPos = this.combiner(...prefix, result.prediction).length
-                - this.combiner(result.prediction).length + result.cursorPosition;
-            return Object.assign({}, result, {
-                cursorPosition: cursPos,
-                prediction: this.combiner(...prefix, result.prediction, ...suffix),
-            });
-        };
-        return resultsP.then((results) => (results.map(contextifyResult)));
-    }
-}
-exports.TokenizingPredictor = TokenizingPredictor;
+exports.default = FuzzyTriePredictor;
 var LevenshteinAutomata_2 = require("./LevenshteinAutomata");
 exports.FlatLevenshteinRelativeCostModule = LevenshteinAutomata_2.FlatLevenshteinRelativeCostModule;
 exports.FlatLevenshteinCostModule = LevenshteinAutomata_2.FlatLevenshteinCostModule;

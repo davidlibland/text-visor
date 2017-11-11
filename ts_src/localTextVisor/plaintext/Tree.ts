@@ -5,11 +5,12 @@
 import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutomata";
 import { Accumulator } from "./Accumulator";
 
-export interface Tree<A, V> {
+interface Tree<A, V> {
     node: A;
     children: Array<Tree<A, V>>;
     data: V[];
 }
+export default Tree;
 
 /**
  * @function buildSortedTreeFromSortedPaths

@@ -8,8 +8,10 @@ function __export(m) {
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 __export(require("./localTextVisor/Contexts/StringContext"));
-var Abstract_1 = require("./localTextVisor/Abstract");
-exports.AbstractPipeline = Abstract_1.AbstractPipeline;
+__export(require("./localTextVisor/abstract/AbstractPipeline"));
+__export(require("./localTextVisor/abstract/AbstractPredictor"));
+__export(require("./localTextVisor/abstract/AbstractValueDifferential"));
+__export(require("./localTextVisor/abstract/AbstractQualityAssessor"));
 __export(require("./localTextVisor/Enums"));
 __export(require("./localTextVisor/plaintext/Tree"));
 //# sourceMappingURL=TextVisor.js.map

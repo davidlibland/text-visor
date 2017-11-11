@@ -4,6 +4,9 @@
  */
 
 export * from "./localTextVisor/Contexts/StringContext";
-export { AbstractPipeline, WeightedPrediction } from "./localTextVisor/Abstract";
+export * from "./localTextVisor/abstract/AbstractPipeline";
+export * from "./localTextVisor/abstract/AbstractPredictor";
+export * from "./localTextVisor/abstract/AbstractValueDifferential";
+export * from "./localTextVisor/abstract/AbstractQualityAssessor";
 export * from "./localTextVisor/Enums";
 export * from "./localTextVisor/plaintext/Tree";
