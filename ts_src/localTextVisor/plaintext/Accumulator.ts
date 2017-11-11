@@ -10,33 +10,45 @@ export interface Accumulator<T> {
     map: <S>(chain: ((inputs: T[]) => S[])) => Accumulator<S>;
 }
 
-export const nowAccumulator = <T>(values: T[]): Accumulator<T> => ({
-    concat: (...more: Array<Accumulator<T>>) => {
+export class PresentAccumulator<T> implements Accumulator<T> {
+    constructor(protected values: T[]) {
+    }
+    public concat(...more: Array<Accumulator<T>>) {
         if (more.length === 0) {
-            return nowAccumulator(values);
+            return this;
         } else {
-            return more[0].map((nextValues) => [...values, ...nextValues]).concat(...more.slice(1, more.length));
+            return more[0].map((nextValues) => [...this.values, ...nextValues]).concat(...more.slice(1, more.length));
         }
-    },
-    fold: (consumer: <S>(inputs: T[]) => S) => consumer(values),
-    map: (chain: (<S>(inputs: T[]) => S[])) => nowAccumulator(chain(values)),
-});
+    }
+    public fold<S>(consumer: (inputs: T[]) => S) {
+        return consumer(this.values);
+    }
+    public map<S>(chain: ((inputs: T[]) => S[])) {
+        return new PresentAccumulator(chain(this.values));
+    }
+}
 
-export const futureAccumulator = <T>(futureConsumption: <S>(futureConsumer: (futureValues: T[]) => S) => S)
-    : Accumulator<T> => ({
-    concat: (...more: Array<Accumulator<T>>) => {
+export class FutureAccumulator<T> implements Accumulator<T> {
+    constructor(protected futureConsumption: <S>(futureConsumer: (futureValues: T[]) => S) => S) {
+    }
+    public concat(...more: Array<Accumulator<T>>) {
         if (more.length === 0) {
-            return futureAccumulator(futureConsumption);
+            return this;
         } else {
-            return futureAccumulator((futureConsumer: <S>(values: T[]) => S) => {
-                    more[0].fold(
-                        (nextValues) => futureConsumption((values: T[]) => futureConsumer([...values, ...nextValues]))
-                    );
-                }).concat(...more.slice(1, more.length));
+            return new FutureAccumulator<T>(<S>(futureConsumer: (values: T[]) => S) =>
+                    more[0].concat(...more.slice(1, more.length)).fold(
+                        (nextValues) => this.futureConsumption((values) => futureConsumer([...values, ...nextValues])),
+                    )
+                );
         }
-    },
-    fold: (consumer: <S>(inputs: T[]) => S) => futureConsumption(consumer),
-    map: (chain: (<S>(inputs: T[]) => S[])) => futureAccumulator(
-        (futureConsumer) => futureConsumption((futureValues: T[]) => futureConsumer(chain(futureValues))),
-    ),
-});
+    }
+    public fold<S>(consumer: (inputs: T[]) => S) {
+        return this.futureConsumption(consumer);
+    }
+    public map<S>(chain: ((inputs: T[]) => S[])) {
+        return new FutureAccumulator<S>(
+            (futureConsumer) => this.futureConsumption((futureValues: T[]) => futureConsumer(chain(futureValues)))
+        );
+    }
+}
+
