@@ -14,4 +14,12 @@ __export(require("./localTextVisor/abstract/AbstractValueDifferential"));
 __export(require("./localTextVisor/abstract/AbstractQualityAssessor"));
 __export(require("./localTextVisor/Enums"));
 __export(require("./localTextVisor/plaintext/Tree"));
+var AbstractPipeline_1 = require("./localTextVisor/abstract/AbstractPipeline");
+exports.AbstractPipeline = AbstractPipeline_1.default;
+var AbstractPredictor_1 = require("./localTextVisor/abstract/AbstractPredictor");
+exports.AbstractPredictor = AbstractPredictor_1.default;
+var AbstractValueDifferential_1 = require("./localTextVisor/abstract/AbstractValueDifferential");
+exports.AbstractValueDifferential = AbstractValueDifferential_1.default;
+var AbstractQualityAssessor_1 = require("./localTextVisor/abstract/AbstractQualityAssessor");
+exports.AbstractQualityAssessor = AbstractQualityAssessor_1.default;
 //# sourceMappingURL=TextVisor.js.map
