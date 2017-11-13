@@ -8,7 +8,8 @@ import { STATUS_TYPE } from "../localTextVisor/plaintext/AbstractAutomata";
 import {
     FlatLevenshteinCostModule,
     LAState,
-    LevenshteinAutomaton, LevenshteinEditCostModule
+    LevenshteinAutomaton,
+    LevenshteinEditCostModule,
 } from "../localTextVisor/plaintext/LevenshteinAutomata";
 
 test("After making at most 1 edit it is possible to complete Heat to Heart Attack", () => {

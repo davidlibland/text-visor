@@ -3,13 +3,14 @@
  * @desc A Tree data structure.
  */
 import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutomata";
-import { Accumulator } from "./Accumulator";
+import { Accumulator, FutureAccumulator, PresentAccumulator } from "./Accumulator";
 
-export interface Tree<A, V> {
+interface Tree<A, V> {
     node: A;
     children: Array<Tree<A, V>>;
     data: V[];
 }
+export default Tree;
 
 /**
  * @function buildSortedTreeFromSortedPaths
@@ -256,18 +257,18 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                     checkCount,
                     counter + 1,
                     ));
-        return Accumulator.concat<V & E>(...resultsA, Accumulator.resolve(localSearchResult));
+        return new PresentAccumulator([]).concat(...resultsA, new PresentAccumulator(localSearchResult));
     };
     if (counter % checkCount === 0) {
-        return new Accumulator<V & E>((resolve) => {
+        return new FutureAccumulator<V & E>((resolve) =>
             setImmediate( () => {
                 if (!abortCallback()) {
-                    subcomputation().consume(resolve);
+                    subcomputation().fold(resolve);
                 } else {
                     resolve([]);
                 }
-            });
-        });
+            })
+        );
     } else {
         return subcomputation();
     }

@@ -4,59 +4,51 @@
  * @todo Implement all the monad methods and improve documentation.
  */
 
-export class Accumulator<T> {
-    public static resolve<T>(values: T[]): Accumulator<T> {
-        return new Accumulator((resolve) => {
-            resolve(values);
-        }, values);
-    }
-    public static concat<T>(...accumulators: Array<Accumulator<T>>): Accumulator<T> {
-        if (accumulators.every((acc) => acc.values !== undefined)) {
-            return Accumulator.resolve([].concat(...accumulators.map((acc) => acc.values)));
-        }
-        return new Accumulator<T>((resolve) => {
-            // We use this trick of a constant pointer to a list of length one
-            // to resolve call stack issues.
-            const curried = [resolve];
-            for (const acc of accumulators ) {
-                if (acc.values !== undefined) {
-                    curried.push((rightResults: T[]) => {
-                        curried.pop()([...acc.values, ...rightResults]);
-                    });
-                } else {
-                    curried.push((rightResults: T[]) => {
-                        acc.resoluter((leftResults: T[]) => curried.pop()(leftResults.concat(...rightResults)));
-                    });
-                }
-            }
-            curried.pop()([]);
-        });
-    }
-    private resoluter: (resolve: (results: T[]) => void) => void;
-    private values?: T[];
-    constructor(resoluter: (resolve: (results: T[]) => void) => void, values?: T[]) {
-        if (values !== undefined) {
-            this.values = values;
-        } else {
-            this.resoluter = resoluter;
-        }
-    }
+export interface Accumulator<T> {
+    concat: (...more: Array<Accumulator<T>>) => Accumulator<T>;
+    fold: (<S>(consumer: (inputs: T[]) => S) => S);
+    map: <S>(chain: ((inputs: T[]) => S[])) => Accumulator<S>;
+}
 
-    public then<S>(chain: (results: T[]) => S[]) {
-        if (this.values !== undefined) {
-            return Accumulator.resolve(chain(this.values));
-        }
-        return new Accumulator<S>((resolve) => {
-            this.resoluter((results: T[]) => {
-                resolve(chain(results));
-            });
-        });
+export class PresentAccumulator<T> implements Accumulator<T> {
+    constructor(protected values: T[]) {
     }
-    public consume(consumer: (results: T[]) => void): void {
-        if (this.values !== undefined) {
-            consumer(this.values);
+    public concat(...more: Array<Accumulator<T>>) {
+        if (more.length === 0) {
+            return this;
         } else {
-            this.resoluter(consumer);
+            return more[0].map((nextValues) => [...this.values, ...nextValues]).concat(...more.slice(1, more.length));
         }
+    }
+    public fold<S>(consumer: (inputs: T[]) => S) {
+        return consumer(this.values);
+    }
+    public map<S>(chain: ((inputs: T[]) => S[])) {
+        return new PresentAccumulator(chain(this.values));
     }
 }
+
+export class FutureAccumulator<T> implements Accumulator<T> {
+    constructor(protected futureConsumption: <S>(futureConsumer: (futureValues: T[]) => S) => S) {
+    }
+    public concat(...more: Array<Accumulator<T>>) {
+        if (more.length === 0) {
+            return this;
+        } else {
+            return new FutureAccumulator<T>(<S>(futureConsumer: (values: T[]) => S) =>
+                    more[0].concat(...more.slice(1, more.length)).fold(
+                        (nextValues) => this.futureConsumption((values) => futureConsumer([...values, ...nextValues])),
+                    )
+                );
+        }
+    }
+    public fold<S>(consumer: (inputs: T[]) => S) {
+        return this.futureConsumption(consumer);
+    }
+    public map<S>(chain: ((inputs: T[]) => S[])) {
+        return new FutureAccumulator<S>(
+            (futureConsumer) => this.futureConsumption((futureValues: T[]) => futureConsumer(chain(futureValues)))
+        );
+    }
+}
+

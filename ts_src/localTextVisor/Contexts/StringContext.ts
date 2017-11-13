@@ -3,11 +3,12 @@
  * @desc The context module used to set up a local text visor.
  */
 
-import {
-    AbstractPipeline,
-    AbstractPredictor,
-    AbstractValueDifferential,
-} from "../Abstract";
+/**
+ * Imports:
+ */
+import AbstractPipeline from "../abstract/AbstractPipeline";
+import AbstractPredictor from "../abstract/AbstractPredictor";
+import AbstractValueDifferential from "../abstract/AbstractValueDifferential";
 import {
     CaseSensitivityType,
     LANGUAGE_MODULE_TYPE,
@@ -16,9 +17,7 @@ import {
     RewardModuleType,
     TOKENIZER_TYPE, TokenizerType,
 } from "../Enums";
-import {
-    MapPredictor,
-} from "../LanguageStub";
+import MapPredictor from "../LanguageStub";
 import {
     charEnglishIntCosts,
     CostElement,
@@ -29,14 +28,14 @@ import {
 import {
     FlatLevenshteinCostModule,
     FlatLevenshteinRelativeCostModule,
-    FuzzyTriePredictor,
     LevenshteinEditCostModule,
-    TokenizingPredictor,
-} from "../plaintext/FuzzyTrieSearch";
-import { Tree } from "../plaintext/Tree";
+    } from "../plaintext/FuzzyTrieSearch";
+import FuzzyTriePredictor from "../plaintext/FuzzyTrieSearch";
+import {InputAndPositionType} from "../plaintext/TokenizingPredictor";
+import TokenizingPredictor from "../plaintext/TokenizingPredictor";
+import Tree from "../plaintext/Tree";
 import {
     FlatDifferential,
-    HasLengthType,
     LengthValueDifferential,
     ProbOfNotRejectingSymbolsGainedDifferential as PRNSGDifferential,
     RankedQualityAssessor,
@@ -173,18 +172,18 @@ function constructCostModuleFactory<A>(
 }
 
 // ToDo: Improve the typing of this function (currently uses any types).
-export function initializeLTVWithContext(
+export function initializeLTVWithContext<S extends InputAndPositionType<string>>(
     languageSpecs: LanguageModuleSpecs,
     rewardSpecs: RewardModuleSpecs,
-    data: ContextDataType): AbstractPipeline<any, any, any> {
-    let languageModule: AbstractPredictor<any, any>;
-    let rewardModule: AbstractValueDifferential<any>;
+    data: ContextDataType): AbstractPipeline<S, string, any> {
+    let languageModule: AbstractPredictor<S, string>;
+    let rewardModule: AbstractValueDifferential<S, string>;
     let prior: () => any;
-    let inputConverter: ( input: any) => any;
+    let inputConverter: ( wrappedInput: S) => string;
     switch (languageSpecs.moduleType) {
         case LANGUAGE_MODULE_TYPE.IDENTITY:
             prior = () => { return; };
-            inputConverter = (input) => input;
+            inputConverter = (wrappedInput) => wrappedInput.input;
             languageModule = new MapPredictor<any, any>(inputConverter);
             break;
         case LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
@@ -239,15 +238,15 @@ export function initializeLTVWithContext(
             rewardModule = new FlatDifferential();
             break;
         case REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
-            rewardModule = new LengthValueDifferential<HasLengthType>();
+            rewardModule = new LengthValueDifferential<S, string>(inputConverter);
             break;
         case REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
             const rewardSpecsPSG = rewardSpecs as RewardModuleSpecsPSG;
-            rewardModule = new PRNSGDifferential<HasLengthType>(rewardSpecsPSG.rejectionLogit);
+            rewardModule = new PRNSGDifferential<S, string>(inputConverter, rewardSpecsPSG.rejectionLogit);
             break;
         default:
             throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);
     }
-    const qualityAssessor = new RankedQualityAssessor<any, any, any>(rewardModule, inputConverter);
-    return new StandardPipeline<any, any, any, any>(languageModule, qualityAssessor, prior);
+    const qualityAssessor = new RankedQualityAssessor<any, any, any>(rewardModule);
+    return new StandardPipeline(languageModule, qualityAssessor, prior);
 }

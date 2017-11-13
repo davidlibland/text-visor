@@ -8,6 +8,8 @@ const Enums_1 = require("../Enums");
 const LanguageStub_1 = require("../LanguageStub");
 const DetailedBalancedCost_1 = require("../plaintext/DetailedBalancedCost");
 const FuzzyTrieSearch_1 = require("../plaintext/FuzzyTrieSearch");
+const FuzzyTrieSearch_2 = require("../plaintext/FuzzyTrieSearch");
+const TokenizingPredictor_1 = require("../plaintext/TokenizingPredictor");
 const StandardLTVModules_1 = require("../StandardLTVModules");
 // ToDo: properly document this.
 // ToDo: Improve this function.
@@ -60,8 +62,8 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
     switch (languageSpecs.moduleType) {
         case Enums_1.LANGUAGE_MODULE_TYPE.IDENTITY:
             prior = () => { return; };
-            inputConverter = (input) => input;
-            languageModule = new LanguageStub_1.MapPredictor(inputConverter);
+            inputConverter = (wrappedInput) => wrappedInput.input;
+            languageModule = new LanguageStub_1.default(inputConverter);
             break;
         case Enums_1.LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
@@ -79,7 +81,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             }
             const priorObj = data.prior;
             const charTokenizer = (token) => token.split("");
-            const triePredictor = new FuzzyTrieSearch_1.FuzzyTriePredictor(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize, fuzzyTreeSearchSpecs.abortableCnt);
+            const triePredictor = new FuzzyTrieSearch_2.default(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize, fuzzyTreeSearchSpecs.abortableCnt);
             let contextTokenizer;
             let contextJoiner;
             switch (fuzzyTreeSearchSpecs.tokenizerType) {
@@ -93,7 +95,7 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
                     contextJoiner = (...tokens) => tokens.join(" ");
                     break;
             }
-            languageModule = new FuzzyTrieSearch_1.TokenizingPredictor(contextTokenizer, contextJoiner, triePredictor);
+            languageModule = new TokenizingPredictor_1.default(contextTokenizer, contextJoiner, triePredictor);
             prior = () => (token) => {
                 const count = priorObj[token];
                 return count ? count : 0;
@@ -108,16 +110,16 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             rewardModule = new StandardLTVModules_1.FlatDifferential();
             break;
         case Enums_1.REWARD_MODULE_TYPE.LENGTH_DIFFERENCE:
-            rewardModule = new StandardLTVModules_1.LengthValueDifferential();
+            rewardModule = new StandardLTVModules_1.LengthValueDifferential(inputConverter);
             break;
         case Enums_1.REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
             const rewardSpecsPSG = rewardSpecs;
-            rewardModule = new StandardLTVModules_1.ProbOfNotRejectingSymbolsGainedDifferential(rewardSpecsPSG.rejectionLogit);
+            rewardModule = new StandardLTVModules_1.ProbOfNotRejectingSymbolsGainedDifferential(inputConverter, rewardSpecsPSG.rejectionLogit);
             break;
         default:
             throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);
     }
-    const qualityAssessor = new StandardLTVModules_1.RankedQualityAssessor(rewardModule, inputConverter);
+    const qualityAssessor = new StandardLTVModules_1.RankedQualityAssessor(rewardModule);
     return new StandardLTVModules_1.StandardPipeline(languageModule, qualityAssessor, prior);
 }
 exports.initializeLTVWithContext = initializeLTVWithContext;

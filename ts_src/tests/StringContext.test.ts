@@ -9,7 +9,7 @@ import {
     RewardModuleSpecs,
 } from "../localTextVisor/Contexts/StringContext";
 import { LANGUAGE_MODULE_TYPE, QUALITY_MODULE_TYPE, REWARD_MODULE_TYPE, TOKENIZER_TYPE } from "../localTextVisor/Enums";
-import { sortedInsert, Tree } from "../localTextVisor/plaintext/Tree";
+import { default as Tree, sortedInsert } from "../localTextVisor/plaintext/Tree";
 
 test("Initialize LTV with Identity Predictor and test confidence quality.", () => {
     const idPipeline = initializeLTVWithContext(
@@ -21,7 +21,11 @@ test("Initialize LTV with Identity Predictor and test confidence quality.", () =
         {trie: {node: "", children: [], data: []}, prior: {}},
     );
 
-    const resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE);
+    const input = {
+        cursorPosition: 0,
+        input: "abracadabra",
+    };
+    const resultsP = idPipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.CONFIDENCE);
     expect.assertions(1);
     return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
         .resolves.toEqual(["abracadabra"]);
@@ -37,7 +41,11 @@ test("Initialize LTV with Identity Predictor and test expected reward quality.",
         {trie: {node: "", children: [], data: []}, prior: {}},
     );
 
-    const resultsP = idPipeline.predict("abracadabra", 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
+    const input = {
+        cursorPosition: 0,
+        input: "abracadabra",
+    };
+    const resultsP = idPipeline.predict(input, 5, 0, QUALITY_MODULE_TYPE.EXPECTED_REWARD);
     expect.assertions(1);
     return expect(resultsP.then((results) => results.map((wPred) => wPred.prediction)))
         .resolves.toEqual([]);

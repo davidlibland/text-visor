@@ -7,10 +7,11 @@ import "ts-jest";
 import {
     FlatLevenshteinCostModule,
     FlatLevenshteinRelativeCostModule,
-    FuzzyTriePredictor,
-    TokenizingPredictor,
-} from "../localTextVisor/plaintext/FuzzyTrieSearch";
-import { sortedInsert, Tree } from "../localTextVisor/plaintext/Tree";
+    } from "../localTextVisor/plaintext/FuzzyTrieSearch";
+import FuzzyTriePredictor from "../localTextVisor/plaintext/FuzzyTrieSearch";
+import TokenizingPredictor from "../localTextVisor/plaintext/TokenizingPredictor";
+import { sortedInsert } from "../localTextVisor/plaintext/Tree";
+import Tree from "../localTextVisor/plaintext/Tree";
 
 interface TokenData {
     prediction: string;
