@@ -1,7 +1,3 @@
-/**
- * @file Tree.ts
- * @desc A Tree data structure.
- */
 import { AbstractAutomaton, StatusContainer } from "./AbstractAutomata";
 import { Accumulator } from "./Accumulator";
 interface Tree<A, V> {

@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @file Tree.ts
  * @desc A Tree data structure.
  */
+const immutable_1 = require("immutable");
 const AbstractAutomata_1 = require("./AbstractAutomata");
 const Accumulator_1 = require("./Accumulator");
 /**
@@ -214,7 +215,7 @@ function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, chec
                 subcomputation().fold(resolve);
             }
             else {
-                resolve([]);
+                resolve(immutable_1.List([]));
             }
         }));
     }

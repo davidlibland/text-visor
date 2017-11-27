@@ -5,28 +5,44 @@
  * @todo Implement all the monad methods and improve documentation.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-class PresentAccumulator {
+const immutable_1 = require("immutable");
+class Accumulator {
+}
+exports.Accumulator = Accumulator;
+class PresentAccumulator extends Accumulator {
     constructor(values) {
-        this.values = values;
+        super();
+        if (immutable_1.List.isList(values)) {
+            this.values = values;
+        }
+        else {
+            this.values = immutable_1.List(values);
+        }
     }
     concat(...more) {
         if (more.length === 0) {
             return this;
         }
         else {
-            return more[0].map((nextValues) => [...this.values, ...nextValues]).concat(...more.slice(1, more.length));
+            return more[0].apply((nextValues) => this.values.concat(nextValues))
+                .concat(...more.slice(1, more.length));
         }
     }
     fold(consumer) {
         return consumer(this.values);
     }
-    map(chain) {
+    map(mapper) {
+        const newValues = this.values.map(mapper);
+        return new PresentAccumulator(newValues);
+    }
+    apply(chain) {
         return new PresentAccumulator(chain(this.values));
     }
 }
 exports.PresentAccumulator = PresentAccumulator;
-class FutureAccumulator {
+class FutureAccumulator extends Accumulator {
     constructor(futureConsumption) {
+        super();
         this.futureConsumption = futureConsumption;
     }
     concat(...more) {
@@ -34,13 +50,16 @@ class FutureAccumulator {
             return this;
         }
         else {
-            return new FutureAccumulator((futureConsumer) => more[0].concat(...more.slice(1, more.length)).fold((nextValues) => this.futureConsumption((values) => futureConsumer([...values, ...nextValues]))));
+            return new FutureAccumulator((futureConsumer) => more[0].concat(...more.slice(1, more.length)).fold((nextValues) => this.futureConsumption((values) => futureConsumer(values.concat(nextValues)))));
         }
     }
     fold(consumer) {
         return this.futureConsumption(consumer);
     }
-    map(chain) {
+    map(mapper) {
+        return new FutureAccumulator((futureConsumer) => this.futureConsumption((futureValues) => futureConsumer(futureValues.map(mapper))));
+    }
+    apply(chain) {
         return new FutureAccumulator((futureConsumer) => this.futureConsumption((futureValues) => futureConsumer(chain(futureValues))));
     }
 }

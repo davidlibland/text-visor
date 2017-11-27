@@ -124,7 +124,7 @@ export default class FuzzyTriePredictor<T = string, A = string, V extends object
                     cancelCallback,
                     this.abortableCnt,
                     0)
-                    .fold(resolve);
+                    .fold((results) => resolve(results.toArray()));
             });
         } else {
             return Promise.resolve(automatonTreeSearch(this.trie, leven, leven.start()));

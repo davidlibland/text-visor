@@ -2,6 +2,7 @@
  * @file Tree.ts
  * @desc A Tree data structure.
  */
+import { List } from "immutable";
 import { AbstractAutomaton, STATUS_TYPE, StatusContainer } from "./AbstractAutomata";
 import { Accumulator, FutureAccumulator, PresentAccumulator } from "./Accumulator";
 
@@ -265,9 +266,9 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                 if (!abortCallback()) {
                     subcomputation().fold(resolve);
                 } else {
-                    resolve([]);
+                    resolve(List([]));
                 }
-            })
+            }),
         );
     } else {
         return subcomputation();
