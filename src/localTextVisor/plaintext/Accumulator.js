@@ -24,7 +24,7 @@ class PresentAccumulator extends Accumulator {
             return this;
         }
         else {
-            return more[0].apply((nextValues) => this.values.concat(nextValues))
+            return more[0].unshift(this.values)
                 .concat(...more.slice(1, more.length));
         }
     }
@@ -35,8 +35,8 @@ class PresentAccumulator extends Accumulator {
         const newValues = this.values.map(mapper);
         return new PresentAccumulator(newValues);
     }
-    apply(chain) {
-        return new PresentAccumulator(chain(this.values));
+    unshift(newValues) {
+        return new PresentAccumulator(newValues.concat(this.values));
     }
 }
 exports.PresentAccumulator = PresentAccumulator;
@@ -50,17 +50,17 @@ class FutureAccumulator extends Accumulator {
             return this;
         }
         else {
-            return new FutureAccumulator((futureConsumer) => more[0].concat(...more.slice(1, more.length)).fold((nextValues) => this.futureConsumption((values) => futureConsumer(values.concat(nextValues)))));
+            return new FutureAccumulator((futureConsumer) => this.fold((futureValues) => more[0].concat(...more.slice(1, more.length)).unshift(futureValues).fold(futureConsumer)));
         }
     }
     fold(consumer) {
         return this.futureConsumption(consumer);
     }
     map(mapper) {
-        return new FutureAccumulator((futureConsumer) => this.futureConsumption((futureValues) => futureConsumer(futureValues.map(mapper))));
+        return new FutureAccumulator((futureConsumer) => this.fold((futureValues) => futureConsumer(futureValues.map(mapper))));
     }
-    apply(chain) {
-        return new FutureAccumulator((futureConsumer) => this.futureConsumption((futureValues) => futureConsumer(chain(futureValues))));
+    unshift(newValues) {
+        return new FutureAccumulator((futureConsumer) => this.fold((futureValues) => futureConsumer(newValues.concat(futureValues))));
     }
 }
 exports.FutureAccumulator = FutureAccumulator;
