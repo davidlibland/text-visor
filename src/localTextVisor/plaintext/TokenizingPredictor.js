@@ -48,7 +48,7 @@ class TokenizingPredictor extends AbstractPredictor_1.default {
         const suffix = this.splitter(wrappedInput.input);
         const prefix = [];
         let token = suffix.shift();
-        while (token) {
+        while (token !== undefined) {
             if (this.combiner(...prefix, token).length >= wrappedInput.cursorPosition) {
                 break;
             }
