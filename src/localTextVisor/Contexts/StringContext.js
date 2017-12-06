@@ -4,106 +4,118 @@
  * @desc The context module used to set up a local text visor.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-const Enums_1 = require("../Enums");
-const LanguageStub_1 = require("../LanguageStub");
-const DetailedBalancedCost_1 = require("../plaintext/DetailedBalancedCost");
-const FuzzyTrieSearch_1 = require("../plaintext/FuzzyTrieSearch");
-const FuzzyTrieSearch_2 = require("../plaintext/FuzzyTrieSearch");
-const TokenizingPredictor_1 = require("../plaintext/TokenizingPredictor");
-const StandardLTVModules_1 = require("../StandardLTVModules");
+var Enums_1 = require("../Enums");
+var LanguageStub_1 = require("../LanguageStub");
+var DetailedBalancedCost_1 = require("../plaintext/DetailedBalancedCost");
+var FuzzyTrieSearch_1 = require("../plaintext/FuzzyTrieSearch");
+var FuzzyTrieSearch_2 = require("../plaintext/FuzzyTrieSearch");
+var TokenizingPredictor_1 = require("../plaintext/TokenizingPredictor");
+var StandardLTVModules_1 = require("../StandardLTVModules");
 // ToDo: properly document this.
 // ToDo: Improve this function.
 function constructCostModuleFactory(languageSpecs) {
     if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH) {
-        const languageSpecsRFTS = languageSpecs;
-        const maxRelativeEditCost = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
+        var languageSpecsRFTS = languageSpecs;
+        var maxRelativeEditCost_1 = languageSpecsRFTS.maxRelativeEditDistance !== undefined ?
             languageSpecsRFTS.maxRelativeEditDistance : 1 / 3;
-        const flatWeight = languageSpecsRFTS.flatCostUnit !== undefined ?
+        var flatWeight_1 = languageSpecsRFTS.flatCostUnit !== undefined ?
             languageSpecsRFTS.flatCostUnit : 1;
-        return (input) => {
-            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
-            return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxRelativeEditCost, rejectCostThreshold, flatWeight);
+        return function (input) {
+            var rejectCostThreshold = maxRelativeEditCost_1 * input.length * 2;
+            return new FuzzyTrieSearch_1.FlatLevenshteinRelativeCostModule(maxRelativeEditCost_1, rejectCostThreshold, flatWeight_1);
         };
     }
     else if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH) {
-        const languageSpecsFTS = languageSpecs;
-        const maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
-        const rejectCostThreshold = maxEditCost + 1;
-        const flatWeight = languageSpecsFTS.flatCostUnit !== undefined ?
+        var languageSpecsFTS = languageSpecs;
+        var maxEditCost = languageSpecsFTS.maxEditDistance !== undefined ? languageSpecsFTS.maxEditDistance : 1;
+        var rejectCostThreshold = maxEditCost + 1;
+        var flatWeight = languageSpecsFTS.flatCostUnit !== undefined ?
             languageSpecsFTS.flatCostUnit : 1;
-        const costModule = new FuzzyTrieSearch_1.FlatLevenshteinCostModule(rejectCostThreshold, flatWeight);
-        return (input) => costModule;
+        var costModule_1 = new FuzzyTrieSearch_1.FlatLevenshteinCostModule(rejectCostThreshold, flatWeight);
+        return function (input) { return costModule_1; };
     }
     else if (languageSpecs.moduleType === Enums_1.LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH) {
-        const languageSpecsDBFTS = languageSpecs;
-        const maxRelativeEditCost = languageSpecsDBFTS.maxRelativeEditDistance !== undefined ?
+        var languageSpecsDBFTS = languageSpecs;
+        var maxRelativeEditCost_2 = languageSpecsDBFTS.maxRelativeEditDistance !== undefined ?
             languageSpecsDBFTS.maxRelativeEditDistance : 2 / 3;
-        const symbolPairCosts = languageSpecsDBFTS.symbolPairCosts !== undefined ?
+        var symbolPairCosts_1 = languageSpecsDBFTS.symbolPairCosts !== undefined ?
             languageSpecsDBFTS.symbolPairCosts : DetailedBalancedCost_1.qwertyIntCostsWithCaseChange;
-        const symbolCosts = languageSpecsDBFTS.symbolCosts !== undefined ?
+        var symbolCosts_1 = languageSpecsDBFTS.symbolCosts !== undefined ?
             languageSpecsDBFTS.symbolCosts : DetailedBalancedCost_1.charEnglishIntCosts;
-        const defaultCost = languageSpecsDBFTS.defaultCost;
-        const baseInsertCost = languageSpecsDBFTS.baseInsertCost;
-        const baseDeleteCost = languageSpecsDBFTS.baseDeleteCost;
-        const symbolPairCostScaleFactor = languageSpecsDBFTS.symbolPairCostScaleFactor;
-        const symbolCostScaleFactor = languageSpecsDBFTS.symbolCostScaleFactor;
-        return (input) => {
-            const rejectCostThreshold = maxRelativeEditCost * input.length * 2;
-            return new DetailedBalancedCost_1.DetailedBalanceCostModule(maxRelativeEditCost, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, baseInsertCost, baseDeleteCost, symbolPairCostScaleFactor, symbolCostScaleFactor);
+        var defaultCost_1 = languageSpecsDBFTS.defaultCost;
+        var baseInsertCost_1 = languageSpecsDBFTS.baseInsertCost;
+        var baseDeleteCost_1 = languageSpecsDBFTS.baseDeleteCost;
+        var symbolPairCostScaleFactor_1 = languageSpecsDBFTS.symbolPairCostScaleFactor;
+        var symbolCostScaleFactor_1 = languageSpecsDBFTS.symbolCostScaleFactor;
+        return function (input) {
+            var rejectCostThreshold = maxRelativeEditCost_2 * input.length * 2;
+            return new DetailedBalancedCost_1.DetailedBalanceCostModule(maxRelativeEditCost_2, rejectCostThreshold, symbolPairCosts_1, symbolCosts_1, defaultCost_1, baseInsertCost_1, baseDeleteCost_1, symbolPairCostScaleFactor_1, symbolCostScaleFactor_1);
         };
     }
 }
 // ToDo: Improve the typing of this function (currently uses any types).
 function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
-    let languageModule;
-    let rewardModule;
-    let prior;
-    let inputConverter;
+    var languageModule;
+    var rewardModule;
+    var prior;
+    var inputConverter;
     switch (languageSpecs.moduleType) {
         case Enums_1.LANGUAGE_MODULE_TYPE.IDENTITY:
-            prior = () => { return; };
-            inputConverter = (wrappedInput) => wrappedInput.input;
+            prior = function () { return; };
+            inputConverter = function (wrappedInput) { return wrappedInput.input; };
             languageModule = new LanguageStub_1.default(inputConverter);
             break;
         case Enums_1.LANGUAGE_MODULE_TYPE.DETAILED_BALANCED_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.RELATIVELY_FUZZY_TRIE_SEARCH:
         case Enums_1.LANGUAGE_MODULE_TYPE.FUZZY_TRIE_SEARCH:
-            const fuzzyTreeSearchSpecs = languageSpecs;
-            const costModuleFactory = constructCostModuleFactory(languageSpecs);
+            var fuzzyTreeSearchSpecs = languageSpecs;
+            var costModuleFactory = constructCostModuleFactory(languageSpecs);
             if (!("trie" in data)) {
                 // ToDo: Add Tree typeguard.
-                throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a trie.`);
+                throw new Error("The data " + data + " passed to initializeLTVWithContext must contain a trie.");
             }
-            const trie = data.trie;
+            var trie = data.trie;
             if (!("prior" in data)) {
                 // ToDo: Add prior typeguard.
-                throw new Error(`The data ${data} passed to initializeLTVWithContext must contain a prior.`);
+                throw new Error("The data " + data + " passed to initializeLTVWithContext must contain a prior.");
             }
-            const priorObj = data.prior;
-            const charTokenizer = (token) => token.split("");
-            const triePredictor = new FuzzyTrieSearch_2.default(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize, fuzzyTreeSearchSpecs.abortableCnt);
-            let contextTokenizer;
-            let contextJoiner;
+            var priorObj_1 = data.prior;
+            var charTokenizer = function (token) { return token.split(""); };
+            var triePredictor = new FuzzyTrieSearch_2.default(trie, charTokenizer, costModuleFactory, fuzzyTreeSearchSpecs.cacheCutoff, fuzzyTreeSearchSpecs.cacheSize, fuzzyTreeSearchSpecs.abortableCnt);
+            var contextTokenizer = void 0;
+            var contextJoiner = void 0;
             switch (fuzzyTreeSearchSpecs.tokenizerType) {
                 case Enums_1.TOKENIZER_TYPE.CHARACTER:
-                    contextTokenizer = (input) => input.split("");
-                    contextJoiner = (...tokens) => tokens.join("");
+                    contextTokenizer = function (input) { return input.split(""); };
+                    contextJoiner = function () {
+                        var tokens = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            tokens[_i] = arguments[_i];
+                        }
+                        return tokens.join("");
+                    };
                     break;
                 case Enums_1.TOKENIZER_TYPE.WHITE_SPACE:
                 default:
-                    contextTokenizer = (input) => input.split(" ");
-                    contextJoiner = (...tokens) => tokens.join(" ");
+                    contextTokenizer = function (input) { return input.split(" "); };
+                    contextJoiner = function () {
+                        var tokens = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            tokens[_i] = arguments[_i];
+                        }
+                        return tokens.join(" ");
+                    };
                     break;
             }
             languageModule = new TokenizingPredictor_1.default(contextTokenizer, contextJoiner, triePredictor);
-            prior = () => (token) => {
-                const count = priorObj[token];
+            prior = function () { return function (token) {
+                var count = priorObj_1[token];
                 return count ? count : 0;
-            };
-            inputConverter = (wrappedInput) => wrappedInput.input;
+            }; };
+            inputConverter = function (wrappedInput) { return wrappedInput.input; };
             break;
         default:
-            throw new Error(`The language algorithm ${languageSpecs.moduleType} has not been implemented.`);
+            throw new Error("The language algorithm " + languageSpecs.moduleType + " has not been implemented.");
     }
     switch (rewardSpecs.moduleType) {
         case Enums_1.REWARD_MODULE_TYPE.CONSTANT:
@@ -113,13 +125,13 @@ function initializeLTVWithContext(languageSpecs, rewardSpecs, data) {
             rewardModule = new StandardLTVModules_1.LengthValueDifferential(inputConverter);
             break;
         case Enums_1.REWARD_MODULE_TYPE.PROB_OF_NOT_REJECTING_SYMBOLS_GAINED:
-            const rewardSpecsPSG = rewardSpecs;
+            var rewardSpecsPSG = rewardSpecs;
             rewardModule = new StandardLTVModules_1.ProbOfNotRejectingSymbolsGainedDifferential(inputConverter, rewardSpecsPSG.rejectionLogit);
             break;
         default:
-            throw new Error(`The reward algorithm ${rewardSpecs.moduleType} has not been implemented.`);
+            throw new Error("The reward algorithm " + rewardSpecs.moduleType + " has not been implemented.");
     }
-    const qualityAssessor = new StandardLTVModules_1.RankedQualityAssessor(rewardModule);
+    var qualityAssessor = new StandardLTVModules_1.RankedQualityAssessor(rewardModule);
     return new StandardLTVModules_1.StandardPipeline(languageModule, qualityAssessor, prior);
 }
 exports.initializeLTVWithContext = initializeLTVWithContext;

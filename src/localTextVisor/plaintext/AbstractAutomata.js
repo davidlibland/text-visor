@@ -15,7 +15,10 @@ exports.STATUS_TYPE = {
  * @typeparam A The type of the action.
  * @typeparam E The type of status, extends "Accept", "Reject", and "Unknown".
  */
-class AbstractAutomaton {
-}
+var AbstractAutomaton = (function () {
+    function AbstractAutomaton() {
+    }
+    return AbstractAutomaton;
+}());
 exports.AbstractAutomaton = AbstractAutomaton;
 //# sourceMappingURL=AbstractAutomata.js.map

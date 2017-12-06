@@ -4,11 +4,30 @@
  * @desc A fast predictor which runs a fuzzy prefix tree search for best
  * corrections/completions.
  */
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __assign = (this && this.__assign) || Object.assign || function(t) {
+    for (var s, i = 1, n = arguments.length; i < n; i++) {
+        s = arguments[i];
+        for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+    }
+    return t;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractPredictor_1 = require("../abstract/AbstractPredictor");
-const LevenshteinAutomata_1 = require("./LevenshteinAutomata");
-const Tree_1 = require("./Tree");
-class FuzzyTriePredictor extends AbstractPredictor_1.default {
+var AbstractPredictor_1 = require("../abstract/AbstractPredictor");
+var LevenshteinAutomata_1 = require("./LevenshteinAutomata");
+var Tree_1 = require("./Tree");
+var FuzzyTriePredictor = (function (_super) {
+    __extends(FuzzyTriePredictor, _super);
     /**
      * Constructs a fuzzy tree predictor using the Levenshtein automata.
      * @param {Tree<A, {prediction: T} & V>} trie The tree to be used by the
@@ -26,64 +45,71 @@ class FuzzyTriePredictor extends AbstractPredictor_1.default {
      * subsequent predict call is made. The prior predict call will return a
      * rejected promise.
      */
-    constructor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize = 1000, abortableCnt) {
-        super();
-        this.trie = trie;
-        this.splitter = splitter;
-        this.costModuleFactory = costModuleFactory;
-        this.cacheEarlyResultsFlag = (cacheCutoff !== undefined);
-        if (this.cacheEarlyResultsFlag) {
-            this.cacheCutoff = cacheCutoff;
-            this.cacheSize = cacheSize;
-            this.cache = new Map();
+    function FuzzyTriePredictor(trie, splitter, costModuleFactory, cacheCutoff, cacheSize, abortableCnt) {
+        if (cacheSize === void 0) { cacheSize = 1000; }
+        var _this = _super.call(this) || this;
+        _this.trie = trie;
+        _this.splitter = splitter;
+        _this.costModuleFactory = costModuleFactory;
+        _this.cacheEarlyResultsFlag = (cacheCutoff !== undefined);
+        if (_this.cacheEarlyResultsFlag) {
+            _this.cacheCutoff = cacheCutoff;
+            _this.cacheSize = cacheSize;
+            _this.cache = new Map();
         }
-        this.abortableCnt = abortableCnt;
+        _this.abortableCnt = abortableCnt;
+        return _this;
     }
-    predict(prior, input) {
+    FuzzyTriePredictor.prototype.predict = function (prior, input) {
+        var _this = this;
         this.currentInput = input;
-        const chars = this.splitter(input);
-        let fuzzyCompletionsP;
+        var chars = this.splitter(input);
+        var fuzzyCompletionsP;
         if (this.cacheEarlyResultsFlag && chars.length <= this.cacheCutoff) {
             if (this.cache.has(input)) {
                 fuzzyCompletionsP = Promise.resolve(this.cache.get(input));
             }
             else {
                 fuzzyCompletionsP = this.computeFuzzyCompletions(chars, input);
-                fuzzyCompletionsP.then((fuzzyCompletions) => {
-                    const fuzzyCompletionsLimited = fuzzyCompletions.sort((a, b) => a.prefixEditCost - b.prefixEditCost).slice(0, this.cacheSize);
-                    this.cache.set(input, fuzzyCompletionsLimited);
+                fuzzyCompletionsP.then(function (fuzzyCompletions) {
+                    var fuzzyCompletionsLimited = fuzzyCompletions.sort(function (a, b) { return a.prefixEditCost - b.prefixEditCost; }).slice(0, _this.cacheSize);
+                    _this.cache.set(input, fuzzyCompletionsLimited);
                 }).catch();
             }
         }
         else {
             fuzzyCompletionsP = this.computeFuzzyCompletions(chars, input);
         }
-        const addMetadata = (completion) => {
-            return Object.assign({}, completion, { cursorPosition: this.splitter(completion.prediction).length, weight: Math.exp(-completion.prefixEditCost) * prior(completion.prediction) });
+        var addMetadata = function (completion) {
+            return __assign({}, completion, { cursorPosition: _this.splitter(completion.prediction).length, weight: Math.exp(-completion.prefixEditCost) * prior(completion.prediction) });
         };
-        return fuzzyCompletionsP.then((fuzzyCompletions) => fuzzyCompletions
-            .map(addMetadata)
-            .filter((completion) => (completion.weight > 0)));
-    }
-    computeFuzzyCompletions(chars, input) {
-        const leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
+        return fuzzyCompletionsP.then(function (fuzzyCompletions) {
+            return fuzzyCompletions
+                .map(addMetadata)
+                .filter(function (completion) { return (completion.weight > 0); });
+        });
+    };
+    FuzzyTriePredictor.prototype.computeFuzzyCompletions = function (chars, input) {
+        var _this = this;
+        var leven = new LevenshteinAutomata_1.LevenshteinAutomaton(chars, this.costModuleFactory(chars));
         if (this.abortableCnt !== undefined && this.abortableCnt > 0) {
-            return new Promise((resolve, reject) => {
-                const cancelCallback = () => {
-                    if (this.currentInput !== input) {
+            return new Promise(function (resolve, reject) {
+                var cancelCallback = function () {
+                    if (_this.currentInput !== input) {
                         reject("Tree search aborted.");
                     }
-                    return this.currentInput !== input;
+                    return _this.currentInput !== input;
                 };
-                Tree_1.abortableAutomatonTreeSearch(this.trie, leven, leven.start(), cancelCallback, this.abortableCnt, 0)
+                Tree_1.abortableAutomatonTreeSearch(_this.trie, leven, leven.start(), cancelCallback, _this.abortableCnt, 0)
                     .fold(resolve);
             });
         }
         else {
             return Promise.resolve(Tree_1.automatonTreeSearch(this.trie, leven, leven.start()));
         }
-    }
-}
+    };
+    return FuzzyTriePredictor;
+}(AbstractPredictor_1.default));
 exports.default = FuzzyTriePredictor;
 var LevenshteinAutomata_2 = require("./LevenshteinAutomata");
 exports.FlatLevenshteinRelativeCostModule = LevenshteinAutomata_2.FlatLevenshteinRelativeCostModule;

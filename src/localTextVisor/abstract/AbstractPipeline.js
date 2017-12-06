@@ -16,7 +16,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @typeparam T The type of the predictions.
  * @typeparam E A type extending WeightedPrediction<T>. The predictions consist of an array of type E.
  */
-class AbstractPipeline {
+var AbstractPipeline = (function () {
     /**
      * @constructor
      * @desc Combines a predictor and a quality assessor to return the highest quality
@@ -24,10 +24,11 @@ class AbstractPipeline {
      * @param {AbstractPredictor<S, T, any, E extends WeightedPrediction<T>>} predictor
      * @param {AbstractQualityAssessor<S, T>} qualityAssessor
      */
-    constructor(predictor, qualityAssessor) {
+    function AbstractPipeline(predictor, qualityAssessor) {
         this.predictor = predictor;
         this.qualityAssessor = qualityAssessor;
     }
-}
+    return AbstractPipeline;
+}());
 exports.default = AbstractPipeline;
 //# sourceMappingURL=AbstractPipeline.js.map

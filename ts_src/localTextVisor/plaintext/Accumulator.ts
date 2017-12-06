@@ -6,7 +6,7 @@
 
 export interface Accumulator<T> {
     concat: (...more: Array<Accumulator<T>>) => Accumulator<T>;
-    fold: (<S>(consumer: (inputs: T[]) => S) => S);
+    fold: ((consumer: (inputs: T[]) => void) => void);
     map: <S>(chain: ((inputs: T[]) => S[])) => Accumulator<S>;
 }
 
@@ -20,7 +20,7 @@ export class PresentAccumulator<T> implements Accumulator<T> {
             return more[0].map((nextValues) => [...this.values, ...nextValues]).concat(...more.slice(1, more.length));
         }
     }
-    public fold<S>(consumer: (inputs: T[]) => S) {
+    public fold(consumer: (inputs: T[]) => void) {
         return consumer(this.values);
     }
     public map<S>(chain: ((inputs: T[]) => S[])) {
@@ -29,20 +29,20 @@ export class PresentAccumulator<T> implements Accumulator<T> {
 }
 
 export class FutureAccumulator<T> implements Accumulator<T> {
-    constructor(protected futureConsumption: <S>(futureConsumer: (futureValues: T[]) => S) => S) {
+    constructor(protected futureConsumption: (futureConsumer: (futureValues: T[]) => void) => void) {
     }
     public concat(...more: Array<Accumulator<T>>) {
         if (more.length === 0) {
             return this;
         } else {
-            return new FutureAccumulator<T>(<S>(futureConsumer: (values: T[]) => S) =>
+            return new FutureAccumulator<T>((futureConsumer: (values: T[]) => void) =>
                     more[0].concat(...more.slice(1, more.length)).fold(
                         (nextValues) => this.futureConsumption((values) => futureConsumer([...values, ...nextValues])),
-                    )
+                    ),
                 );
         }
     }
-    public fold<S>(consumer: (inputs: T[]) => S) {
+    public fold(consumer: (inputs: T[]) => void) {
         return this.futureConsumption(consumer);
     }
     public map<S>(chain: ((inputs: T[]) => S[])) {

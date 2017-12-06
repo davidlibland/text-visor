@@ -4,7 +4,6 @@
   "description": "A javascript module for autocorrect/autocomplete.",
   "main": "./src/TextVisor.js",
   "types": "./src/TextVisor.d.ts",
-  "dependencies": {},
   "devDependencies": {
     "@types/jest": "21.1.1",
     "gulp": "^3.9.1",

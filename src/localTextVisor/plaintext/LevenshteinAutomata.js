@@ -3,16 +3,52 @@
  * @file LevenshteinAutomata.ts
  * @desc An implementation of a levenstein automata.
  */
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const AbstractAutomata_1 = require("./AbstractAutomata");
-class LevenshteinEditCostModule {
-}
+var AbstractAutomata_1 = require("./AbstractAutomata");
+var LevenshteinEditCostModule = (function () {
+    function LevenshteinEditCostModule() {
+    }
+    return LevenshteinEditCostModule;
+}());
 exports.LevenshteinEditCostModule = LevenshteinEditCostModule;
-class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
-    constructor(rejectCostThreshold, flatWeight = 1) {
-        super();
-        this.rejectCostThreshold = rejectCostThreshold;
-        this.flatWeight = flatWeight;
+var FlatLevenshteinCostModule = (function (_super) {
+    __extends(FlatLevenshteinCostModule, _super);
+    function FlatLevenshteinCostModule(rejectCostThreshold, flatWeight) {
+        if (flatWeight === void 0) { flatWeight = 1; }
+        var _this = _super.call(this) || this;
+        _this.rejectCostThreshold = rejectCostThreshold;
+        _this.flatWeight = flatWeight;
+        return _this;
     }
     /**
      * @public
@@ -22,9 +58,9 @@ class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
      * @param {A} beta
      * @returns {number}
      */
-    swapCost(alpha, beta) {
+    FlatLevenshteinCostModule.prototype.swapCost = function (alpha, beta) {
         return alpha === beta ? 0 : this.flatWeight;
-    }
+    };
     /**
      * @public
      * @method deleteCost
@@ -32,9 +68,9 @@ class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
      * @param {A} alpha
      * @returns {number}
      */
-    deleteCost(alpha) {
+    FlatLevenshteinCostModule.prototype.deleteCost = function (alpha) {
         return this.flatWeight;
-    }
+    };
     /**
      * @public
      * @method insertCost
@@ -42,9 +78,9 @@ class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
      * @param {A} alpha
      * @returns {number}
      */
-    insertCost(alpha) {
+    FlatLevenshteinCostModule.prototype.insertCost = function (alpha) {
         return this.flatWeight;
-    }
+    };
     /**
      * @public
      * @method editCostAcceptor
@@ -53,15 +89,19 @@ class FlatLevenshteinCostModule extends LevenshteinEditCostModule {
      * @param {number} step
      * @returns {boolean}
      */
-    editCostAcceptor(editCost, step) {
+    FlatLevenshteinCostModule.prototype.editCostAcceptor = function (editCost, step) {
         return (editCost < this.rejectCostThreshold);
-    }
-}
+    };
+    return FlatLevenshteinCostModule;
+}(LevenshteinEditCostModule));
 exports.FlatLevenshteinCostModule = FlatLevenshteinCostModule;
-class FlatLevenshteinRelativeCostModule extends FlatLevenshteinCostModule {
-    constructor(relativeAcceptanceThreshold, rejectCostThreshold, flatWeight = 1) {
-        super(rejectCostThreshold, flatWeight);
-        this.relativeAcceptanceThreshold = relativeAcceptanceThreshold;
+var FlatLevenshteinRelativeCostModule = (function (_super) {
+    __extends(FlatLevenshteinRelativeCostModule, _super);
+    function FlatLevenshteinRelativeCostModule(relativeAcceptanceThreshold, rejectCostThreshold, flatWeight) {
+        if (flatWeight === void 0) { flatWeight = 1; }
+        var _this = _super.call(this, rejectCostThreshold, flatWeight) || this;
+        _this.relativeAcceptanceThreshold = relativeAcceptanceThreshold;
+        return _this;
     }
     /**
      * @public
@@ -71,74 +111,76 @@ class FlatLevenshteinRelativeCostModule extends FlatLevenshteinCostModule {
      * @param {number} step
      * @returns {boolean}
      */
-    editCostAcceptor(editCost, step) {
+    FlatLevenshteinRelativeCostModule.prototype.editCostAcceptor = function (editCost, step) {
         return (editCost < this.rejectCostThreshold) && (editCost <= this.relativeAcceptanceThreshold * step);
-    }
-}
+    };
+    return FlatLevenshteinRelativeCostModule;
+}(FlatLevenshteinCostModule));
 exports.FlatLevenshteinRelativeCostModule = FlatLevenshteinRelativeCostModule;
-class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
-    constructor(str, costModule) {
-        super();
-        this.str = str;
-        this.costModule = costModule;
-        this.stateIdLookup = {};
-        this.hiddenStateLookup = [];
-        this.editCostLookup = [];
-        this.editCostLowerBoundLookup = [];
-        this.stateIdTransitions = [];
-        const initialHiddenState = str.reduce((accState, char) => {
-            const prevValue = accState[accState.length - 1];
+var LevenshteinAutomaton = (function (_super) {
+    __extends(LevenshteinAutomaton, _super);
+    function LevenshteinAutomaton(str, costModule) {
+        var _this = _super.call(this) || this;
+        _this.str = str;
+        _this.costModule = costModule;
+        _this.stateIdLookup = {};
+        _this.hiddenStateLookup = [];
+        _this.editCostLookup = [];
+        _this.editCostLowerBoundLookup = [];
+        _this.stateIdTransitions = [];
+        var initialHiddenState = str.reduce(function (accState, char) {
+            var prevValue = accState[accState.length - 1];
             costModule.insertCost(char);
-            return [
-                ...accState,
-                Math.min(prevValue + costModule.deleteCost(char), this.costModule.rejectCostThreshold)
-            ];
+            return __spread(accState, [
+                Math.min(prevValue + costModule.deleteCost(char), _this.costModule.rejectCostThreshold)
+            ]);
         }, [0]);
-        const initialStateId = this.getStateId(initialHiddenState);
-        const prefixEditCost = this.costModule.editCostAcceptor(initialHiddenState[initialHiddenState.length - 1], 0) ?
+        var initialStateId = _this.getStateId(initialHiddenState);
+        var prefixEditCost = _this.costModule.editCostAcceptor(initialHiddenState[initialHiddenState.length - 1], 0) ?
             { editCost: initialHiddenState[initialHiddenState.length - 1], step: 0 } : undefined;
-        this.initialState = {
+        _this.initialState = {
             acceptedPrefixData: prefixEditCost,
             stateId: initialStateId,
             step: 0,
         };
+        return _this;
     }
-    start() {
+    LevenshteinAutomaton.prototype.start = function () {
         return this.initialState;
-    }
-    step(sourceState, nextChar) {
-        const sourceStateId = sourceState.stateId;
+    };
+    LevenshteinAutomaton.prototype.step = function (sourceState, nextChar) {
+        var sourceStateId = sourceState.stateId;
         if (sourceStateId >= this.hiddenStateLookup.length) {
-            console.warn(`The State ${sourceStateId} has never been seen before.` +
-                `Pass only allowed states to the automaton's step method.`);
+            console.warn("The State " + sourceStateId + " has never been seen before." +
+                "Pass only allowed states to the automaton's step method.");
             return sourceState;
         }
-        let targetStateId = this.stateIdTransitions[sourceStateId].get(nextChar);
-        let targetEditCost;
+        var targetStateId = this.stateIdTransitions[sourceStateId].get(nextChar);
+        var targetEditCost;
         if (targetStateId !== undefined) {
             targetEditCost = this.editCostLookup[targetStateId];
         }
         else {
-            const sourceHiddenState = this.hiddenStateLookup[sourceStateId];
-            const targetHiddenState = new Array(sourceHiddenState.length);
+            var sourceHiddenState = this.hiddenStateLookup[sourceStateId];
+            var targetHiddenState = new Array(sourceHiddenState.length);
             targetHiddenState[0] = Math.min(sourceHiddenState[0] + this.costModule.insertCost(nextChar), this.costModule.rejectCostThreshold);
-            for (let i = 0; i < sourceHiddenState.length - 1; i++) {
+            for (var i = 0; i < sourceHiddenState.length - 1; i++) {
                 targetHiddenState[i + 1] = (Math.min(targetHiddenState[i] + this.costModule.deleteCost(this.str[i]), sourceHiddenState[i] + this.costModule.swapCost(this.str[i], nextChar), sourceHiddenState[i + 1] + this.costModule.insertCost(nextChar), this.costModule.rejectCostThreshold));
             }
             targetStateId = this.getStateId(targetHiddenState);
             targetEditCost = targetHiddenState[targetHiddenState.length - 1];
             this.stateIdTransitions[sourceStateId].set(nextChar, targetStateId);
         }
-        const targetStep = sourceState.step + 1;
-        const targetLAStateProposal = {
+        var targetStep = sourceState.step + 1;
+        var targetLAStateProposal = {
             acceptedPrefixData: sourceState.acceptedPrefixData,
             stateId: targetStateId,
             step: targetStep,
         };
-        const targetStateAccepted = this.costModule.editCostAcceptor(targetEditCost, targetStep);
+        var targetStateAccepted = this.costModule.editCostAcceptor(targetEditCost, targetStep);
         if (targetStateAccepted) {
-            const sourceStateAccepted = sourceState.acceptedPrefixData !== undefined;
-            const targetStateCloser = sourceStateAccepted ?
+            var sourceStateAccepted = sourceState.acceptedPrefixData !== undefined;
+            var targetStateCloser = sourceStateAccepted ?
                 targetEditCost <= sourceState.acceptedPrefixData.editCost : true;
             if (targetStateCloser) {
                 targetLAStateProposal.acceptedPrefixData = {
@@ -148,11 +190,11 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
             }
         }
         return targetLAStateProposal;
-    }
-    status(state) {
+    };
+    LevenshteinAutomaton.prototype.status = function (state) {
         if (state.stateId >= this.hiddenStateLookup.length) {
-            console.warn(`The State ${state.stateId} has never been seen before.` +
-                `Pass only allowed states to the automaton's step method.`);
+            console.warn("The State " + state.stateId + " has never been seen before." +
+                "Pass only allowed states to the automaton's step method.");
             return {
                 editCost: this.costModule.rejectCostThreshold,
                 prefixEditCost: this.costModule.rejectCostThreshold,
@@ -169,9 +211,9 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
             };
         }
         else if (this.costModule.editCostAcceptor(this.editCostLowerBoundLookup[state.stateId], state.step)) {
-            const editCost = this.editCostLookup[state.stateId];
+            var editCost = this.editCostLookup[state.stateId];
             return {
-                editCost,
+                editCost: editCost,
                 prefixEditCost: editCost,
                 status: AbstractAutomata_1.STATUS_TYPE.UNKNOWN,
                 step: state.step,
@@ -185,20 +227,21 @@ class LevenshteinAutomaton extends AbstractAutomata_1.AbstractAutomaton {
                 step: state.step,
             };
         }
-    }
-    getStateId(state) {
-        const stateId = this.stateIdLookup[state.toString()];
+    };
+    LevenshteinAutomaton.prototype.getStateId = function (state) {
+        var stateId = this.stateIdLookup[state.toString()];
         if (stateId === undefined) {
-            const newStateId = this.hiddenStateLookup.length;
+            var newStateId = this.hiddenStateLookup.length;
             this.stateIdLookup[state.toString()] = newStateId;
             this.hiddenStateLookup.push(state);
             this.editCostLookup.push(state[state.length - 1]);
-            this.editCostLowerBoundLookup.push(Math.min(...state));
+            this.editCostLowerBoundLookup.push(Math.min.apply(Math, __spread(state)));
             this.stateIdTransitions.push(new Map());
             return newStateId;
         }
         return stateId;
-    }
-}
+    };
+    return LevenshteinAutomaton;
+}(AbstractAutomata_1.AbstractAutomaton));
 exports.LevenshteinAutomaton = LevenshteinAutomaton;
 //# sourceMappingURL=LevenshteinAutomata.js.map

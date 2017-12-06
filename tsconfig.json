@@ -1,10 +1,19 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "es5",
     "sourceMap": true,
     "baseUrl": "./ts_src",
     "declaration": true,
+    "downlevelIteration": true,
+    "lib": [
+      "dom",
+      "es5",
+      "es2015.collection",
+      "es2015.iterable",
+      "es2015.promise",
+      "es2015.core"
+    ],
     "rootDirs": [
       "./ts_src",
       "./node_modules"

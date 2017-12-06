@@ -11,15 +11,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @typeparam T The type of the predictions, defaults to string.
  * @typeparam E A type extending WeightedPrediction<T>. The predictions consist of an array of type E.
  */
-class AbstractQualityAssessor {
+var AbstractQualityAssessor = (function () {
     /**
      * @constructor
      * @param {AbstractValueDifferential<T>} valueDifferential Used to evaluate the quality
      * of predictions.
      */
-    constructor(valueDifferential) {
+    function AbstractQualityAssessor(valueDifferential) {
         this.valueDifferential = valueDifferential;
     }
-}
+    return AbstractQualityAssessor;
+}());
 exports.default = AbstractQualityAssessor;
 //# sourceMappingURL=AbstractQualityAssessor.js.map

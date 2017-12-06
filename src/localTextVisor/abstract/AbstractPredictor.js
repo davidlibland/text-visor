@@ -14,7 +14,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @typeparam E A type extending WeightedPrediction<T>. The predict method will
  * return a Promise of an array of type E.
  */
-class AbstractPredictor {
-}
+var AbstractPredictor = (function () {
+    function AbstractPredictor() {
+    }
+    return AbstractPredictor;
+}());
 exports.default = AbstractPredictor;
 //# sourceMappingURL=AbstractPredictor.js.map

@@ -3,9 +3,50 @@
  * @file BasicQWERTYCost.ts
  * @desc A basic implementation of a qwerty cost module.
  */
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
+var __values = (this && this.__values) || function (o) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator], i = 0;
+    if (m) return m.call(o);
+    return {
+        next: function () {
+            if (o && i >= o.length) o = void 0;
+            return { value: o && o[i++], done: !o };
+        }
+    };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const LevenshteinAutomata_1 = require("./LevenshteinAutomata");
-class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRelativeCostModule {
+var LevenshteinAutomata_1 = require("./LevenshteinAutomata");
+var DetailedBalanceCostModule = (function (_super) {
+    __extends(DetailedBalanceCostModule, _super);
     /**
      * @desc We assume that the process of editing an incorrect prefix to the
      * correct one can be modeled via a transition matrix which satisfies
@@ -42,28 +83,37 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @param {number} symbolPairCostScaleFactor
      * @param {number} symbolCostScaleFactor
      */
-    constructor(relativeAcceptanceThreshold, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, baseInsertCost, baseDeleteCost, symbolPairCostScaleFactor = 1, symbolCostScaleFactor = 1) {
-        super(relativeAcceptanceThreshold, rejectCostThreshold);
+    function DetailedBalanceCostModule(relativeAcceptanceThreshold, rejectCostThreshold, symbolPairCosts, symbolCosts, defaultCost, baseInsertCost, baseDeleteCost, symbolPairCostScaleFactor, symbolCostScaleFactor) {
+        if (symbolPairCostScaleFactor === void 0) { symbolPairCostScaleFactor = 1; }
+        if (symbolCostScaleFactor === void 0) { symbolCostScaleFactor = 1; }
+        var _this = _super.call(this, relativeAcceptanceThreshold, rejectCostThreshold) || this;
         // Rescale the Cost data.
         symbolPairCosts = symbolPairCosts
-            .map(([key1, key2, cost]) => [key1, key2, cost * symbolPairCostScaleFactor]);
+            .map(function (_a) {
+            var _b = __read(_a, 3), key1 = _b[0], key2 = _b[1], cost = _b[2];
+            return [key1, key2, cost * symbolPairCostScaleFactor];
+        });
         symbolCosts = symbolCosts
-            .map(([key, cost]) => [key, cost * symbolCostScaleFactor]);
+            .map(function (_a) {
+            var _b = __read(_a, 2), key = _b[0], cost = _b[1];
+            return [key, cost * symbolCostScaleFactor];
+        });
         // Create the cost maps:
-        this.symbolPairCostMap = new Map(symbolPairCosts
-            .map(([key1, key2, cost]) => [[key1, key2], cost]));
-        this.symbolCostMap = new Map(symbolCosts);
+        _this.symbolPairCostMap = new Map(symbolPairCosts
+            .map(function (_a) {
+            var _b = __read(_a, 3), key1 = _b[0], key2 = _b[1], cost = _b[2];
+            return [[key1, key2], cost];
+        }));
+        _this.symbolCostMap = new Map(symbolCosts);
         // Validate them.
-        this.validateCosts();
+        _this.validateCosts();
         // Compute the average cost (to use as a default):
-        const averageCost = Math.ceil([
-            ...this.symbolPairCostMap.values(),
-            ...this.symbolCostMap.values(),
-        ].reduce((avg, cost, i) => ((cost + avg * i) / (i + 1)), 0));
+        var averageCost = Math.ceil(__spread(_this.symbolPairCostMap.values(), _this.symbolCostMap.values()).reduce(function (avg, cost, i) { return ((cost + avg * i) / (i + 1)); }, 0));
         // Fill in the remaining defaults.
-        this.defaultCost = defaultCost !== undefined ? defaultCost : averageCost;
-        this.baseInsertCost = baseInsertCost !== undefined ? baseInsertCost : this.defaultCost;
-        this.baseDeleteCost = baseDeleteCost !== undefined ? baseDeleteCost : this.defaultCost;
+        _this.defaultCost = defaultCost !== undefined ? defaultCost : averageCost;
+        _this.baseInsertCost = baseInsertCost !== undefined ? baseInsertCost : _this.defaultCost;
+        _this.baseDeleteCost = baseDeleteCost !== undefined ? baseDeleteCost : _this.defaultCost;
+        return _this;
     }
     /**
      * @public
@@ -73,14 +123,14 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @param {A} beta
      * @returns {number}
      */
-    swapCost(alpha, beta) {
-        const transitionCost = this.symbolPairCostMap.has([alpha, beta]) ?
+    DetailedBalanceCostModule.prototype.swapCost = function (alpha, beta) {
+        var transitionCost = this.symbolPairCostMap.has([alpha, beta]) ?
             this.symbolPairCostMap.get([alpha, beta]) : this.defaultCost;
-        const targetCost = this.symbolCostMap.has(beta) ?
+        var targetCost = this.symbolCostMap.has(beta) ?
             this.symbolCostMap.get(beta) : this.defaultCost;
-        const cost = transitionCost + targetCost;
+        var cost = transitionCost + targetCost;
         return alpha === beta ? 0 : Math.max(cost, 0);
-    }
+    };
     /**
      * @public
      * @method deleteCost
@@ -88,9 +138,9 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @param {A} alpha
      * @returns {number}
      */
-    deleteCost(alpha) {
+    DetailedBalanceCostModule.prototype.deleteCost = function (alpha) {
         return Math.max(this.baseDeleteCost, 0);
-    }
+    };
     /**
      * @public
      * @method insertCost
@@ -98,32 +148,54 @@ class DetailedBalanceCostModule extends LevenshteinAutomata_1.FlatLevenshteinRel
      * @param {A} alpha
      * @returns {number}
      */
-    insertCost(alpha) {
-        const cost = this.symbolCostMap.has(alpha) ?
+    DetailedBalanceCostModule.prototype.insertCost = function (alpha) {
+        var cost = this.symbolCostMap.has(alpha) ?
             this.symbolCostMap.get(alpha) : this.defaultCost;
         return Math.max(this.baseInsertCost + cost, 0);
-    }
+    };
     /**
      * Ensures symmetry and positivity.
      */
-    validateCosts() {
-        for (const [[key1, key2], cost] of this.symbolPairCostMap.entries()) {
-            if (key1 < key2) {
-                this.symbolPairCostMap.set([key2, key1], cost);
-            }
-            if (cost < 0) {
-                throw (new Error("Costs must be Positive."));
-            }
-        }
-        for (const [key, cost] of this.symbolCostMap.entries()) {
-            if (cost < 0) {
-                throw (new Error("Costs must be Positive."));
+    DetailedBalanceCostModule.prototype.validateCosts = function () {
+        try {
+            for (var _a = __values(this.symbolPairCostMap.entries()), _b = _a.next(); !_b.done; _b = _a.next()) {
+                var _c = __read(_b.value, 2), _d = __read(_c[0], 2), key1 = _d[0], key2 = _d[1], cost = _c[1];
+                if (key1 < key2) {
+                    this.symbolPairCostMap.set([key2, key1], cost);
+                }
+                if (cost < 0) {
+                    throw (new Error("Costs must be Positive."));
+                }
             }
         }
-    }
-}
+        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        finally {
+            try {
+                if (_b && !_b.done && (_e = _a.return)) _e.call(_a);
+            }
+            finally { if (e_1) throw e_1.error; }
+        }
+        try {
+            for (var _f = __values(this.symbolCostMap.entries()), _g = _f.next(); !_g.done; _g = _f.next()) {
+                var _h = __read(_g.value, 2), key = _h[0], cost = _h[1];
+                if (cost < 0) {
+                    throw (new Error("Costs must be Positive."));
+                }
+            }
+        }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
+        finally {
+            try {
+                if (_g && !_g.done && (_j = _f.return)) _j.call(_f);
+            }
+            finally { if (e_2) throw e_2.error; }
+        }
+        var e_1, _e, e_2, _j;
+    };
+    return DetailedBalanceCostModule;
+}(LevenshteinAutomata_1.FlatLevenshteinRelativeCostModule));
 exports.DetailedBalanceCostModule = DetailedBalanceCostModule;
-const qwertyKeyLocs = [
+var qwertyKeyLocs = [
     ["q", -.5, 0],
     ["w", .5, 0],
     ["e", 1.5, 0],
@@ -151,31 +223,39 @@ const qwertyKeyLocs = [
     ["n", 6, 2],
     ["m", 7, 2],
 ];
-const cartesianProduct = (array1, array2) => {
-    return [].concat(...array1.map((el1) => array2.map((el2) => [el1, el2])));
+var cartesianProduct = function (array1, array2) {
+    return [].concat.apply([], __spread(array1.map(function (el1) { return array2.map(function (el2) { return [el1, el2]; }); })));
 };
-const generateCosts = (keyLocs) => {
+var generateCosts = function (keyLocs) {
     return cartesianProduct(keyLocs, keyLocs)
-        .map(([keyLoc1, keyLoc2]) => {
-        const [symbol1, x1, y1] = keyLoc1;
-        const [symbol2, x2, y2] = keyLoc2;
-        const cost = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
+        .map(function (_a) {
+        var _b = __read(_a, 2), keyLoc1 = _b[0], keyLoc2 = _b[1];
+        var _c = __read(keyLoc1, 3), symbol1 = _c[0], x1 = _c[1], y1 = _c[2];
+        var _d = __read(keyLoc2, 3), symbol2 = _d[0], x2 = _d[1], y2 = _d[2];
+        var cost = Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
         return [symbol1, symbol2, cost];
     });
 };
-const qwertyCosts = generateCosts(qwertyKeyLocs);
-const qwertyIntCosts = qwertyCosts
-    .map(([key1, key2, x]) => ([key1, key2, Math.round(x)]));
-exports.qwertyIntCostsWithCaseChange = [
-    ...qwertyIntCosts,
-    ...qwertyIntCosts
-        .map(([key1, key2, x]) => ([key1.toUpperCase(), key2, Math.round(x) + 1])),
-    ...qwertyIntCosts
-        .map(([key1, key2, x]) => ([key1, key2.toUpperCase(), Math.round(x) + 1])),
-    ...qwertyIntCosts
-        .map(([key1, key2, x]) => ([key1.toUpperCase(), key2.toUpperCase(), Math.round(x)])),
-];
-const charEnglishPercentages = [
+var qwertyCosts = generateCosts(qwertyKeyLocs);
+var qwertyIntCosts = qwertyCosts
+    .map(function (_a) {
+    var _b = __read(_a, 3), key1 = _b[0], key2 = _b[1], x = _b[2];
+    return ([key1, key2, Math.round(x)]);
+});
+exports.qwertyIntCostsWithCaseChange = __spread(qwertyIntCosts, qwertyIntCosts
+    .map(function (_a) {
+    var _b = __read(_a, 3), key1 = _b[0], key2 = _b[1], x = _b[2];
+    return ([key1.toUpperCase(), key2, Math.round(x) + 1]);
+}), qwertyIntCosts
+    .map(function (_a) {
+    var _b = __read(_a, 3), key1 = _b[0], key2 = _b[1], x = _b[2];
+    return ([key1, key2.toUpperCase(), Math.round(x) + 1]);
+}), qwertyIntCosts
+    .map(function (_a) {
+    var _b = __read(_a, 3), key1 = _b[0], key2 = _b[1], x = _b[2];
+    return ([key1.toUpperCase(), key2.toUpperCase(), Math.round(x)]);
+}));
+var charEnglishPercentages = [
     ["a", 7.52766],
     ["e", 7.0925],
     ["o", 5.17],
@@ -276,10 +356,16 @@ const charEnglishPercentages = [
     ["ä", 6.10223e-05],
     ["}", 6.10223e-05],
 ];
-const convertPercentagesToCosts = (charPercentages) => {
+var convertPercentagesToCosts = function (charPercentages) {
     return charPercentages
-        .map(([char, freq]) => [char, -Math.log(freq * 0.01)]);
+        .map(function (_a) {
+        var _b = __read(_a, 2), char = _b[0], freq = _b[1];
+        return [char, -Math.log(freq * 0.01)];
+    });
 };
 exports.charEnglishIntCosts = convertPercentagesToCosts(charEnglishPercentages)
-    .map(([char, cost]) => [char, Math.round(cost)]);
+    .map(function (_a) {
+    var _b = __read(_a, 2), char = _b[0], cost = _b[1];
+    return [char, Math.round(cost)];
+});
 //# sourceMappingURL=DetailedBalancedCost.js.map

@@ -267,7 +267,7 @@ export function abortableAutomatonTreeSearch<S, A, V extends object, E extends S
                 } else {
                     resolve([]);
                 }
-            })
+            }),
         );
     } else {
         return subcomputation();

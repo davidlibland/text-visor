@@ -1,11 +1,31 @@
 "use strict";
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * @file Tree.ts
  * @desc A Tree data structure.
  */
-const AbstractAutomata_1 = require("./AbstractAutomata");
-const Accumulator_1 = require("./Accumulator");
+var AbstractAutomata_1 = require("./AbstractAutomata");
+var Accumulator_1 = require("./Accumulator");
 /**
  * @function buildSortedTreeFromSortedPaths
  * @desc This function assumes that wrappedPaths has been sorted
@@ -21,8 +41,14 @@ const Accumulator_1 = require("./Accumulator");
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-function buildSortedTreeFromSortedPaths(root, ...wrappedPaths) {
-    const reducer = (tree, wrappedPath) => lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data);
+function buildSortedTreeFromSortedPaths(root) {
+    var wrappedPaths = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        wrappedPaths[_i - 1] = arguments[_i];
+    }
+    var reducer = function (tree, wrappedPath) {
+        return lazyInsert(tree, wrappedPath.nodePath, wrappedPath.data);
+    };
     return wrappedPaths.reduce(reducer, { node: root, children: [], data: [] });
 }
 exports.buildSortedTreeFromSortedPaths = buildSortedTreeFromSortedPaths;
@@ -43,8 +69,14 @@ exports.buildSortedTreeFromSortedPaths = buildSortedTreeFromSortedPaths;
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-function buildSortedTreeFromPaths(root, ...wrappedPaths) {
-    const reducer = (tree, wrappedPath) => sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data);
+function buildSortedTreeFromPaths(root) {
+    var wrappedPaths = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        wrappedPaths[_i - 1] = arguments[_i];
+    }
+    var reducer = function (tree, wrappedPath) {
+        return sortedInsert(tree, wrappedPath.nodePath, wrappedPath.data);
+    };
     return wrappedPaths.reduce(reducer, { node: root, children: [], data: [] });
 }
 exports.buildSortedTreeFromPaths = buildSortedTreeFromPaths;
@@ -63,17 +95,23 @@ exports.buildSortedTreeFromPaths = buildSortedTreeFromPaths;
  * be placed at that node in the tree.
  * @returns {Tree<A, V>}
  */
-function buildTreeFromPaths(root, ...wrappedPaths) {
-    const reducer = (tree, wrappedPath) => insert(tree, wrappedPath.nodePath, wrappedPath.data);
+function buildTreeFromPaths(root) {
+    var wrappedPaths = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        wrappedPaths[_i - 1] = arguments[_i];
+    }
+    var reducer = function (tree, wrappedPath) {
+        return insert(tree, wrappedPath.nodePath, wrappedPath.data);
+    };
     return wrappedPaths.reduce(reducer, { node: root, children: [], data: [] });
 }
 exports.buildTreeFromPaths = buildTreeFromPaths;
 function insert(tree, token, data) {
     if (token.length > 0) {
-        const currentSymbol = token[0];
-        let branch = tree.children.find((child) => (child.node === currentSymbol));
+        var currentSymbol_1 = token[0];
+        var branch = tree.children.find(function (child) { return (child.node === currentSymbol_1); });
         if (branch === undefined) {
-            branch = { node: currentSymbol, children: [], data: [] };
+            branch = { node: currentSymbol_1, children: [], data: [] };
             tree.children.push(branch);
         }
         insert(branch, token.slice(1), data);
@@ -84,16 +122,17 @@ function insert(tree, token, data) {
     return tree;
 }
 exports.insert = insert;
-function sortedInsert(tree, token, data, comparisonFunc = stdComparisonFunc) {
+function sortedInsert(tree, token, data, comparisonFunc) {
+    if (comparisonFunc === void 0) { comparisonFunc = stdComparisonFunc; }
     if (token.length > 0) {
-        const currentSymbol = token[0];
-        const childNodes = tree.children.map((x) => x.node);
-        const potIndex = findObjectIndexInSortedArray(currentSymbol, childNodes, comparisonFunc);
+        var currentSymbol = token[0];
+        var childNodes = tree.children.map(function (x) { return x.node; });
+        var potIndex = findObjectIndexInSortedArray(currentSymbol, childNodes, comparisonFunc);
         if (!potIndex.exists) {
-            const leftChildren = tree.children.slice(0, potIndex.index);
-            const rightChildren = tree.children.slice(potIndex.index);
-            const newChild = { node: currentSymbol, children: [], data: [] };
-            tree.children = [...leftChildren, newChild, ...rightChildren];
+            var leftChildren = tree.children.slice(0, potIndex.index);
+            var rightChildren = tree.children.slice(potIndex.index);
+            var newChild = { node: currentSymbol, children: [], data: [] };
+            tree.children = __spread(leftChildren, [newChild], rightChildren);
         }
         sortedInsert(tree.children[potIndex.index], token.slice(1), data, comparisonFunc);
     }
@@ -103,7 +142,7 @@ function sortedInsert(tree, token, data, comparisonFunc = stdComparisonFunc) {
     return tree;
 }
 exports.sortedInsert = sortedInsert;
-const stdComparisonFunc = (a, b) => {
+var stdComparisonFunc = function (a, b) {
     if (a < b) {
         return -1;
     }
@@ -114,8 +153,8 @@ const stdComparisonFunc = (a, b) => {
 };
 function lazyInsert(tree, token, data) {
     if (token.length > 0) {
-        const currentSymbol = token[0];
-        let branch;
+        var currentSymbol = token[0];
+        var branch = void 0;
         if (tree.children.length > 0 ? tree.children[tree.children.length - 1].node === currentSymbol : false) {
             branch = tree.children[tree.children.length - 1];
         }
@@ -144,11 +183,11 @@ exports.lazyInsert = lazyInsert;
  * should-be-inserted, exists reflect whether the item is already there.
  */
 function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc) {
-    let low = 0;
-    let high = arrayOfObjects.length;
+    var low = 0;
+    var high = arrayOfObjects.length;
     while (low < high) {
-        const mid = (low + high) >> 1; // divide by two.
-        const comparison = comparisonFunc(arrayOfObjects[mid], newObject);
+        var mid = (low + high) >> 1; // divide by two.
+        var comparison = comparisonFunc(arrayOfObjects[mid], newObject);
         if (comparison < 0) {
             // then we should insert our object strictly to the right of mid.
             low = mid + 1;
@@ -168,15 +207,15 @@ function findObjectIndexInSortedArray(newObject, arrayOfObjects, comparisonFunc)
     return { exists: false, index: low };
 }
 function automatonTreeSearch(tree, automata, state) {
-    const addStatusToData = (data, internalState) => data.map((dataPt) => Object.assign({}, automata.status(internalState), dataPt));
-    const isAcceptedState = (internalState) => (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
-    const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
-    const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
+    var addStatusToData = function (data, internalState) { return data.map(function (dataPt) { return Object.assign({}, automata.status(internalState), dataPt); }); };
+    var isAcceptedState = function (internalState) { return (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT); };
+    var isNotRejectedState = function (internalState) { return (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT); };
+    var localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
     return tree.children
-        .map((child) => ({ child, state: automata.step(state, child.node) }))
-        .filter((childAndState) => isNotRejectedState(childAndState.state))
-        .map((childAndState) => automatonTreeSearch(childAndState.child, automata, childAndState.state))
-        .reduce((results, result) => results.concat(result), localSearchResult);
+        .map(function (child) { return ({ child: child, state: automata.step(state, child.node) }); })
+        .filter(function (childAndState) { return isNotRejectedState(childAndState.state); })
+        .map(function (childAndState) { return automatonTreeSearch(childAndState.child, automata, childAndState.state); })
+        .reduce(function (results, result) { return results.concat(result); }, localSearchResult);
 }
 exports.automatonTreeSearch = automatonTreeSearch;
 /**
@@ -193,30 +232,37 @@ exports.automatonTreeSearch = automatonTreeSearch;
  * been taken during the search.
  * @returns {Promise<Array<V & E>>}
  */
-function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, checkCount = 1, counter = 0) {
-    const addStatusToData = (data, internalState) => data.map((dataPt) => Object.assign({}, automata.status(internalState), dataPt));
-    const isAcceptedState = (internalState) => (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT);
-    const isNotRejectedState = (internalState) => (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT);
-    const localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
-    const subcomputation = () => {
-        const resultsA = tree.children
-            .map((child) => ({
-            child,
+function abortableAutomatonTreeSearch(tree, automata, state, abortCallback, checkCount, counter) {
+    if (checkCount === void 0) { checkCount = 1; }
+    if (counter === void 0) { counter = 0; }
+    var addStatusToData = function (data, internalState) { return data.map(function (dataPt) { return Object.assign({}, automata.status(internalState), dataPt); }); };
+    var isAcceptedState = function (internalState) { return (automata.status(internalState).status === AbstractAutomata_1.STATUS_TYPE.ACCEPT); };
+    var isNotRejectedState = function (internalState) { return (automata.status(internalState).status !== AbstractAutomata_1.STATUS_TYPE.REJECT); };
+    var localSearchResult = isAcceptedState(state) ? addStatusToData(tree.data, state) : [];
+    var subcomputation = function () {
+        var resultsA = tree.children
+            .map(function (child) { return ({
+            child: child,
             state: automata.step(state, child.node),
-        }))
-            .filter((childAndState) => isNotRejectedState(childAndState.state))
-            .map((childAndState) => abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, counter + 1));
-        return new Accumulator_1.PresentAccumulator([]).concat(...resultsA, new Accumulator_1.PresentAccumulator(localSearchResult));
+        }); })
+            .filter(function (childAndState) { return isNotRejectedState(childAndState.state); })
+            .map(function (childAndState) {
+            return abortableAutomatonTreeSearch(childAndState.child, automata, childAndState.state, abortCallback, checkCount, counter + 1);
+        });
+        return (_a = new Accumulator_1.PresentAccumulator([])).concat.apply(_a, __spread(resultsA, [new Accumulator_1.PresentAccumulator(localSearchResult)]));
+        var _a;
     };
     if (counter % checkCount === 0) {
-        return new Accumulator_1.FutureAccumulator((resolve) => setImmediate(() => {
-            if (!abortCallback()) {
-                subcomputation().fold(resolve);
-            }
-            else {
-                resolve([]);
-            }
-        }));
+        return new Accumulator_1.FutureAccumulator(function (resolve) {
+            return setImmediate(function () {
+                if (!abortCallback()) {
+                    subcomputation().fold(resolve);
+                }
+                else {
+                    resolve([]);
+                }
+            });
+        });
     }
     else {
         return subcomputation();

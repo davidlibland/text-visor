@@ -15,7 +15,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * @typeparam S the type of the input. Defaults to string.
  * @typeparam T the type of the prediction. Defaults to string.
  */
-class AbstractValueDifferential {
-}
+var AbstractValueDifferential = (function () {
+    function AbstractValueDifferential() {
+    }
+    return AbstractValueDifferential;
+}());
 exports.default = AbstractValueDifferential;
 //# sourceMappingURL=AbstractValueDifferential.js.map

@@ -1,4 +1,34 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * @file TokenizingPredictor.ts
@@ -7,7 +37,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * chunk around the indicated position and passes that to another predictor
  * to get corrections/completions relevant to that chunk.
  */
-const AbstractPredictor_1 = require("../abstract/AbstractPredictor");
+var AbstractPredictor_1 = require("../abstract/AbstractPredictor");
 /**
  * @class TokenizingPredictor
  * @extends AbstractPredictor
@@ -25,7 +55,8 @@ const AbstractPredictor_1 = require("../abstract/AbstractPredictor");
  * @typeparam V A type extending CursorPositionType which the childPredictor returns.
  * @typeparam P The type for the prior to be used by the childPredictor.
  */
-class TokenizingPredictor extends AbstractPredictor_1.default {
+var TokenizingPredictor = (function (_super) {
+    __extends(TokenizingPredictor, _super);
     /**
      *
      * @param {SplitterType<T extends HasLengthType, A>} splitter A function which
@@ -38,18 +69,20 @@ class TokenizingPredictor extends AbstractPredictor_1.default {
      * An AbstractPredictor used to make auto-complete/correct predictions for the
      * chunk of input nearest the cursorPosition.
      */
-    constructor(splitter, combiner, childPredictor) {
-        super();
-        this.splitter = splitter;
-        this.combiner = combiner;
-        this.childPredictor = childPredictor;
+    function TokenizingPredictor(splitter, combiner, childPredictor) {
+        var _this = _super.call(this) || this;
+        _this.splitter = splitter;
+        _this.combiner = combiner;
+        _this.childPredictor = childPredictor;
+        return _this;
     }
-    predict(prior, wrappedInput) {
-        const suffix = this.splitter(wrappedInput.input);
-        const prefix = [];
-        let token = suffix.shift();
+    TokenizingPredictor.prototype.predict = function (prior, wrappedInput) {
+        var _this = this;
+        var suffix = this.splitter(wrappedInput.input);
+        var prefix = [];
+        var token = suffix.shift();
         while (token !== undefined) {
-            if (this.combiner(...prefix, token).length >= wrappedInput.cursorPosition) {
+            if (this.combiner.apply(this, __spread(prefix, [token])).length >= wrappedInput.cursorPosition) {
                 break;
             }
             prefix.push(token);
@@ -58,17 +91,18 @@ class TokenizingPredictor extends AbstractPredictor_1.default {
         if (token === undefined) {
             return Promise.resolve([]);
         }
-        const resultsP = this.childPredictor.predict(prior, token);
-        const contextifyResult = (result) => {
-            const cursPos = this.combiner(...prefix, result.prediction).length
-                - this.combiner(result.prediction).length + result.cursorPosition;
+        var resultsP = this.childPredictor.predict(prior, token);
+        var contextifyResult = function (result) {
+            var cursPos = _this.combiner.apply(_this, __spread(prefix, [result.prediction])).length
+                - _this.combiner(result.prediction).length + result.cursorPosition;
             return Object.assign({}, result, {
                 cursorPosition: cursPos,
-                prediction: this.combiner(...prefix, result.prediction, ...suffix),
+                prediction: _this.combiner.apply(_this, __spread(prefix, [result.prediction], suffix)),
             });
         };
-        return resultsP.then((results) => (results.map(contextifyResult)));
-    }
-}
+        return resultsP.then(function (results) { return (results.map(contextifyResult)); });
+    };
+    return TokenizingPredictor;
+}(AbstractPredictor_1.default));
 exports.default = TokenizingPredictor;
 //# sourceMappingURL=TokenizingPredictor.js.map
